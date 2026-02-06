@@ -65,18 +65,21 @@ export async function PUT(
       return NextResponse.json({ error: 'BOQ not found' }, { status: 404 });
     }
 
+    // Build update data - only include fields that are explicitly provided
+    const updateData: Record<string, any> = {};
+    
+    if (body?.projectName !== undefined) updateData.projectName = body.projectName;
+    if (body?.customerId !== undefined) updateData.customerId = body.customerId || null;
+    if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled;
+    if (body?.discountType !== undefined) updateData.discountType = body.discountType;
+    if (body?.discountValue !== undefined) updateData.discountValue = body.discountValue;
+    if (body?.vatEnabled !== undefined) updateData.vatEnabled = body.vatEnabled;
+    if (body?.vatPercent !== undefined) updateData.vatPercent = body.vatPercent;
+    if (body?.status !== undefined) updateData.status = body.status;
+
     const boq = await prisma.boq.update({
       where: { id: params?.id },
-      data: {
-        projectName: body?.projectName,
-        customerId: body?.customerId || null,
-        discountEnabled: body?.discountEnabled ?? false,
-        discountType: body?.discountType,
-        discountValue: body?.discountValue ?? 0,
-        vatEnabled: body?.vatEnabled ?? false,
-        vatPercent: body?.vatPercent ?? 0,
-        status: body?.status,
-      },
+      data: updateData,
       include: {
         customer: true,
         categories: {

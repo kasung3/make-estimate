@@ -397,17 +397,31 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   };
 
-  // Drag and drop handlers - only trigger on grip handle
+  // Track if drag was initiated from grip handle
+  const [canDrag, setCanDrag] = useState(false);
+
+  // Mouse down on grip handle - enable dragging
+  const handleGripMouseDown = (categoryId: string, itemId: string) => {
+    setCanDrag(true);
+    setDraggedItem({ categoryId, itemId });
+  };
+
+  // Mouse up - disable dragging if not actually dragging
+  const handleGripMouseUp = () => {
+    if (!draggedItem) {
+      setCanDrag(false);
+    }
+  };
+
+  // Drag start - only proceed if initiated from grip
   const handleDragStart = (e: React.DragEvent, categoryId: string, itemId: string) => {
-    // Check if drag started from grip handle
-    const target = e.target as HTMLElement;
-    const isGripHandle = target.closest('[data-grip-handle="true"]');
-    if (!isGripHandle) {
+    if (!canDrag || !draggedItem || draggedItem.itemId !== itemId) {
       e.preventDefault();
+      setCanDrag(false);
       return;
     }
-    setDraggedItem({ categoryId, itemId });
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', itemId);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -417,9 +431,15 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   };
 
+  const handleDragEnd = () => {
+    setCanDrag(false);
+    setDraggedItem(null);
+  };
+
   const handleDrop = async (categoryId: string, targetIndex: number) => {
     if (!draggedItem || draggedItem.categoryId !== categoryId) {
       setDraggedItem(null);
+      setCanDrag(false);
       return;
     }
 
@@ -431,6 +451,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     
     if (draggedIndex === -1 || draggedIndex === targetIndex) {
       setDraggedItem(null);
+      setCanDrag(false);
       return;
     }
 
@@ -466,6 +487,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
 
     setDraggedItem(null);
+    setCanDrag(false);
   };
 
   // Open edit item dialog
@@ -724,9 +746,124 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Categories & Items */}
-            <div className="lg:col-span-2 space-y-4">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Totals & Profit Analysis - Top Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="shadow-md border-0 bg-gradient-to-br from-cyan-50 to-teal-50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Totals</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Label className="text-gray-600">Discount</Label>
+                      <Switch
+                        checked={boq?.discountEnabled ?? false}
+                        onCheckedChange={(checked) => updateBoq({ discountEnabled: checked })}
+                      />
+                    </div>
+                    {boq?.discountEnabled && (
+                      <div className="flex items-center space-x-2">
+                        <Select
+                          value={boq?.discountType ?? 'percent'}
+                          onValueChange={(value) =>
+                            updateBoq({ discountType: value as 'percent' | 'fixed' })
+                          }
+                        >
+                          <SelectTrigger className="w-20 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percent">%</SelectItem>
+                            <SelectItem value="fixed">Fixed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={boq?.discountValue ?? 0}
+                          onChange={(e) =>
+                            updateBoq({ discountValue: parseFloat(e.target.value) || 0 })
+                          }
+                          className="w-24 h-8"
+                        />
+                        {totals.discount > 0 && (
+                          <span className="text-sm text-gray-500">-{formatCurrency(totals.discount)}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Label className="text-gray-600">VAT</Label>
+                      <Switch
+                        checked={boq?.vatEnabled ?? false}
+                        onCheckedChange={(checked) => updateBoq({ vatEnabled: checked })}
+                      />
+                    </div>
+                    {boq?.vatEnabled && (
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={boq?.vatPercent ?? 0}
+                          onChange={(e) =>
+                            updateBoq({ vatPercent: parseFloat(e.target.value) || 0 })
+                          }
+                          className="w-20 h-8"
+                        />
+                        <span className="text-gray-500">%</span>
+                        <span className="text-gray-500">+{formatCurrency(totals.vatAmount)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-center py-2 border-t-2 border-cyan-200">
+                    <span className="text-lg font-semibold text-gray-900">Final Total</span>
+                    <span className="text-2xl font-bold text-cyan-600">
+                      {formatCurrency(totals.finalTotal)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-md border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Profit Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Total Cost</span>
+                    <span className="font-medium">{formatCurrency(totals.totalCost)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Price (after discount)</span>
+                    <span className="font-medium">{formatCurrency(totals.priceAfterDiscount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-gray-600">Profit</span>
+                    <span className={`font-semibold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatCurrency(totals.profit)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Gross Profit %</span>
+                    <span className={`font-semibold ${totals.grossProfitPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatNumber(totals.grossProfitPct)}%
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Categories & Items - Full Width */}
+            <div className="space-y-4">
               {(boq?.categories ?? []).map((category, catIndex) => (
                 <Card key={category?.id} className="shadow-md border-0 overflow-hidden">
                   <Collapsible
@@ -802,14 +939,19 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                   return (
                                     <tr 
                                       key={item?.id} 
-                                      className="border-b border-gray-100 bg-amber-50"
-                                      draggable
+                                      className={`border-b border-gray-100 bg-amber-50 ${draggedItem?.itemId === item.id ? 'opacity-50' : ''}`}
+                                      draggable={canDrag && draggedItem?.itemId === item.id}
                                       onDragStart={(e) => handleDragStart(e, category.id, item.id)}
                                       onDragOver={handleDragOver}
+                                      onDragEnd={handleDragEnd}
                                       onDrop={() => handleDrop(category.id, itemIndex)}
                                     >
                                       <td className="py-2 px-1">
-                                        <div data-grip-handle="true" className="cursor-grab active:cursor-grabbing">
+                                        <div 
+                                          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+                                          onMouseDown={() => handleGripMouseDown(category.id, item.id)}
+                                          onMouseUp={handleGripMouseUp}
+                                        >
                                           <GripVertical className="w-4 h-4 text-gray-400" />
                                         </div>
                                       </td>
@@ -874,14 +1016,19 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                 return (
                                   <tr 
                                     key={item?.id} 
-                                    className="border-b border-gray-100 hover:bg-gray-50"
-                                    draggable
+                                    className={`border-b border-gray-100 hover:bg-gray-50 ${draggedItem?.itemId === item.id ? 'opacity-50' : ''}`}
+                                    draggable={canDrag && draggedItem?.itemId === item.id}
                                     onDragStart={(e) => handleDragStart(e, category.id, item.id)}
                                     onDragOver={handleDragOver}
+                                    onDragEnd={handleDragEnd}
                                     onDrop={() => handleDrop(category.id, itemIndex)}
                                   >
                                     <td className="py-2 px-1">
-                                      <div data-grip-handle="true" className="cursor-grab active:cursor-grabbing">
+                                      <div 
+                                        className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+                                        onMouseDown={() => handleGripMouseDown(category.id, item.id)}
+                                        onMouseUp={handleGripMouseUp}
+                                      >
                                         <GripVertical className="w-4 h-4 text-gray-400" />
                                       </div>
                                     </td>
@@ -1011,125 +1158,6 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                 <Plus className="w-4 h-4 mr-2" />
                 Add Category
               </Button>
-            </div>
-
-            {/* Totals Panel */}
-            <div className="space-y-4">
-              <Card className="shadow-md border-0 bg-gradient-to-br from-cyan-50 to-teal-50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Totals</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-gray-600">Discount</Label>
-                      <Switch
-                        checked={boq?.discountEnabled ?? false}
-                        onCheckedChange={(checked) => updateBoq({ discountEnabled: checked })}
-                      />
-                    </div>
-                    {boq?.discountEnabled && (
-                      <>
-                        <div className="flex space-x-2">
-                          <Select
-                            value={boq?.discountType ?? 'percent'}
-                            onValueChange={(value) =>
-                              updateBoq({ discountType: value as 'percent' | 'fixed' })
-                            }
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="percent">%</SelectItem>
-                              <SelectItem value="fixed">Fixed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={boq?.discountValue ?? 0}
-                            onChange={(e) =>
-                              updateBoq({ discountValue: parseFloat(e.target.value) || 0 })
-                            }
-                            className="flex-1"
-                          />
-                        </div>
-                        {totals.discount > 0 && (
-                          <p className="text-sm text-gray-500">-{formatCurrency(totals.discount)}</p>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-gray-600">VAT</Label>
-                      <Switch
-                        checked={boq?.vatEnabled ?? false}
-                        onCheckedChange={(checked) => updateBoq({ vatEnabled: checked })}
-                      />
-                    </div>
-                    {boq?.vatEnabled && (
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={boq?.vatPercent ?? 0}
-                          onChange={(e) =>
-                            updateBoq({ vatPercent: parseFloat(e.target.value) || 0 })
-                          }
-                          className="w-20"
-                        />
-                        <span className="text-gray-500">%</span>
-                        <span className="flex-1 text-right text-gray-500">
-                          +{formatCurrency(totals.vatAmount)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between items-center py-3 border-t-2 border-cyan-200">
-                    <span className="text-lg font-semibold text-gray-900">Final Total</span>
-                    <span className="text-2xl font-bold text-cyan-600">
-                      {formatCurrency(totals.finalTotal)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-md border-0">
-                <CardHeader>
-                  <CardTitle className="text-lg">Profit Analysis</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total Cost</span>
-                    <span className="font-medium">{formatCurrency(totals.totalCost)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Price (after discount)</span>
-                    <span className="font-medium">{formatCurrency(totals.priceAfterDiscount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-gray-600">Profit</span>
-                    <span className={`font-semibold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {formatCurrency(totals.profit)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Gross Profit %</span>
-                    <span className={`font-semibold ${totals.grossProfitPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {formatNumber(totals.grossProfitPct)}%
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>

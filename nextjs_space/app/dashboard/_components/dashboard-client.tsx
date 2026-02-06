@@ -58,11 +58,19 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
 
+  // Format number with thousand separators
+  const formatNumber = (num: number, decimals: number = 2): string => {
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
   const formatCurrency = (amount: number) => {
-    const formatted = amount?.toFixed?.(2) ?? '0.00';
+    const formatted = formatNumber(amount ?? 0, 2);
     return currencyPosition === 'left'
-      ? `${currencySymbol}${formatted}`
-      : `${formatted}${currencySymbol}`;
+      ? `${currencySymbol} ${formatted}`
+      : `${formatted} ${currencySymbol}`;
   };
 
   const calculateBoqTotal = (boq: BoqWithRelations) => {

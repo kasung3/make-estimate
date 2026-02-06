@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -34,11 +35,14 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Save,
   Loader2,
   FileDown,
   Check,
   GripVertical,
+  StickyNote,
+  Bold,
+  Italic,
+  Underline,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings } from '@/lib/types';
@@ -63,17 +67,32 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+  
+  // Local input states to prevent typing lag
+  const [localProjectName, setLocalProjectName] = useState(initialBoq?.projectName ?? '');
+  const [localCategoryNames, setLocalCategoryNames] = useState<Record<string, string>>({});
+  const [localItemValues, setLocalItemValues] = useState<Record<string, Partial<BoqItemType>>>({});
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
 
-  const formatCurrency = (amount: number) => {
-    const formatted = (amount ?? 0)?.toFixed?.(2) ?? '0.00';
+  // Format number with thousand separators
+  const formatNumber = (num: number, decimals: number = 2): string => {
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
+  const formatCurrency = (amount: number): string => {
+    const formatted = formatNumber(amount ?? 0, 2);
     return currencyPosition === 'left'
-      ? `${currencySymbol}${formatted}`
-      : `${formatted}${currencySymbol}`;
+      ? `${currencySymbol} ${formatted}`
+      : `${formatted} ${currencySymbol}`;
   };
 
   const calculateTotals = useCallback(() => {
@@ -82,6 +101,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
     (boq?.categories ?? []).forEach((cat) => {
       (cat?.items ?? []).forEach((item) => {
+        if (item?.isNote) return; // Skip notes
         const qty = item?.quantity ?? 0;
         if (qty > 0) {
           const unitPrice = (item?.unitCost ?? 0) * (1 + (item?.markupPct ?? 0) / 100);
@@ -91,18 +111,24 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       });
     });
 
+    // Apply discount only if enabled
     let discount = 0;
-    if (boq?.discountType === 'percent') {
-      discount = subtotal * ((boq?.discountValue ?? 0) / 100);
-    } else {
-      discount = boq?.discountValue ?? 0;
+    if (boq?.discountEnabled) {
+      if (boq?.discountType === 'percent') {
+        discount = subtotal * ((boq?.discountValue ?? 0) / 100);
+      } else {
+        discount = boq?.discountValue ?? 0;
+      }
     }
 
     const afterDiscount = subtotal - discount;
     const vatAmount = boq?.vatEnabled ? afterDiscount * ((boq?.vatPercent ?? 0) / 100) : 0;
     const finalTotal = afterDiscount + vatAmount;
-    const profit = subtotal - totalCost;
-    const grossProfitPct = subtotal > 0 ? (profit / subtotal) * 100 : 0;
+    
+    // Profit calculations based on price AFTER discount
+    const priceAfterDiscount = afterDiscount;
+    const profit = priceAfterDiscount - totalCost;
+    const grossProfitPct = priceAfterDiscount > 0 ? (profit / priceAfterDiscount) * 100 : 0;
 
     return {
       subtotal: Math.round(subtotal * 100) / 100,
@@ -110,7 +136,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       vatAmount: Math.round(vatAmount * 100) / 100,
       finalTotal: Math.round(finalTotal * 100) / 100,
       totalCost: Math.round(totalCost * 100) / 100,
-      totalPriceQuoted: Math.round(subtotal * 100) / 100,
+      priceAfterDiscount: Math.round(priceAfterDiscount * 100) / 100,
       profit: Math.round(profit * 100) / 100,
       grossProfitPct: Math.round(grossProfitPct * 100) / 100,
     };
@@ -127,6 +153,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
         body: JSON.stringify({
           projectName: boq?.projectName,
           customerId: boq?.customerId,
+          discountEnabled: boq?.discountEnabled,
           discountType: boq?.discountType,
           discountValue: boq?.discountValue,
           vatEnabled: boq?.vatEnabled,
@@ -156,12 +183,29 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      Object.values(inputSaveTimeoutRef.current).forEach(clearTimeout);
     };
   }, []);
+
+  // Sync local project name when boq changes externally
+  useEffect(() => {
+    setLocalProjectName(boq?.projectName ?? '');
+  }, [boq?.projectName]);
 
   const updateBoq = (updates: Partial<BoqWithRelations>) => {
     setBoq((prev) => ({ ...(prev ?? {}), ...updates } as BoqWithRelations));
     triggerAutosave();
+  };
+
+  const handleProjectNameChange = (value: string) => {
+    setLocalProjectName(value);
+    // Debounce the actual update
+    if (inputSaveTimeoutRef.current['projectName']) {
+      clearTimeout(inputSaveTimeoutRef.current['projectName']);
+    }
+    inputSaveTimeoutRef.current['projectName'] = setTimeout(() => {
+      updateBoq({ projectName: value });
+    }, 500);
   };
 
   const handleAddCategory = async () => {
@@ -188,22 +232,35 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   };
 
   const handleUpdateCategory = async (categoryId: string, name: string) => {
-    try {
-      await fetch(`/api/categories/${categoryId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-
-      setBoq((prev) => ({
-        ...(prev ?? {}),
-        categories: (prev?.categories ?? []).map((cat) =>
-          cat?.id === categoryId ? { ...(cat ?? {}), name } : cat
-        ),
-      } as BoqWithRelations));
-    } catch (error) {
-      toast.error('Failed to update category');
+    // Update local state immediately
+    setLocalCategoryNames(prev => ({ ...prev, [categoryId]: name }));
+    
+    // Debounce API call
+    if (inputSaveTimeoutRef.current[`cat_${categoryId}`]) {
+      clearTimeout(inputSaveTimeoutRef.current[`cat_${categoryId}`]);
     }
+    inputSaveTimeoutRef.current[`cat_${categoryId}`] = setTimeout(async () => {
+      try {
+        await fetch(`/api/categories/${categoryId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+
+        setBoq((prev) => ({
+          ...(prev ?? {}),
+          categories: (prev?.categories ?? []).map((cat) =>
+            cat?.id === categoryId ? { ...(cat ?? {}), name } : cat
+          ),
+        } as BoqWithRelations));
+      } catch (error) {
+        toast.error('Failed to update category');
+      }
+    }, 500);
+  };
+
+  const getCategoryName = (category: CategoryWithItems) => {
+    return localCategoryNames[category.id] ?? category.name ?? '';
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
@@ -223,7 +280,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   };
 
-  const handleAddItem = async (categoryId: string) => {
+  const handleAddItem = async (categoryId: string, isNote: boolean = false) => {
     const category = (boq?.categories ?? []).find((c) => c?.id === categoryId);
     try {
       const response = await fetch('/api/items', {
@@ -231,12 +288,15 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           categoryId,
-          description: '',
+          description: isNote ? '' : '',
           unit: '',
           unitCost: 0,
           markupPct: 0,
           quantity: 0,
           sortOrder: category?.items?.length ?? 0,
+          isNote: isNote,
+          noteContent: isNote ? '' : null,
+          includeInPdf: true,
         }),
       });
 
@@ -254,25 +314,51 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   };
 
-  const handleUpdateItem = async (itemId: string, updates: Partial<BoqItemType>) => {
-    try {
-      await fetch(`/api/items/${itemId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
+  const getItemValue = (itemId: string, field: keyof BoqItemType, originalValue: any) => {
+    return localItemValues[itemId]?.[field] ?? originalValue;
+  };
 
-      setBoq((prev) => ({
-        ...(prev ?? {}),
-        categories: (prev?.categories ?? []).map((cat) => ({
-          ...(cat ?? {}),
-          items: (cat?.items ?? []).map((item) =>
-            item?.id === itemId ? { ...(item ?? {}), ...updates } : item
-          ),
-        })),
-      } as BoqWithRelations));
-    } catch (error) {
-      console.error('Failed to update item:', error);
+  const handleUpdateItem = async (itemId: string, updates: Partial<BoqItemType>, immediate: boolean = false) => {
+    // Update local state immediately for responsive UI
+    setLocalItemValues(prev => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] ?? {}), ...updates }
+    }));
+
+    // Also update the main boq state for calculations
+    setBoq((prev) => ({
+      ...(prev ?? {}),
+      categories: (prev?.categories ?? []).map((cat) => ({
+        ...(cat ?? {}),
+        items: (cat?.items ?? []).map((item) =>
+          item?.id === itemId ? { ...(item ?? {}), ...updates } : item
+        ),
+      })),
+    } as BoqWithRelations));
+
+    // Debounce API call
+    const timeoutKey = `item_${itemId}`;
+    if (inputSaveTimeoutRef.current[timeoutKey]) {
+      clearTimeout(inputSaveTimeoutRef.current[timeoutKey]);
+    }
+    
+    const saveToApi = async () => {
+      try {
+        await fetch(`/api/items/${itemId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error('Failed to update item:', error);
+      }
+    };
+
+    if (immediate) {
+      saveToApi();
+    } else {
+      inputSaveTimeoutRef.current[timeoutKey] = setTimeout(saveToApi, 500);
     }
   };
 
@@ -292,6 +378,66 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     } catch (error) {
       toast.error('Failed to delete item');
     }
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (categoryId: string, itemId: string) => {
+    setDraggedItem({ categoryId, itemId });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (categoryId: string, targetIndex: number) => {
+    if (!draggedItem || draggedItem.categoryId !== categoryId) {
+      setDraggedItem(null);
+      return;
+    }
+
+    const category = (boq?.categories ?? []).find((c) => c?.id === categoryId);
+    if (!category) return;
+
+    const items = [...(category.items ?? [])];
+    const draggedIndex = items.findIndex(item => item.id === draggedItem.itemId);
+    
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+      setDraggedItem(null);
+      return;
+    }
+
+    // Reorder items
+    const [removed] = items.splice(draggedIndex, 1);
+    items.splice(targetIndex, 0, removed);
+
+    // Update sort orders
+    const updatedItems = items.map((item, index) => ({ ...item, sortOrder: index }));
+
+    // Update local state
+    setBoq((prev) => ({
+      ...(prev ?? {}),
+      categories: (prev?.categories ?? []).map((cat) =>
+        cat?.id === categoryId ? { ...cat, items: updatedItems } : cat
+      ),
+    } as BoqWithRelations));
+
+    // Update sort orders in database
+    try {
+      await Promise.all(
+        updatedItems.map((item) =>
+          fetch(`/api/items/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sortOrder: item.sortOrder }),
+          })
+        )
+      );
+      setLastSaved(new Date());
+    } catch (error) {
+      toast.error('Failed to reorder items');
+    }
+
+    setDraggedItem(null);
   };
 
   const handleCreateCustomer = async () => {
@@ -372,6 +518,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
   const getCategorySubtotal = (category: CategoryWithItems) => {
     return (category?.items ?? []).reduce((sum, item) => {
+      if (item?.isNote) return sum; // Skip notes
       const qty = item?.quantity ?? 0;
       if (qty > 0) {
         const unitPrice = (item?.unitCost ?? 0) * (1 + (item?.markupPct ?? 0) / 100);
@@ -381,22 +528,37 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }, 0);
   };
 
+  // Get item number (excluding notes)
+  const getItemNumber = (category: CategoryWithItems, catIndex: number, itemIndex: number): string | null => {
+    const item = category.items[itemIndex];
+    if (item?.isNote) return null;
+    
+    // Count non-note items before this one
+    let nonNoteCount = 0;
+    for (let i = 0; i <= itemIndex; i++) {
+      if (!category.items[i]?.isNote) {
+        nonNoteCount++;
+      }
+    }
+    return `${catIndex + 1}.${nonNoteCount}`;
+  };
+
   return (
     <AppLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-1 min-w-0">
             <Link href="/dashboard">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="flex-shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <div>
+            <div className="flex-1 min-w-0 max-w-2xl">
               <Input
-                value={boq?.projectName ?? ''}
-                onChange={(e) => updateBoq({ projectName: e.target.value })}
-                className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
+                value={localProjectName}
+                onChange={(e) => handleProjectNameChange(e.target.value)}
+                className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
                 placeholder="Project Name"
               />
               <div className="flex items-center space-x-2 mt-1">
@@ -428,7 +590,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-shrink-0">
             <div className="flex items-center text-sm text-gray-500">
               {saving ? (
                 <>
@@ -471,22 +633,22 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                     <CollapsibleTrigger asChild>
                       <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <GripVertical className="w-5 h-5 text-gray-400" />
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0" />
                             <Input
-                              value={category?.name ?? ''}
+                              value={getCategoryName(category)}
                               onChange={(e) => {
                                 e.stopPropagation();
                                 handleUpdateCategory(category?.id, e.target.value);
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-auto"
+                              className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
                             />
-                            <span className="text-sm text-gray-500">
-                              ({category?.items?.length ?? 0} items)
+                            <span className="text-sm text-gray-500 flex-shrink-0">
+                              ({(category?.items ?? []).filter(i => !i?.isNote).length} items)
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-shrink-0">
                             <span className="text-lg font-semibold text-cyan-600">
                               {formatCurrency(getCategorySubtotal(category))}
                             </span>
@@ -516,7 +678,8 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b border-gray-200">
-                                <th className="text-left py-2 px-2 font-medium text-gray-500 w-8">#</th>
+                                <th className="text-left py-2 px-1 font-medium text-gray-500 w-6"></th>
+                                <th className="text-left py-2 px-2 font-medium text-gray-500 w-12">#</th>
                                 <th className="text-left py-2 px-2 font-medium text-gray-500">Description</th>
                                 <th className="text-left py-2 px-2 font-medium text-gray-500 w-20">Unit</th>
                                 <th className="text-right py-2 px-2 font-medium text-gray-500 w-24">Unit Cost</th>
@@ -529,20 +692,89 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                             </thead>
                             <tbody>
                               {(category?.items ?? []).map((item, itemIndex) => {
-                                const unitPrice = (item?.unitCost ?? 0) * (1 + (item?.markupPct ?? 0) / 100);
-                                const amount = unitPrice * (item?.quantity ?? 0);
+                                const itemNumber = getItemNumber(category, catIndex, itemIndex);
+                                
+                                if (item?.isNote) {
+                                  // Render note row
+                                  return (
+                                    <tr 
+                                      key={item?.id} 
+                                      className="border-b border-gray-100 bg-amber-50"
+                                      draggable
+                                      onDragStart={() => handleDragStart(category.id, item.id)}
+                                      onDragOver={handleDragOver}
+                                      onDrop={() => handleDrop(category.id, itemIndex)}
+                                    >
+                                      <td className="py-2 px-1">
+                                        <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                      </td>
+                                      <td className="py-2 px-2">
+                                        <StickyNote className="w-4 h-4 text-amber-500" />
+                                      </td>
+                                      <td colSpan={6} className="py-2 px-2">
+                                        <div className="space-y-2">
+                                          <Input
+                                            value={getItemValue(item.id, 'noteContent', item?.noteContent) ?? ''}
+                                            onChange={(e) => handleUpdateItem(item?.id, { noteContent: e.target.value })}
+                                            className="h-8 text-sm bg-white"
+                                            placeholder="Enter note..."
+                                          />
+                                          <div className="flex items-center space-x-4">
+                                            <div className="flex items-center space-x-2">
+                                              <Checkbox
+                                                id={`pdf-${item.id}`}
+                                                checked={getItemValue(item.id, 'includeInPdf', item?.includeInPdf) ?? true}
+                                                onCheckedChange={(checked) => 
+                                                  handleUpdateItem(item?.id, { includeInPdf: checked as boolean }, true)
+                                                }
+                                              />
+                                              <label htmlFor={`pdf-${item.id}`} className="text-xs text-gray-500">
+                                                Include in PDF
+                                              </label>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="py-2 px-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-gray-400 hover:text-red-500"
+                                          onClick={() => handleDeleteItem(item?.id)}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  );
+                                }
+
+                                const unitCost = getItemValue(item.id, 'unitCost', item?.unitCost) ?? 0;
+                                const markupPct = getItemValue(item.id, 'markupPct', item?.markupPct) ?? 0;
+                                const quantity = getItemValue(item.id, 'quantity', item?.quantity) ?? 0;
+                                const unitPrice = unitCost * (1 + markupPct / 100);
+                                const amount = unitPrice * quantity;
+                                
                                 return (
-                                  <tr key={item?.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <tr 
+                                    key={item?.id} 
+                                    className="border-b border-gray-100 hover:bg-gray-50"
+                                    draggable
+                                    onDragStart={() => handleDragStart(category.id, item.id)}
+                                    onDragOver={handleDragOver}
+                                    onDrop={() => handleDrop(category.id, itemIndex)}
+                                  >
+                                    <td className="py-2 px-1">
+                                      <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                    </td>
                                     <td className="py-2 px-2 text-gray-500">
-                                      {catIndex + 1}.{itemIndex + 1}
+                                      {itemNumber}
                                     </td>
                                     <td className="py-2 px-2">
                                       <Input
-                                        value={item?.description ?? ''}
+                                        value={getItemValue(item.id, 'description', item?.description) ?? ''}
                                         onChange={(e) =>
-                                          handleUpdateItem(item?.id, {
-                                            description: e.target.value,
-                                          })
+                                          handleUpdateItem(item?.id, { description: e.target.value })
                                         }
                                         className="h-8 text-sm"
                                         placeholder="Description"
@@ -550,11 +782,9 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                     </td>
                                     <td className="py-2 px-2">
                                       <Input
-                                        value={item?.unit ?? ''}
+                                        value={getItemValue(item.id, 'unit', item?.unit) ?? ''}
                                         onChange={(e) =>
-                                          handleUpdateItem(item?.id, {
-                                            unit: e.target.value,
-                                          })
+                                          handleUpdateItem(item?.id, { unit: e.target.value })
                                         }
                                         className="h-8 text-sm"
                                         placeholder="Unit"
@@ -564,7 +794,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       <Input
                                         type="number"
                                         step="0.01"
-                                        value={item?.unitCost ?? 0}
+                                        value={unitCost}
                                         onChange={(e) =>
                                           handleUpdateItem(item?.id, {
                                             unitCost: parseFloat(e.target.value) || 0,
@@ -577,7 +807,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       <Input
                                         type="number"
                                         step="0.01"
-                                        value={item?.markupPct ?? 0}
+                                        value={markupPct}
                                         onChange={(e) =>
                                           handleUpdateItem(item?.id, {
                                             markupPct: parseFloat(e.target.value) || 0,
@@ -587,13 +817,13 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       />
                                     </td>
                                     <td className="py-2 px-2 text-right font-medium text-gray-700">
-                                      {unitPrice?.toFixed?.(2) ?? '0.00'}
+                                      {formatNumber(unitPrice)}
                                     </td>
                                     <td className="py-2 px-2">
                                       <Input
                                         type="number"
                                         step="0.01"
-                                        value={item?.quantity ?? 0}
+                                        value={quantity}
                                         onChange={(e) =>
                                           handleUpdateItem(item?.id, {
                                             quantity: parseFloat(e.target.value) || 0,
@@ -621,14 +851,24 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                             </tbody>
                           </table>
                         </div>
-                        <Button
-                          variant="ghost"
-                          className="mt-3 w-full text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
-                          onClick={() => handleAddItem(category?.id)}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Item
-                        </Button>
+                        <div className="flex space-x-2 mt-3">
+                          <Button
+                            variant="ghost"
+                            className="flex-1 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+                            onClick={() => handleAddItem(category?.id, false)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Item
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                            onClick={() => handleAddItem(category?.id, true)}
+                          >
+                            <StickyNote className="w-4 h-4 mr-2" />
+                            Add Note
+                          </Button>
+                        </div>
                       </CardContent>
                     </CollapsibleContent>
                   </Collapsible>
@@ -657,34 +897,44 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-600">Discount</Label>
-                    <div className="flex space-x-2">
-                      <Select
-                        value={boq?.discountType ?? 'percent'}
-                        onValueChange={(value) =>
-                          updateBoq({ discountType: value as 'percent' | 'fixed' })
-                        }
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percent">%</SelectItem>
-                          <SelectItem value="fixed">Fixed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={boq?.discountValue ?? 0}
-                        onChange={(e) =>
-                          updateBoq({ discountValue: parseFloat(e.target.value) || 0 })
-                        }
-                        className="flex-1"
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600">Discount</Label>
+                      <Switch
+                        checked={boq?.discountEnabled ?? false}
+                        onCheckedChange={(checked) => updateBoq({ discountEnabled: checked })}
                       />
                     </div>
-                    {totals.discount > 0 && (
-                      <p className="text-sm text-gray-500">-{formatCurrency(totals.discount)}</p>
+                    {boq?.discountEnabled && (
+                      <>
+                        <div className="flex space-x-2">
+                          <Select
+                            value={boq?.discountType ?? 'percent'}
+                            onValueChange={(value) =>
+                              updateBoq({ discountType: value as 'percent' | 'fixed' })
+                            }
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percent">%</SelectItem>
+                              <SelectItem value="fixed">Fixed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={boq?.discountValue ?? 0}
+                            onChange={(e) =>
+                              updateBoq({ discountValue: parseFloat(e.target.value) || 0 })
+                            }
+                            className="flex-1"
+                          />
+                        </div>
+                        {totals.discount > 0 && (
+                          <p className="text-sm text-gray-500">-{formatCurrency(totals.discount)}</p>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -734,19 +984,19 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                     <span className="font-medium">{formatCurrency(totals.totalCost)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Price Quoted</span>
-                    <span className="font-medium">{formatCurrency(totals.totalPriceQuoted)}</span>
+                    <span className="text-gray-600">Price (after discount)</span>
+                    <span className="font-medium">{formatCurrency(totals.priceAfterDiscount)}</span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                     <span className="text-gray-600">Profit</span>
-                    <span className="font-semibold text-emerald-600">
+                    <span className={`font-semibold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       {formatCurrency(totals.profit)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Gross Profit %</span>
-                    <span className="font-semibold text-emerald-600">
-                      {totals.grossProfitPct?.toFixed?.(2) ?? '0.00'}%
+                    <span className={`font-semibold ${totals.grossProfitPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatNumber(totals.grossProfitPct)}%
                     </span>
                   </div>
                 </CardContent>

@@ -29,16 +29,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
+    // Build update data object only with provided fields
+    const updateData: any = {};
+    if (body?.description !== undefined) updateData.description = body.description;
+    if (body?.unit !== undefined) updateData.unit = body.unit;
+    if (body?.unitCost !== undefined) updateData.unitCost = body.unitCost;
+    if (body?.markupPct !== undefined) updateData.markupPct = body.markupPct;
+    if (body?.quantity !== undefined) updateData.quantity = body.quantity;
+    if (body?.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
+    if (body?.isNote !== undefined) updateData.isNote = body.isNote;
+    if (body?.noteContent !== undefined) updateData.noteContent = body.noteContent;
+    if (body?.includeInPdf !== undefined) updateData.includeInPdf = body.includeInPdf;
+
     const item = await prisma.boqItem.update({
       where: { id: params?.id },
-      data: {
-        description: body?.description,
-        unit: body?.unit,
-        unitCost: body?.unitCost,
-        markupPct: body?.markupPct,
-        quantity: body?.quantity,
-        sortOrder: body?.sortOrder,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(item);

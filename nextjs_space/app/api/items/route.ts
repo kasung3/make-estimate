@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     const companyId = (session.user as any)?.companyId;
-    const { categoryId, description, unit, unitCost, markupPct, quantity, sortOrder } = await request.json();
+    const { categoryId, description, unit, unitCost, markupPct, quantity, sortOrder, isNote, noteContent, includeInPdf } = await request.json();
 
     const category = await prisma.boqCategory.findFirst({
       where: {
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
         markupPct: markupPct ?? 0,
         quantity: quantity ?? 0,
         sortOrder: sortOrder ?? 0,
+        isNote: isNote ?? false,
+        noteContent: noteContent || null,
+        includeInPdf: includeInPdf ?? true,
       },
     });
 

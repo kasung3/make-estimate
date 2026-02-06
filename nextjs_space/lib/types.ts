@@ -16,6 +16,7 @@ export interface BoqWithRelations {
   companyId: string;
   customerId: string | null;
   projectName: string;
+  discountEnabled: boolean;
   discountType: DiscountType;
   discountValue: number;
   vatEnabled: boolean;
@@ -49,6 +50,9 @@ export interface BoqItemType {
   markupPct: number;
   quantity: number;
   sortOrder: number;
+  isNote: boolean;
+  noteContent: string | null;
+  includeInPdf: boolean;
   createdAt: Date;
 }
 
@@ -57,6 +61,7 @@ export interface CompanySettings {
   name: string;
   currencySymbol: string;
   currencyPosition: string;
+  defaultVatPercent: number;
 }
 
 export interface CustomerType {

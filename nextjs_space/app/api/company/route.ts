@@ -44,7 +44,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'No company found' }, { status: 400 });
     }
 
-    const { name, currencySymbol, currencyPosition } = await request.json();
+    const { name, currencySymbol, currencyPosition, defaultVatPercent } = await request.json();
 
     const company = await prisma.company.update({
       where: { id: companyId },
@@ -52,6 +52,7 @@ export async function PUT(request: Request) {
         name: name,
         currencySymbol: currencySymbol,
         currencyPosition: currencyPosition,
+        defaultVatPercent: defaultVatPercent ?? 18,
       },
     });
 

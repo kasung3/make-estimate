@@ -70,6 +70,7 @@ export async function PUT(
       data: {
         projectName: body?.projectName,
         customerId: body?.customerId || null,
+        discountEnabled: body?.discountEnabled ?? false,
         discountType: body?.discountType,
         discountValue: body?.discountValue ?? 0,
         vatEnabled: body?.vatEnabled ?? false,

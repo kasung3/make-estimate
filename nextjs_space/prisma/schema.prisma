@@ -34,6 +34,7 @@ model Company {
   name              String
   currencySymbol    String   @default("Rs.")
   currencyPosition  String   @default("left")
+  defaultVatPercent Float    @default(18)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   memberships       CompanyMembership[]
@@ -66,20 +67,21 @@ model Customer {
 }
 
 model Boq {
-  id            String       @id @default(cuid())
-  companyId     String
-  customerId    String?
-  projectName   String
-  discountType  DiscountType @default(percent)
-  discountValue Float        @default(0)
-  vatEnabled    Boolean      @default(false)
-  vatPercent    Float        @default(0)
-  status        String       @default("draft")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  categories    BoqCategory[]
+  id              String       @id @default(cuid())
+  companyId       String
+  customerId      String?
+  projectName     String
+  discountEnabled Boolean      @default(false)
+  discountType    DiscountType @default(percent)
+  discountValue   Float        @default(0)
+  vatEnabled      Boolean      @default(false)
+  vatPercent      Float        @default(18)
+  status          String       @default("draft")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer        Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  categories      BoqCategory[]
 }
 
 model BoqCategory {
@@ -93,14 +95,17 @@ model BoqCategory {
 }
 
 model BoqItem {
-  id          String      @id @default(cuid())
-  categoryId  String
-  description String
-  unit        String      @default("")
-  unitCost    Float       @default(0)
-  markupPct   Float       @default(0)
-  quantity    Float       @default(0)
-  sortOrder   Int         @default(0)
-  createdAt   DateTime    @default(now())
-  category    BoqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id           String      @id @default(cuid())
+  categoryId   String
+  description  String
+  unit         String      @default("")
+  unitCost     Float       @default(0)
+  markupPct    Float       @default(0)
+  quantity     Float       @default(0)
+  sortOrder    Int         @default(0)
+  isNote       Boolean     @default(false)
+  noteContent  String?
+  includeInPdf Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  category     BoqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }

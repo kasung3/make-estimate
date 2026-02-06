@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building2, DollarSign, Loader2, Save } from 'lucide-react';
+import { Building2, DollarSign, Loader2, Save, Percent } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanySettings } from '@/lib/types';
 
@@ -35,6 +35,7 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
           name: company?.name,
           currencySymbol: company?.currencySymbol,
           currencyPosition: company?.currencyPosition,
+          defaultVatPercent: company?.defaultVatPercent,
         }),
       });
 
@@ -132,6 +133,41 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
                     ? `${company?.currencySymbol ?? 'Rs.'}1,234.56`
                     : `1,234.56${company?.currencySymbol ?? 'Rs.'}`}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md border-0">
+            <CardHeader>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-400 rounded-lg flex items-center justify-center">
+                  <Percent className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Default VAT Settings</CardTitle>
+                  <CardDescription>Set the default VAT percentage for new BOQs</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="defaultVatPercent">Default VAT Percentage</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="defaultVatPercent"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={company?.defaultVatPercent ?? 18}
+                    onChange={(e) =>
+                      setCompany({ ...(company ?? {}), defaultVatPercent: parseFloat(e.target.value) || 0 } as CompanySettings)
+                    }
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">%</span>
+                </div>
+                <p className="text-sm text-gray-500">This percentage will be used as the default VAT for all new BOQs.</p>
               </div>
             </CardContent>
           </Card>

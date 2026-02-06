@@ -54,11 +54,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
 
+    // Get company's default VAT percentage
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { defaultVatPercent: true },
+    });
+
     const boq = await prisma.boq.create({
       data: {
         companyId,
         projectName,
         customerId: customerId || null,
+        vatPercent: company?.defaultVatPercent ?? 18,
         categories: {
           create: [
             {

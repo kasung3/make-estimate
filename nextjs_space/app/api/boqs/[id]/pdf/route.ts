@@ -5,6 +5,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 
+// Format number with thousand separators
+const formatNumber = (num: number, decimals: number = 2): string => {
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+};
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -43,17 +51,18 @@ export async function POST(
     const currencySymbol = company?.currencySymbol ?? 'Rs.';
     const currencyPosition = company?.currencyPosition ?? 'left';
 
-    const formatCurrency = (amount: number) => {
-      const formatted = (amount ?? 0).toFixed(2);
+    const formatCurrency = (amount: number): string => {
+      const formatted = formatNumber(amount ?? 0, 2);
       return currencyPosition === 'left'
-        ? `${currencySymbol}${formatted}`
-        : `${formatted}${currencySymbol}`;
+        ? `${currencySymbol} ${formatted}`
+        : `${formatted} ${currencySymbol}`;
     };
 
     // Calculate totals
     let subtotal = 0;
     (boq?.categories ?? []).forEach((cat) => {
       (cat?.items ?? []).forEach((item) => {
+        if (item?.isNote) return; // Skip notes in calculations
         const qty = item?.quantity ?? 0;
         if (qty > 0) {
           const unitPrice = (item?.unitCost ?? 0) * (1 + (item?.markupPct ?? 0) / 100);
@@ -62,11 +71,14 @@ export async function POST(
       });
     });
 
+    // Apply discount only if enabled
     let discount = 0;
-    if (boq?.discountType === 'percent') {
-      discount = subtotal * ((boq?.discountValue ?? 0) / 100);
-    } else {
-      discount = boq?.discountValue ?? 0;
+    if (boq?.discountEnabled) {
+      if (boq?.discountType === 'percent') {
+        discount = subtotal * ((boq?.discountValue ?? 0) / 100);
+      } else {
+        discount = boq?.discountValue ?? 0;
+      }
     }
 
     const afterDiscount = subtotal - discount;
@@ -172,6 +184,13 @@ export async function POST(
     .subtotal-row td {
       border-top: 2px solid #14b8a6;
     }
+    .note-row {
+      background-color: #fffbeb;
+      font-style: italic;
+    }
+    .note-row td {
+      color: #92400e;
+    }
     .totals-section {
       margin-top: 30px;
       page-break-inside: avoid;
@@ -215,22 +234,43 @@ export async function POST(
     </div>
 
     ${(boq?.categories ?? []).map((category, catIndex) => {
-      const itemsWithQty = (category?.items ?? []).filter((item) => (item?.quantity ?? 0) > 0);
-      if (itemsWithQty.length === 0) return '';
+      // Filter items: include items with qty > 0, and notes with includeInPdf = true
+      const visibleItems = (category?.items ?? []).filter((item) => {
+        if (item?.isNote) {
+          return item?.includeInPdf;
+        }
+        return (item?.quantity ?? 0) > 0;
+      });
+      
+      if (visibleItems.length === 0) return '';
 
       let categorySubtotal = 0;
-      const itemRows = itemsWithQty.map((item, itemIndex) => {
+      let itemNumber = 0;
+      
+      const itemRows = visibleItems.map((item) => {
+        if (item?.isNote) {
+          // Note row - spans across columns, no item number
+          return `
+            <tr class="note-row">
+              <td></td>
+              <td colspan="5">${item?.noteContent ?? ''}</td>
+            </tr>
+          `;
+        }
+        
+        // Regular item row
+        itemNumber++;
         const unitPrice = (item?.unitCost ?? 0) * (1 + (item?.markupPct ?? 0) / 100);
         const amount = unitPrice * (item?.quantity ?? 0);
         categorySubtotal += amount;
         return `
           <tr>
-            <td>${catIndex + 1}.${itemIndex + 1}</td>
+            <td>${catIndex + 1}.${itemNumber}</td>
             <td>${item?.description ?? ''}</td>
             <td>${item?.unit ?? ''}</td>
-            <td class="text-right">${(item?.quantity ?? 0).toFixed(2)}</td>
-            <td class="text-right">${formatCurrency(unitPrice)}</td>
-            <td class="text-right">${formatCurrency(amount)}</td>
+            <td class="text-right">${formatNumber(item?.quantity ?? 0, 2)}</td>
+            <td class="text-right">${formatNumber(unitPrice, 2)}</td>
+            <td class="text-right">${formatNumber(amount, 2)}</td>
           </tr>
         `;
       }).join('');
@@ -245,8 +285,8 @@ export async function POST(
                 <th>Description</th>
                 <th style="width: 60px;">Unit</th>
                 <th style="width: 70px;" class="text-right">Quantity</th>
-                <th style="width: 90px;" class="text-right">Rate</th>
-                <th style="width: 100px;" class="text-right">Amount</th>
+                <th style="width: 90px;" class="text-right">Rate (${currencySymbol})</th>
+                <th style="width: 100px;" class="text-right">Amount (${currencySymbol})</th>
               </tr>
             </thead>
             <tbody>
@@ -267,13 +307,13 @@ export async function POST(
           <td class="label">Subtotal</td>
           <td class="value">${formatCurrency(subtotal)}</td>
         </tr>
-        ${discount > 0 ? `
+        ${boq?.discountEnabled && discount > 0 ? `
         <tr>
           <td class="label">Discount${boq?.discountType === 'percent' ? ` (${boq?.discountValue}%)` : ''}</td>
           <td class="value">-${formatCurrency(discount)}</td>
         </tr>
         ` : ''}
-        ${boq?.vatEnabled ? `
+        ${boq?.vatEnabled && vatAmount > 0 ? `
         <tr>
           <td class="label">VAT (${boq?.vatPercent}%)</td>
           <td class="value">${formatCurrency(vatAmount)}</td>

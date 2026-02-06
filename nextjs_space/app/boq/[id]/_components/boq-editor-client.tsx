@@ -97,6 +97,47 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
 
+  // Sanitize HTML to prevent XSS - only allow safe formatting tags
+  const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    // Create a temporary element to parse the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Allowed tags whitelist
+    const allowedTags = ['strong', 'b', 'em', 'i', 'u', 'p', 'br', 'ul', 'ol', 'li', 'span'];
+    
+    // Remove any script tags and event handlers
+    const removeUnsafe = (element: Element) => {
+      // Remove script tags
+      element.querySelectorAll('script').forEach(el => el.remove());
+      
+      // Process all elements
+      element.querySelectorAll('*').forEach(el => {
+        const tagName = el.tagName.toLowerCase();
+        
+        // Remove disallowed tags but keep their content
+        if (!allowedTags.includes(tagName)) {
+          const parent = el.parentNode;
+          while (el.firstChild) {
+            parent?.insertBefore(el.firstChild, el);
+          }
+          el.remove();
+          return;
+        }
+        
+        // Remove all attributes (especially event handlers like onclick, onerror)
+        const attrs = Array.from(el.attributes);
+        attrs.forEach(attr => {
+          el.removeAttribute(attr.name);
+        });
+      });
+    };
+    
+    removeUnsafe(tempDiv);
+    return tempDiv.innerHTML;
+  };
+
   // Format number with thousand separators
   const formatNumber = (num: number, decimals: number = 2): string => {
     return num.toLocaleString('en-US', {
@@ -161,6 +202,9 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
   const totals = calculateTotals();
 
+  // Promise-based autosave for flush capability
+  const autosavePromiseRef = useRef<Promise<void> | null>(null);
+  
   const autosave = useCallback(async () => {
     setSaving(true);
     try {
@@ -191,8 +235,23 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      autosave();
+      autosavePromiseRef.current = autosave();
     }, 1500);
+  }, [autosave]);
+
+  // Flush any pending autosave immediately - used before PDF export
+  const flushPendingAutosave = useCallback(async () => {
+    // Cancel any pending debounced save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    // Wait for any in-progress save to complete
+    if (autosavePromiseRef.current) {
+      await autosavePromiseRef.current;
+    }
+    // Force save current state
+    await autosave();
   }, [autosave]);
 
   useEffect(() => {
@@ -604,6 +663,9 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const handleExportPdf = async () => {
     setExportingPdf(true);
     try {
+      // Flush any pending autosave to ensure database has latest state
+      await flushPendingAutosave();
+      
       const response = await fetch(`/api/boqs/${boq?.id}/pdf`, {
         method: 'POST',
       });
@@ -961,12 +1023,23 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       <td colSpan={6} className="py-2 px-2">
                                         <div className="space-y-2">
                                           <div className="flex items-center space-x-2">
-                                            <Input
-                                              value={getItemValue(item.id, 'noteContent', item?.noteContent) ?? ''}
-                                              onChange={(e) => handleUpdateItem(item?.id, { noteContent: e.target.value })}
-                                              className="h-8 text-sm bg-white flex-1"
-                                              placeholder="Enter note..."
-                                            />
+                                            {/* Render formatted note content with click to edit */}
+                                            <div 
+                                              className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-pointer hover:border-cyan-400 transition-colors"
+                                              onClick={() => openEditItemDialog(item, category.id, category.name ?? '', null)}
+                                              title="Click to edit with formatting"
+                                            >
+                                              {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
+                                                <div 
+                                                  className="prose prose-sm max-w-none"
+                                                  dangerouslySetInnerHTML={{ 
+                                                    __html: sanitizeHtml(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') 
+                                                  }}
+                                                />
+                                              ) : (
+                                                <span className="text-gray-400">Click to add note...</span>
+                                              )}
+                                            </div>
                                             <Button
                                               variant="ghost"
                                               size="icon"

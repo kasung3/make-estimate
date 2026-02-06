@@ -250,10 +250,12 @@ export async function POST(
       const itemRows = visibleItems.map((item) => {
         if (item?.isNote) {
           // Note row - spans across columns, no item number
+          // Note content may contain HTML formatting (bold, italic, underline)
+          const noteContent = item?.noteContent ?? '';
           return `
             <tr class="note-row">
               <td></td>
-              <td colspan="5">${item?.noteContent ?? ''}</td>
+              <td colspan="5" style="font-style: normal;">${noteContent}</td>
             </tr>
           `;
         }
@@ -307,13 +309,13 @@ export async function POST(
           <td class="label">Subtotal</td>
           <td class="value">${formatCurrency(subtotal)}</td>
         </tr>
-        ${boq?.discountEnabled && discount > 0 ? `
+        ${boq?.discountEnabled === true && (boq?.discountValue ?? 0) > 0 ? `
         <tr>
           <td class="label">Discount${boq?.discountType === 'percent' ? ` (${boq?.discountValue}%)` : ''}</td>
           <td class="value">-${formatCurrency(discount)}</td>
         </tr>
         ` : ''}
-        ${boq?.vatEnabled && vatAmount > 0 ? `
+        ${boq?.vatEnabled === true && (boq?.vatPercent ?? 0) > 0 ? `
         <tr>
           <td class="label">VAT (${boq?.vatPercent}%)</td>
           <td class="value">${formatCurrency(vatAmount)}</td>

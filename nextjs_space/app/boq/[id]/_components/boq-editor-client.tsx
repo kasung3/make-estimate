@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -42,7 +43,9 @@ import {
   StickyNote,
   Bold,
   Italic,
-  Underline,
+  Underline as UnderlineIcon,
+  Expand,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings } from '@/lib/types';
@@ -51,6 +54,13 @@ interface BoqEditorClientProps {
   boq: BoqWithRelations;
   customers: CustomerType[];
   company: CompanySettings;
+}
+
+interface EditItemDialogData {
+  item: BoqItemType;
+  categoryId: string;
+  categoryName: string;
+  itemNumber: string | null;
 }
 
 export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, company }: BoqEditorClientProps) {
@@ -68,6 +78,13 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [exportingPdf, setExportingPdf] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+  
+  // Edit item dialog state
+  const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
+  const [editItemValues, setEditItemValues] = useState<Partial<BoqItemType>>({});
+  
+  // Note editor ref for rich text
+  const noteEditorRef = useRef<HTMLDivElement>(null);
   
   // Local input states to prevent typing lag
   const [localProjectName, setLocalProjectName] = useState(initialBoq?.projectName ?? '');
@@ -380,13 +397,24 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (categoryId: string, itemId: string) => {
+  // Drag and drop handlers - only trigger on grip handle
+  const handleDragStart = (e: React.DragEvent, categoryId: string, itemId: string) => {
+    // Check if drag started from grip handle
+    const target = e.target as HTMLElement;
+    const isGripHandle = target.closest('[data-grip-handle="true"]');
+    if (!isGripHandle) {
+      e.preventDefault();
+      return;
+    }
     setDraggedItem({ categoryId, itemId });
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
+    if (draggedItem) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
   };
 
   const handleDrop = async (categoryId: string, targetIndex: number) => {
@@ -438,6 +466,81 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
 
     setDraggedItem(null);
+  };
+
+  // Open edit item dialog
+  const openEditItemDialog = (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => {
+    setEditItemDialog({
+      item,
+      categoryId,
+      categoryName,
+      itemNumber,
+    });
+    setEditItemValues({
+      description: item.description,
+      unit: item.unit,
+      unitCost: item.unitCost,
+      markupPct: item.markupPct,
+      quantity: item.quantity,
+      noteContent: item.noteContent,
+      includeInPdf: item.includeInPdf,
+    });
+  };
+
+  // Save edit item dialog
+  const saveEditItemDialog = async () => {
+    if (!editItemDialog) return;
+    await handleUpdateItem(editItemDialog.item.id, editItemValues, true);
+    setEditItemDialog(null);
+    setEditItemValues({});
+  };
+
+  // Rich text formatting for notes
+  const applyTextFormat = (format: 'bold' | 'italic' | 'underline') => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return;
+    
+    // Get selected text
+    const selectedText = range.toString();
+    if (!selectedText) return;
+    
+    // Create formatted text
+    let tag = '';
+    switch (format) {
+      case 'bold':
+        tag = 'strong';
+        break;
+      case 'italic':
+        tag = 'em';
+        break;
+      case 'underline':
+        tag = 'u';
+        break;
+    }
+    
+    // Check if selection is already formatted
+    const parentElement = range.commonAncestorContainer.parentElement;
+    if (parentElement?.tagName.toLowerCase() === tag) {
+      // Remove formatting
+      const textNode = document.createTextNode(selectedText);
+      range.deleteContents();
+      range.insertNode(textNode);
+    } else {
+      // Apply formatting
+      const wrapper = document.createElement(tag);
+      range.surroundContents(wrapper);
+    }
+    
+    // Update the note content
+    if (noteEditorRef.current) {
+      const htmlContent = noteEditorRef.current.innerHTML;
+      if (editItemDialog) {
+        setEditItemValues(prev => ({ ...prev, noteContent: htmlContent }));
+      }
+    }
   };
 
   const handleCreateCustomer = async () => {
@@ -701,24 +804,37 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       key={item?.id} 
                                       className="border-b border-gray-100 bg-amber-50"
                                       draggable
-                                      onDragStart={() => handleDragStart(category.id, item.id)}
+                                      onDragStart={(e) => handleDragStart(e, category.id, item.id)}
                                       onDragOver={handleDragOver}
                                       onDrop={() => handleDrop(category.id, itemIndex)}
                                     >
                                       <td className="py-2 px-1">
-                                        <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                        <div data-grip-handle="true" className="cursor-grab active:cursor-grabbing">
+                                          <GripVertical className="w-4 h-4 text-gray-400" />
+                                        </div>
                                       </td>
                                       <td className="py-2 px-2">
                                         <StickyNote className="w-4 h-4 text-amber-500" />
                                       </td>
                                       <td colSpan={6} className="py-2 px-2">
                                         <div className="space-y-2">
-                                          <Input
-                                            value={getItemValue(item.id, 'noteContent', item?.noteContent) ?? ''}
-                                            onChange={(e) => handleUpdateItem(item?.id, { noteContent: e.target.value })}
-                                            className="h-8 text-sm bg-white"
-                                            placeholder="Enter note..."
-                                          />
+                                          <div className="flex items-center space-x-2">
+                                            <Input
+                                              value={getItemValue(item.id, 'noteContent', item?.noteContent) ?? ''}
+                                              onChange={(e) => handleUpdateItem(item?.id, { noteContent: e.target.value })}
+                                              className="h-8 text-sm bg-white flex-1"
+                                              placeholder="Enter note..."
+                                            />
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8 text-gray-400 hover:text-cyan-600"
+                                              onClick={() => openEditItemDialog(item, category.id, category.name ?? '', null)}
+                                              title="Expand to edit with formatting"
+                                            >
+                                              <Expand className="w-4 h-4" />
+                                            </Button>
+                                          </div>
                                           <div className="flex items-center space-x-4">
                                             <div className="flex items-center space-x-2">
                                               <Checkbox
@@ -760,25 +876,38 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                     key={item?.id} 
                                     className="border-b border-gray-100 hover:bg-gray-50"
                                     draggable
-                                    onDragStart={() => handleDragStart(category.id, item.id)}
+                                    onDragStart={(e) => handleDragStart(e, category.id, item.id)}
                                     onDragOver={handleDragOver}
                                     onDrop={() => handleDrop(category.id, itemIndex)}
                                   >
                                     <td className="py-2 px-1">
-                                      <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                      <div data-grip-handle="true" className="cursor-grab active:cursor-grabbing">
+                                        <GripVertical className="w-4 h-4 text-gray-400" />
+                                      </div>
                                     </td>
                                     <td className="py-2 px-2 text-gray-500">
                                       {itemNumber}
                                     </td>
                                     <td className="py-2 px-2">
-                                      <Input
-                                        value={getItemValue(item.id, 'description', item?.description) ?? ''}
-                                        onChange={(e) =>
-                                          handleUpdateItem(item?.id, { description: e.target.value })
-                                        }
-                                        className="h-8 text-sm"
-                                        placeholder="Description"
-                                      />
+                                      <div className="flex items-center space-x-1">
+                                        <Input
+                                          value={getItemValue(item.id, 'description', item?.description) ?? ''}
+                                          onChange={(e) =>
+                                            handleUpdateItem(item?.id, { description: e.target.value })
+                                          }
+                                          className="h-8 text-sm flex-1"
+                                          placeholder="Description"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
+                                          onClick={() => openEditItemDialog(item, category.id, category.name ?? '', itemNumber)}
+                                          title="Expand to edit"
+                                        >
+                                          <Expand className="w-4 h-4" />
+                                        </Button>
+                                      </div>
                                     </td>
                                     <td className="py-2 px-2">
                                       <Input
@@ -1046,6 +1175,171 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                 Cancel
               </Button>
               <Button onClick={handleCreateCustomer}>Add Customer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Item Dialog */}
+        <Dialog open={!!editItemDialog} onOpenChange={(open) => !open && setEditItemDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editItemDialog?.item.isNote ? 'Edit Note' : `Edit Item ${editItemDialog?.itemNumber ?? ''}`}
+              </DialogTitle>
+              <p className="text-sm text-gray-500">
+                Category: {editItemDialog?.categoryName}
+              </p>
+            </DialogHeader>
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+              {editItemDialog?.item.isNote ? (
+                // Note editing with rich text
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Note Content</Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="flex items-center space-x-1 p-2 border-b bg-gray-50">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => applyTextFormat('bold')}
+                          title="Bold"
+                        >
+                          <Bold className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => applyTextFormat('italic')}
+                          title="Italic"
+                        >
+                          <Italic className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => applyTextFormat('underline')}
+                          title="Underline"
+                        >
+                          <UnderlineIcon className="w-4 h-4" />
+                        </Button>
+                        <span className="text-xs text-gray-400 ml-2">
+                          Select text and click to format
+                        </span>
+                      </div>
+                      <div
+                        ref={noteEditorRef}
+                        contentEditable
+                        className="min-h-[150px] p-3 focus:outline-none text-sm"
+                        dangerouslySetInnerHTML={{ __html: editItemValues.noteContent ?? '' }}
+                        onInput={(e) => {
+                          const target = e.currentTarget;
+                          setEditItemValues(prev => ({ ...prev, noteContent: target.innerHTML }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-includeInPdf"
+                      checked={editItemValues.includeInPdf ?? true}
+                      onCheckedChange={(checked) => 
+                        setEditItemValues(prev => ({ ...prev, includeInPdf: checked as boolean }))
+                      }
+                    />
+                    <label htmlFor="edit-includeInPdf" className="text-sm text-gray-600">
+                      Include in PDF
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                // Regular item editing
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Description</Label>
+                    <Textarea
+                      id="edit-description"
+                      placeholder="Enter item description..."
+                      value={editItemValues.description ?? ''}
+                      onChange={(e) => setEditItemValues(prev => ({ ...prev, description: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-unit">Unit</Label>
+                      <Input
+                        id="edit-unit"
+                        placeholder="e.g., Sqm, Cub, Nos"
+                        value={editItemValues.unit ?? ''}
+                        onChange={(e) => setEditItemValues(prev => ({ ...prev, unit: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-unitCost">Unit Cost</Label>
+                      <Input
+                        id="edit-unitCost"
+                        type="number"
+                        step="0.01"
+                        value={editItemValues.unitCost ?? 0}
+                        onChange={(e) => setEditItemValues(prev => ({ ...prev, unitCost: parseFloat(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-markupPct">Markup %</Label>
+                      <Input
+                        id="edit-markupPct"
+                        type="number"
+                        step="0.01"
+                        value={editItemValues.markupPct ?? 0}
+                        onChange={(e) => setEditItemValues(prev => ({ ...prev, markupPct: parseFloat(e.target.value) || 0 }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-quantity">Quantity</Label>
+                      <Input
+                        id="edit-quantity"
+                        type="number"
+                        step="0.01"
+                        value={editItemValues.quantity ?? 0}
+                        onChange={(e) => setEditItemValues(prev => ({ ...prev, quantity: parseFloat(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+                  {/* Calculated values display */}
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Unit Price:</span>
+                      <span className="font-medium">
+                        {formatCurrency((editItemValues.unitCost ?? 0) * (1 + (editItemValues.markupPct ?? 0) / 100))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Amount:</span>
+                      <span className="font-semibold text-cyan-600">
+                        {formatCurrency(
+                          (editItemValues.unitCost ?? 0) * 
+                          (1 + (editItemValues.markupPct ?? 0) / 100) * 
+                          (editItemValues.quantity ?? 0)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditItemDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={saveEditItemDialog}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -1,0 +1,106 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/make_estimate/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  memberships   CompanyMembership[]
+}
+
+model Company {
+  id                String   @id @default(cuid())
+  name              String
+  currencySymbol    String   @default("Rs.")
+  currencyPosition  String   @default("left")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  memberships       CompanyMembership[]
+  customers         Customer[]
+  boqs              Boq[]
+}
+
+model CompanyMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  boqs      Boq[]
+}
+
+model Boq {
+  id            String       @id @default(cuid())
+  companyId     String
+  customerId    String?
+  projectName   String
+  discountType  DiscountType @default(percent)
+  discountValue Float        @default(0)
+  vatEnabled    Boolean      @default(false)
+  vatPercent    Float        @default(0)
+  status        String       @default("draft")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  categories    BoqCategory[]
+}
+
+model BoqCategory {
+  id        String    @id @default(cuid())
+  boqId     String
+  name      String
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  boq       Boq       @relation(fields: [boqId], references: [id], onDelete: Cascade)
+  items     BoqItem[]
+}
+
+model BoqItem {
+  id          String      @id @default(cuid())
+  categoryId  String
+  description String
+  unit        String      @default("")
+  unitCost    Float       @default(0)
+  markupPct   Float       @default(0)
+  quantity    Float       @default(0)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  category    BoqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}

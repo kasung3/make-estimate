@@ -1,0 +1,60 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-options';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/db';
+import { BoqEditorClient } from './_components/boq-editor-client';
+
+export const dynamic = 'force-dynamic';
+
+export default async function BoqEditorPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  const companyId = (session.user as any)?.companyId;
+
+  if (!companyId) {
+    redirect('/login');
+  }
+
+  const [boq, customers, company] = await Promise.all([
+    prisma.boq.findFirst({
+      where: {
+        id: params?.id,
+        companyId,
+      },
+      include: {
+        customer: true,
+        categories: {
+          include: { items: { orderBy: { sortOrder: 'asc' } } },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    }),
+    prisma.customer.findMany({
+      where: { companyId },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.company.findUnique({
+      where: { id: companyId },
+    }),
+  ]);
+
+  if (!boq) {
+    redirect('/dashboard');
+  }
+
+  return (
+    <BoqEditorClient
+      boq={JSON.parse(JSON.stringify(boq))}
+      customers={JSON.parse(JSON.stringify(customers ?? []))}
+      company={JSON.parse(JSON.stringify(company ?? {}))}
+    />
+  );
+}

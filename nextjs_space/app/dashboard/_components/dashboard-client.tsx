@@ -215,65 +215,65 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-0 shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-cyan-700">Total BOQs</p>
-                  <p className="text-3xl font-bold text-cyan-900">{boqs?.length ?? 0}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-0 shadow-md overflow-hidden">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-cyan-700 truncate">Total BOQs</p>
+                  <p className="text-xl sm:text-3xl font-bold text-cyan-900 tabular-nums">{boqs?.length ?? 0}</p>
                 </div>
-                <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-0 shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-teal-700">Total Value</p>
-                  <p className="text-2xl font-bold text-teal-900">
+          <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-0 shadow-md overflow-hidden">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-teal-700 truncate">Total Value</p>
+                  <p className="text-base sm:text-2xl font-bold text-teal-900 tabular-nums truncate" title={formatCurrency(totalValue)}>
                     {formatCurrency(totalValue)}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-teal-500 rounded-xl flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-emerald-700">Customers</p>
-                  <p className="text-3xl font-bold text-emerald-900">{customers?.length ?? 0}</p>
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-md overflow-hidden">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-emerald-700 truncate">Customers</p>
+                  <p className="text-xl sm:text-3xl font-bold text-emerald-900 tabular-nums">{customers?.length ?? 0}</p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">This Month</p>
-                  <p className="text-3xl font-bold text-blue-900">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-md overflow-hidden">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-blue-700 truncate">This Month</p>
+                  <p className="text-xl sm:text-3xl font-bold text-blue-900 tabular-nums">
                     {(boqs ?? []).filter(
                       (b) =>
                         new Date(b?.createdAt ?? 0).getMonth() === new Date().getMonth()
                     )?.length ?? 0}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -314,31 +314,31 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
                 {(filteredBoqs ?? []).map((boq) => (
                   <div
                     key={boq?.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group gap-2 sm:gap-4"
                     onClick={() => router.push(`/boq/${boq?.id}`)}
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-white" />
+                    <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 truncate text-sm sm:text-base">
                           {boq?.projectName}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {boq?.customer?.name || 'No customer'} •{' '}
                           {format(new Date(boq?.updatedAt ?? Date.now()), 'MMM d, yyyy')}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-lg font-semibold text-gray-900">
+                    <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4 pl-12 sm:pl-0">
+                      <span className="text-sm sm:text-lg font-semibold text-gray-900 tabular-nums truncate" title={formatCurrency(calculateBoqTotal(boq))}>
                         {formatCurrency(calculateBoqTotal(boq))}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500"
+                        className="sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-red-500 h-8 w-8 flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteBoq(boq?.id);

@@ -26,6 +26,12 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -46,6 +52,10 @@ import {
   Underline as UnderlineIcon,
   Expand,
   X,
+  FileText,
+  Palette,
+  Calendar,
+  Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType, PdfThemeType } from '@/lib/types';
@@ -929,6 +939,10 @@ export function BoqEditorClient({
         body: JSON.stringify({
           projectName: boq?.projectName,
           customerId: boq?.customerId,
+          coverTemplateId: boq?.coverTemplateId,
+          pdfThemeId: boq?.pdfThemeId,
+          dateMode: boq?.dateMode,
+          preparationDate: boq?.preparationDate,
           discountEnabled: boq?.discountEnabled,
           discountType: boq?.discountType,
           discountValue: boq?.discountValue,
@@ -1667,50 +1681,138 @@ export function BoqEditorClient({
                 </>
               ) : null}
             </div>
-            {/* Cover Template Selector */}
-            {coverTemplates.length > 0 && (
-              <Select
-                value={boq?.coverTemplateId || 'default'}
-                onValueChange={(value) => {
-                  const newValue = value === 'default' ? null : value;
-                  updateBoq({ coverTemplateId: newValue });
-                }}
-              >
-                <SelectTrigger className="w-40 h-9">
-                  <SelectValue placeholder="Cover Template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Company Default</SelectItem>
-                  {coverTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name} {template.isDefault && '(Default)'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {/* PDF Theme Selector */}
-            {pdfThemes.length > 0 && (
-              <Select
-                value={boq?.pdfThemeId || 'default'}
-                onValueChange={(value) => {
-                  const newValue = value === 'default' ? null : value;
-                  updateBoq({ pdfThemeId: newValue });
-                }}
-              >
-                <SelectTrigger className="w-36 h-9">
-                  <SelectValue placeholder="Color Theme" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Default Theme</SelectItem>
-                  {pdfThemes.map((theme) => (
-                    <SelectItem key={theme.id} value={theme.id}>
-                      {theme.name} {theme.isDefault && '(Default)'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            {/* PDF Settings Group */}
+            <TooltipProvider>
+              <div className="flex items-center gap-2 border-l pl-3">
+                {/* Cover Template Selector */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-xs text-gray-500 font-medium">Cover Page</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs max-w-48">Controls the cover page elements, layout, and styling</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Select
+                    value={boq?.coverTemplateId || 'default'}
+                    onValueChange={(value) => {
+                      if (value === 'create_new') {
+                        router.push('/settings?tab=pdf');
+                        return;
+                      }
+                      const newValue = value === 'default' ? null : value;
+                      updateBoq({ coverTemplateId: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="w-40 h-8 text-xs">
+                      <FileText className="w-3 h-3 mr-1 text-gray-400" />
+                      <SelectValue placeholder="Cover Template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Company Default</SelectItem>
+                      {coverTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name} {template.isDefault && '★'}
+                        </SelectItem>
+                      ))}
+                      <div className="border-t my-1" />
+                      <SelectItem value="create_new" className="text-cyan-600">
+                        <Plus className="w-3 h-3 mr-1 inline" />
+                        Create new template...
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* PDF Theme Selector */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-xs text-gray-500 font-medium">PDF Theme</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs max-w-48">Controls colors/shading for BOQ pages (layout unchanged)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Select
+                    value={boq?.pdfThemeId || 'default'}
+                    onValueChange={(value) => {
+                      if (value === 'create_new') {
+                        router.push('/settings?tab=pdf');
+                        return;
+                      }
+                      const newValue = value === 'default' ? null : value;
+                      updateBoq({ pdfThemeId: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="w-36 h-8 text-xs">
+                      <Palette className="w-3 h-3 mr-1 text-gray-400" />
+                      <SelectValue placeholder="Color Theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default Theme</SelectItem>
+                      {pdfThemes.map((theme) => (
+                        <SelectItem key={theme.id} value={theme.id}>
+                          {theme.name} {theme.isDefault && '★'}
+                        </SelectItem>
+                      ))}
+                      <div className="border-t my-1" />
+                      <SelectItem value="create_new" className="text-cyan-600">
+                        <Plus className="w-3 h-3 mr-1 inline" />
+                        Create new theme...
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Mode Selector */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-xs text-gray-500 font-medium">Date</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs max-w-48">Date shown on PDF cover page</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Select
+                      value={boq?.dateMode || 'export_date'}
+                      onValueChange={(value) => {
+                        updateBoq({ dateMode: value as 'export_date' | 'preparation_date' });
+                      }}
+                    >
+                      <SelectTrigger className="w-32 h-8 text-xs">
+                        <Calendar className="w-3 h-3 mr-1 text-gray-400" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="export_date">Export Date</SelectItem>
+                        <SelectItem value="preparation_date">Custom Date</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {boq?.dateMode === 'preparation_date' && (
+                      <input
+                        type="date"
+                        value={boq?.preparationDate ? new Date(boq.preparationDate).toISOString().split('T')[0] : ''}
+                        onChange={(e) => updateBoq({ preparationDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TooltipProvider>
             <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
               {exportingPdf ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

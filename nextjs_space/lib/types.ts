@@ -1,6 +1,6 @@
-import { Role, DiscountType } from '@prisma/client';
+import { Role, DiscountType, DateMode } from '@prisma/client';
 
-export type { Role, DiscountType };
+export type { Role, DiscountType, DateMode };
 
 export interface SessionUser {
   id: string;
@@ -18,6 +18,8 @@ export interface BoqWithRelations {
   coverTemplateId: string | null;
   pdfThemeId: string | null;
   projectName: string;
+  dateMode: DateMode;
+  preparationDate: Date | string | null;
   discountEnabled: boolean;
   discountType: DiscountType;
   discountValue: number;
@@ -95,9 +97,11 @@ export interface CoverElement {
   type: 'project_name' | 'subtitle' | 'prepared_for' | 'company_name' | 'logo' | 'date' | 'prepared_by' | 'custom_text';
   enabled: boolean;
   text?: string; // for custom_text type
-  dateMode?: 'today' | 'custom'; // for date type
-  customDate?: string; // YYYY-MM-DD for custom date
-  logoUrl?: string; // for logo type
+  dateMode?: 'today' | 'custom'; // for date type (deprecated, use BOQ-level dateMode)
+  customDate?: string; // YYYY-MM-DD for custom date (deprecated, use BOQ-level preparationDate)
+  logoUrl?: string; // for logo type - can be cloud storage path or URL
+  logoWidth?: number; // logo width in pixels
+  logoMaxWidthPercent?: number; // max width as percentage of page (e.g., 50 for 50%)
   style: CoverElementStyle;
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,8 @@ import {
   FileText,
   Pencil,
   Eye,
+  Upload,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CoverElement, CoverPageConfig, PdfCoverTemplateType } from '@/lib/types';
@@ -117,6 +119,198 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
     },
   ],
 });
+
+// Logo Upload Section Component
+function LogoUploadSection({
+  element,
+  onUpdate,
+}: {
+  element: CoverElement;
+  onUpdate: (updates: Partial<CoverElement>) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Please use PNG, JPG, WEBP or SVG.');
+      return;
+    }
+
+    // Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large. Max 5MB allowed.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Get presigned URL
+      const presignedRes = await fetch('/api/upload/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+          isPublic: true, // Logos need to be publicly accessible for PDF generation
+        }),
+      });
+
+      if (!presignedRes.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { uploadUrl, cloud_storage_path } = await presignedRes.json();
+
+      // Check if content-disposition is in signed headers
+      const signedHeadersMatch = uploadUrl.match(/X-Amz-SignedHeaders=([^&]+)/);
+      const signedHeaders = signedHeadersMatch ? decodeURIComponent(signedHeadersMatch[1]).split(';') : [];
+      const needsContentDisposition = signedHeaders.includes('content-disposition');
+
+      // Upload file to S3
+      const uploadHeaders: HeadersInit = {
+        'Content-Type': file.type,
+      };
+      if (needsContentDisposition) {
+        uploadHeaders['Content-Disposition'] = 'attachment';
+      }
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: uploadHeaders,
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      // Extract the public URL from the upload URL (which contains bucket info)
+      // The presigned URL format is: https://bucket.s3.region.amazonaws.com/key?...
+      const urlParts = new URL(uploadUrl);
+      const publicUrl = `${urlParts.protocol}//${urlParts.host}/${cloud_storage_path}`;
+
+      onUpdate({ 
+        logoUrl: publicUrl,
+        logoWidth: element.logoWidth || 200,
+        logoMaxWidthPercent: element.logoMaxWidthPercent || 50,
+      });
+      toast.success('Logo uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload logo');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    onUpdate({ logoUrl: undefined, logoWidth: undefined, logoMaxWidthPercent: undefined });
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Logo preview and upload */}
+      <div className="flex items-start gap-3">
+        {element.logoUrl ? (
+          <div className="flex-shrink-0 border rounded-lg p-2 bg-gray-50">
+            <img 
+              src={element.logoUrl} 
+              alt="Logo preview" 
+              style={{ 
+                maxWidth: `${element.logoWidth || 200}px`,
+                height: 'auto',
+              }}
+              className="max-h-20 object-contain"
+            />
+          </div>
+        ) : (
+          <div className="flex-shrink-0 w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-50">
+            <Upload className="w-6 h-6 text-gray-400" />
+          </div>
+        )}
+        <div className="flex-1 space-y-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-1" />
+                  {element.logoUrl ? 'Change' : 'Upload'} Logo
+                </>
+              )}
+            </Button>
+            {element.logoUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveLogo}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Remove
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">PNG, JPG, WEBP or SVG (max 5MB)</p>
+        </div>
+      </div>
+
+      {/* Logo sizing controls */}
+      {element.logoUrl && (
+        <div className="flex flex-wrap items-center gap-4 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-gray-500">Width (px):</Label>
+            <Input
+              type="number"
+              min="50"
+              max="600"
+              value={element.logoWidth || 200}
+              onChange={(e) => onUpdate({ logoWidth: parseInt(e.target.value) || 200 })}
+              className="h-7 w-20 text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-gray-500">Max width (%):</Label>
+            <Input
+              type="number"
+              min="10"
+              max="100"
+              value={element.logoMaxWidthPercent || 50}
+              onChange={(e) => onUpdate({ logoMaxWidthPercent: parseInt(e.target.value) || 50 })}
+              className="h-7 w-16 text-xs"
+            />
+            <span className="text-xs text-gray-400">of page</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Sortable Element Row Component
 function SortableElementRow({
@@ -218,13 +412,11 @@ function SortableElementRow({
                 </div>
               )}
 
-              {/* Logo URL for logo type */}
+              {/* Logo upload and sizing for logo type */}
               {element.type === 'logo' && (
-                <Input
-                  value={element.logoUrl || ''}
-                  onChange={(e) => onUpdate(element.id, { logoUrl: e.target.value })}
-                  placeholder="Logo URL (https://i.pinimg.com/736x/19/63/c8/1963c80b8983da5f3be640ca7473b098.jpg)"
-                  className="h-8 text-sm"
+                <LogoUploadSection
+                  element={element}
+                  onUpdate={(updates) => onUpdate(element.id, updates)}
                 />
               )}
 
@@ -385,9 +577,19 @@ function CoverPreview({
         break;
       case 'logo':
         if (element.logoUrl) {
+          const logoWidth = element.logoWidth || 200;
+          const logoMaxWidth = element.logoMaxWidthPercent ? `${element.logoMaxWidthPercent}%` : `${logoWidth}px`;
           return (
             <div key={element.id} style={{ ...style, display: 'flex', justifyContent: element.style.align }}>
-              <img src={element.logoUrl} alt="Logo" style={{ maxHeight: element.style.fontSize * 3, maxWidth: '200px' }} />
+              <img 
+                src={element.logoUrl} 
+                alt="Logo" 
+                style={{ 
+                  width: `${logoWidth}px`,
+                  maxWidth: logoMaxWidth,
+                  height: 'auto',
+                }} 
+              />
             </div>
           );
         }
@@ -449,7 +651,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
   const [editingConfig, setEditingConfig] = useState<CoverPageConfig | null>(null);
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  // Preview is always shown (no toggle needed)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -797,17 +999,14 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
               </div>
             </div>
 
-            {/* Preview Panel */}
+            {/* Preview Panel - Always visible */}
             <div className="w-1/2 border-l flex flex-col min-h-0">
               <div className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0">
-                <Label>Preview</Label>
-                <Button variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)}>
-                  <Eye className="w-4 h-4 mr-1" />
-                  {showPreview ? 'Hide Preview' : 'Show Preview'}
-                </Button>
+                <Label>Live Preview</Label>
+                <Eye className="w-4 h-4 text-gray-400" />
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-4">
-                {showPreview !== false && editingConfig && (
+                {editingConfig && (
                   <CoverPreview
                     config={editingConfig}
                     projectName="Sample Project Name"

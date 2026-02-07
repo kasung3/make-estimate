@@ -124,7 +124,9 @@ function generateCoverPageHtml(
   config: CoverPageConfig,
   projectName: string,
   customerName: string | null,
-  companyName: string
+  companyName: string,
+  dateMode: string,
+  preparationDate: Date | string | null
 ): string {
   const renderElement = (element: CoverElement): string => {
     if (!element.enabled) return '';
@@ -161,14 +163,18 @@ function generateCoverPageHtml(
         break;
       case 'logo':
         if (element.logoUrl) {
+          // Handle logo sizing
+          const logoWidth = element.logoWidth || 200;
+          const logoMaxWidth = element.logoMaxWidthPercent ? `${element.logoMaxWidthPercent}%` : `${logoWidth}px`;
           return `<div style="${style}; display: flex; justify-content: ${element.style.align};">
-            <img src="${element.logoUrl}" alt="Logo" style="max-height: ${element.style.fontSize * 3}px; max-width: 200px;" />
+            <img src="${element.logoUrl}" alt="Logo" style="max-width: ${logoMaxWidth}; width: ${logoWidth}px; height: auto;" />
           </div>`;
         }
         return '';
       case 'date':
-        if (element.dateMode === 'custom' && element.customDate) {
-          const date = new Date(element.customDate);
+        // Use BOQ-level date mode instead of element-level
+        if (dateMode === 'preparation_date' && preparationDate) {
+          const date = new Date(preparationDate);
           content = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
         } else {
           const today = new Date();
@@ -317,7 +323,9 @@ export async function POST(
       coverConfig,
       boq?.projectName ?? 'Project',
       boq?.customer?.name ?? null,
-      company?.name ?? 'Company'
+      company?.name ?? 'Company',
+      boq?.dateMode ?? 'export_date',
+      boq?.preparationDate ?? null
     );
 
     // Generate HTML with theme colors

@@ -72,6 +72,8 @@ export async function PUT(
     if (body?.customerId !== undefined) updateData.customerId = body.customerId || null;
     if (body?.coverTemplateId !== undefined) updateData.coverTemplateId = body.coverTemplateId || null;
     if (body?.pdfThemeId !== undefined) updateData.pdfThemeId = body.pdfThemeId || null;
+    if (body?.dateMode !== undefined) updateData.dateMode = body.dateMode;
+    if (body?.preparationDate !== undefined) updateData.preparationDate = body.preparationDate ? new Date(body.preparationDate) : null;
     if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled;
     if (body?.discountType !== undefined) updateData.discountType = body.discountType;
     if (body?.discountValue !== undefined) updateData.discountValue = body.discountValue;

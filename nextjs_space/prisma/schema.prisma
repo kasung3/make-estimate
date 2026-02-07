@@ -64,6 +64,8 @@ model Customer {
   createdAt DateTime @default(now())
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   boqs      Boq[]
+
+  @@index([companyId])
 }
 
 model Boq {
@@ -82,6 +84,9 @@ model Boq {
   company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customer        Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   categories      BoqCategory[]
+
+  @@index([companyId])
+  @@index([companyId, updatedAt])
 }
 
 model BoqCategory {
@@ -92,6 +97,9 @@ model BoqCategory {
   createdAt DateTime  @default(now())
   boq       Boq       @relation(fields: [boqId], references: [id], onDelete: Cascade)
   items     BoqItem[]
+
+  @@index([boqId])
+  @@index([boqId, sortOrder])
 }
 
 model BoqItem {
@@ -108,4 +116,7 @@ model BoqItem {
   includeInPdf Boolean     @default(true)
   createdAt    DateTime    @default(now())
   category     BoqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([categoryId, sortOrder])
 }

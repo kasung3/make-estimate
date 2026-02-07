@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -57,6 +57,22 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
+
+  // Prefetch top BOQs on mount for faster navigation
+  useEffect(() => {
+    // Prefetch the first 5 BOQs for faster navigation
+    const boqsToPreload = (initialBoqs ?? []).slice(0, 5);
+    boqsToPreload.forEach((boq) => {
+      if (boq?.id) {
+        router.prefetch(`/boq/${boq.id}`);
+      }
+    });
+  }, [initialBoqs, router]);
+
+  // Prefetch on hover for BOQs not in the initial prefetch
+  const handleBoqHover = useCallback((boqId: string) => {
+    router.prefetch(`/boq/${boqId}`);
+  }, [router]);
 
   // Format number with thousand separators
   const formatNumber = (num: number, decimals: number = 2): string => {
@@ -316,6 +332,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
                     key={boq?.id}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group gap-2 sm:gap-4"
                     onClick={() => router.push(`/boq/${boq?.id}`)}
+                    onMouseEnter={() => handleBoqHover(boq?.id)}
                   >
                     <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                       <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center flex-shrink-0">

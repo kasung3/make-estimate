@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -49,6 +49,26 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings } from '@/lib/types';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface BoqEditorClientProps {
   boq: BoqWithRelations;
@@ -77,7 +97,10 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [exportingPdf, setExportingPdf] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+  
+  // Drag state for dnd-kit
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
@@ -654,72 +677,61 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }
   }, [cancelInlineEdit, saveInlineEdit]);
 
-  // Track if drag was initiated from grip handle
-  const [canDrag, setCanDrag] = useState(false);
+  // DnD Kit sensors with activation constraint (prevents accidental drags)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  // Mouse down on grip handle - enable dragging
-  const handleGripMouseDown = (categoryId: string, itemId: string) => {
-    setCanDrag(true);
-    setDraggedItem({ categoryId, itemId });
-  };
-
-  // Mouse up - disable dragging if not actually dragging
-  const handleGripMouseUp = () => {
-    if (!draggedItem) {
-      setCanDrag(false);
+  // Get the active dragged item data for overlay
+  const activeItem = useMemo(() => {
+    if (!activeItemId) return null;
+    for (const category of (boq?.categories ?? [])) {
+      const item = (category?.items ?? []).find(i => i?.id === activeItemId);
+      if (item) return { item, categoryId: category.id };
     }
-  };
+    return null;
+  }, [activeItemId, boq?.categories]);
 
-  // Drag start - only proceed if initiated from grip
-  const handleDragStart = (e: React.DragEvent, categoryId: string, itemId: string) => {
-    if (!canDrag || !draggedItem || draggedItem.itemId !== itemId) {
-      e.preventDefault();
-      setCanDrag(false);
-      return;
-    }
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', itemId);
-  };
+  // Get the active dragged category data for overlay
+  const activeCategory = useMemo(() => {
+    if (!activeCategoryId) return null;
+    return (boq?.categories ?? []).find(c => c?.id === activeCategoryId) || null;
+  }, [activeCategoryId, boq?.categories]);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    if (draggedItem) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    }
-  };
+  // Handle item drag start
+  const handleItemDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    setActiveItemId(active.id as string);
+  }, []);
 
-  const handleDragEnd = () => {
-    setCanDrag(false);
-    setDraggedItem(null);
-  };
+  // Handle item drag end
+  const handleItemDragEnd = useCallback(async (event: DragEndEvent, categoryId: string) => {
+    const { active, over } = event;
+    setActiveItemId(null);
 
-  const handleDrop = async (categoryId: string, targetIndex: number) => {
-    if (!draggedItem || draggedItem.categoryId !== categoryId) {
-      setDraggedItem(null);
-      setCanDrag(false);
-      return;
-    }
+    if (!over || active.id === over.id) return;
 
-    const category = (boq?.categories ?? []).find((c) => c?.id === categoryId);
+    const category = (boq?.categories ?? []).find(c => c?.id === categoryId);
     if (!category) return;
 
     const items = [...(category.items ?? [])];
-    const draggedIndex = items.findIndex(item => item.id === draggedItem.itemId);
-    
-    if (draggedIndex === -1 || draggedIndex === targetIndex) {
-      setDraggedItem(null);
-      setCanDrag(false);
-      return;
-    }
+    const oldIndex = items.findIndex(item => item.id === active.id);
+    const newIndex = items.findIndex(item => item.id === over.id);
 
-    // Reorder items
-    const [removed] = items.splice(draggedIndex, 1);
-    items.splice(targetIndex, 0, removed);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
 
-    // Update sort orders
-    const updatedItems = items.map((item, index) => ({ ...item, sortOrder: index }));
+    // Reorder items using arrayMove
+    const reorderedItems = arrayMove(items, oldIndex, newIndex);
+    const updatedItems = reorderedItems.map((item, index) => ({ ...item, sortOrder: index }));
 
-    // Update local state
+    // Update local state optimistically
     setBoq((prev) => ({
       ...(prev ?? {}),
       categories: (prev?.categories ?? []).map((cat) =>
@@ -727,7 +739,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       ),
     } as BoqWithRelations));
 
-    // Update sort orders in database
+    // Persist to database
     try {
       await Promise.all(
         updatedItems.map((item) =>
@@ -742,10 +754,53 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     } catch (error) {
       toast.error('Failed to reorder items');
     }
+  }, [boq?.categories]);
 
-    setDraggedItem(null);
-    setCanDrag(false);
-  };
+  // Handle category drag start
+  const handleCategoryDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    setActiveCategoryId(active.id as string);
+  }, []);
+
+  // Handle category drag end
+  const handleCategoryDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveCategoryId(null);
+
+    if (!over || active.id === over.id) return;
+
+    const categories = [...(boq?.categories ?? [])];
+    const oldIndex = categories.findIndex(cat => cat.id === active.id);
+    const newIndex = categories.findIndex(cat => cat.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+    // Reorder categories using arrayMove
+    const reorderedCategories = arrayMove(categories, oldIndex, newIndex);
+    const updatedCategories = reorderedCategories.map((cat, index) => ({ ...cat, sortOrder: index }));
+
+    // Update local state optimistically
+    setBoq((prev) => ({
+      ...(prev ?? {}),
+      categories: updatedCategories,
+    } as BoqWithRelations));
+
+    // Persist to database
+    try {
+      await Promise.all(
+        updatedCategories.map((cat) =>
+          fetch(`/api/categories/${cat.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sortOrder: cat.sortOrder }),
+          })
+        )
+      );
+      setLastSaved(new Date());
+    } catch (error) {
+      toast.error('Failed to reorder categories');
+    }
+  }, [boq?.categories]);
 
   // Open edit item dialog
   const openEditItemDialog = (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => {
@@ -953,20 +1008,26 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     }, 0);
   };
 
-  // Get item number (excluding notes)
-  const getItemNumber = (category: CategoryWithItems, catIndex: number, itemIndex: number): string | null => {
-    const item = category.items[itemIndex];
+  // Get item number (excluding notes) - using category's current position in the array
+  const getItemNumber = useCallback((categoryIndex: number, items: BoqItemType[], itemIndex: number): string | null => {
+    const item = items[itemIndex];
     if (item?.isNote) return null;
     
     // Count non-note items before this one
     let nonNoteCount = 0;
     for (let i = 0; i <= itemIndex; i++) {
-      if (!category.items[i]?.isNote) {
+      if (!items[i]?.isNote) {
         nonNoteCount++;
       }
     }
-    return `${catIndex + 1}.${nonNoteCount}`;
-  };
+    return `${categoryIndex + 1}.${nonNoteCount}`;
+  }, []);
+
+  // Memoized category IDs for SortableContext
+  const categoryIds = useMemo(() => 
+    (boq?.categories ?? []).map(c => c?.id), 
+    [boq?.categories]
+  );
 
   return (
     <AppLayout>
@@ -1174,55 +1235,95 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                   Reset column widths
                 </button>
               </div>
-              {(boq?.categories ?? []).map((category, catIndex) => (
-                <Card key={category?.id} className="shadow-md border-0 overflow-hidden">
-                  <Collapsible
-                    open={expandedCategories.has(category?.id)}
-                    onOpenChange={() => toggleCategory(category?.id)}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                            <Input
-                              value={getCategoryName(category)}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleUpdateCategory(category?.id, e.target.value);
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
-                            />
-                            <span className="text-sm text-gray-500 flex-shrink-0">
-                              ({(category?.items ?? []).filter(i => !i?.isNote).length} items)
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 flex-shrink-0">
-                            <span className="text-lg font-semibold text-cyan-600">
-                              {formatCurrency(getCategorySubtotal(category))}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-gray-400 hover:text-red-500"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCategory(category?.id);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                            {expandedCategories.has(category?.id) ? (
-                              <ChevronUp className="w-5 h-5 text-gray-400" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleCategoryDragStart}
+                onDragEnd={handleCategoryDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
+                  {(boq?.categories ?? []).map((category, catIndex) => {
+                    // Get sortable props for this category
+                    const {
+                      attributes: catAttributes,
+                      listeners: catListeners,
+                      setNodeRef: catSetNodeRef,
+                      transform: catTransform,
+                      transition: catTransition,
+                      isDragging: catIsDragging,
+                    } = useSortable({ id: category?.id });
+
+                    const catStyle = {
+                      transform: CSS.Transform.toString(catTransform),
+                      transition: catTransition,
+                    };
+
+                    // Get item IDs for this category's sortable context
+                    const itemIds = (category?.items ?? []).map(item => item?.id);
+
+                    return (
+                      <div 
+                        key={category?.id}
+                        ref={catSetNodeRef} 
+                        style={catStyle as React.CSSProperties}
+                        className={catIsDragging ? 'opacity-50' : ''}
+                      >
+                        <Card className={`shadow-md border-0 overflow-hidden transition-shadow ${catIsDragging ? 'shadow-xl ring-2 ring-cyan-400' : ''}`}>
+                          <Collapsible
+                            open={expandedCategories.has(category?.id)}
+                            onOpenChange={() => toggleCategory(category?.id)}
+                          >
+                            <CollapsibleTrigger asChild>
+                              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                    <div
+                                      {...catAttributes}
+                                      {...catListeners}
+                                      className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded touch-none"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                    <Input
+                                      value={getCategoryName(category)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleUpdateCategory(category?.id, e.target.value);
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
+                                    />
+                                    <span className="text-sm text-gray-500 flex-shrink-0">
+                                      ({(category?.items ?? []).filter(i => !i?.isNote).length} items)
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2 flex-shrink-0">
+                                    <span className="text-lg font-semibold text-cyan-600">
+                                      {formatCurrency(getCategorySubtotal(category))}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-gray-400 hover:text-red-500"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteCategory(category?.id);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                    {expandedCategories.has(category?.id) ? (
+                                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                                    ) : (
+                                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                                    )}
+                                  </div>
+                                </div>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
                       <CardContent className="pt-0">
                         <div className="overflow-x-auto">
                           <table className="text-sm" style={{ tableLayout: 'fixed', minWidth: '100%' }}>
@@ -1300,33 +1401,53 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                 <th className=""></th>
                               </tr>
                             </thead>
-                            <tbody>
-                              {(category?.items ?? []).map((item, itemIndex) => {
-                                const itemNumber = getItemNumber(category, catIndex, itemIndex);
-                                
-                                if (item?.isNote) {
-                                  // Render note row
-                                  return (
-                                    <tr 
-                                      key={item?.id} 
-                                      className={`border-b border-gray-100 bg-amber-50 ${draggedItem?.itemId === item.id ? 'opacity-50' : ''}`}
-                                      draggable={canDrag && draggedItem?.itemId === item.id}
-                                      onDragStart={(e) => handleDragStart(e, category.id, item.id)}
-                                      onDragOver={handleDragOver}
-                                      onDragEnd={handleDragEnd}
-                                      onDrop={() => handleDrop(category.id, itemIndex)}
-                                    >
-                                      <td className="py-2 px-1">
-                                        <div 
-                                          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
-                                          onMouseDown={() => handleGripMouseDown(category.id, item.id)}
-                                          onMouseUp={handleGripMouseUp}
+                            <DndContext
+                              sensors={sensors}
+                              collisionDetection={closestCenter}
+                              onDragStart={handleItemDragStart}
+                              onDragEnd={(e) => handleItemDragEnd(e, category.id)}
+                              modifiers={[restrictToVerticalAxis]}
+                            >
+                              <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                                <tbody>
+                                  {(category?.items ?? []).map((item, itemIndex) => {
+                                    const itemNumber = getItemNumber(catIndex, category?.items ?? [], itemIndex);
+                                    
+                                    // Sortable row hook
+                                    const {
+                                      attributes: itemAttributes,
+                                      listeners: itemListeners,
+                                      setNodeRef: itemSetNodeRef,
+                                      transform: itemTransform,
+                                      transition: itemTransition,
+                                      isDragging: itemIsDragging,
+                                    } = useSortable({ id: item?.id });
+
+                                    const itemStyle = {
+                                      transform: CSS.Transform.toString(itemTransform),
+                                      transition: itemTransition,
+                                    };
+                                    
+                                    if (item?.isNote) {
+                                      // Render note row
+                                      return (
+                                        <tr 
+                                          key={item?.id}
+                                          ref={itemSetNodeRef}
+                                          style={itemStyle as React.CSSProperties}
+                                          className={`border-b border-gray-100 bg-amber-50 ${itemIsDragging ? 'opacity-50 bg-amber-100' : ''}`}
                                         >
-                                          <GripVertical className="w-4 h-4 text-gray-400" />
-                                        </div>
-                                      </td>
-                                      <td className="py-2 px-2">
-                                        <StickyNote className="w-4 h-4 text-amber-500" />
+                                          <td className="py-2 px-1">
+                                            <div 
+                                              {...itemAttributes}
+                                              {...itemListeners}
+                                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded touch-none"
+                                            >
+                                              <GripVertical className="w-4 h-4 text-gray-400" />
+                                            </div>
+                                          </td>
+                                          <td className="py-2 px-2">
+                                            <StickyNote className="w-4 h-4 text-amber-500" />
                                       </td>
                                       <td colSpan={6} className="py-2 px-2">
                                         <div className="space-y-2">
@@ -1435,34 +1556,31 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                   );
                                 }
 
-                                const unitCost = getItemValue(item.id, 'unitCost', item?.unitCost) ?? 0;
-                                const markupPct = getItemValue(item.id, 'markupPct', item?.markupPct) ?? 0;
-                                const quantity = getItemValue(item.id, 'quantity', item?.quantity) ?? 0;
-                                const unitPrice = unitCost * (1 + markupPct / 100);
-                                const amount = unitPrice * quantity;
-                                
-                                return (
-                                  <tr 
-                                    key={item?.id} 
-                                    className={`border-b border-gray-100 hover:bg-gray-50 ${draggedItem?.itemId === item.id ? 'opacity-50' : ''}`}
-                                    draggable={canDrag && draggedItem?.itemId === item.id}
-                                    onDragStart={(e) => handleDragStart(e, category.id, item.id)}
-                                    onDragOver={handleDragOver}
-                                    onDragEnd={handleDragEnd}
-                                    onDrop={() => handleDrop(category.id, itemIndex)}
-                                  >
-                                    <td className="py-2 px-1">
-                                      <div 
-                                        className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
-                                        onMouseDown={() => handleGripMouseDown(category.id, item.id)}
-                                        onMouseUp={handleGripMouseUp}
+                                    const unitCost = getItemValue(item.id, 'unitCost', item?.unitCost) ?? 0;
+                                    const markupPct = getItemValue(item.id, 'markupPct', item?.markupPct) ?? 0;
+                                    const quantity = getItemValue(item.id, 'quantity', item?.quantity) ?? 0;
+                                    const unitPrice = unitCost * (1 + markupPct / 100);
+                                    const amount = unitPrice * quantity;
+                                    
+                                    return (
+                                      <tr 
+                                        key={item?.id}
+                                        ref={itemSetNodeRef}
+                                        style={itemStyle as React.CSSProperties}
+                                        className={`border-b border-gray-100 hover:bg-gray-50 ${itemIsDragging ? 'opacity-50 bg-gray-100' : ''}`}
                                       >
-                                        <GripVertical className="w-4 h-4 text-gray-400" />
-                                      </div>
-                                    </td>
-                                    <td className="py-2 px-2 text-gray-500">
-                                      {itemNumber}
-                                    </td>
+                                        <td className="py-2 px-1">
+                                          <div 
+                                            {...itemAttributes}
+                                            {...itemListeners}
+                                            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded touch-none"
+                                          >
+                                            <GripVertical className="w-4 h-4 text-gray-400" />
+                                          </div>
+                                        </td>
+                                        <td className="py-2 px-2 text-gray-500">
+                                          {itemNumber}
+                                        </td>
                                     <td className="py-2 px-2">
                                       <div className="flex items-center space-x-1">
                                         <Input
@@ -1551,8 +1669,10 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                     </td>
                                   </tr>
                                 );
-                              })}
-                            </tbody>
+                                  })}
+                                </tbody>
+                              </SortableContext>
+                            </DndContext>
                           </table>
                         </div>
                         <div className="flex space-x-2 mt-3">
@@ -1573,11 +1693,15 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                             Add Note
                           </Button>
                         </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </Card>
-              ))}
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </Card>
+                      </div>
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
               <Button
                 variant="outline"
                 className="w-full border-dashed border-2"

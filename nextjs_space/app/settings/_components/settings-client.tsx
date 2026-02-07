@@ -121,8 +121,8 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="left">Left (Rs.1,000)</SelectItem>
-                    <SelectItem value="right">Right (1,000Rs.)</SelectItem>
+                    <SelectItem value="left">Left ({company?.currencySymbol || 'Rs.'}1,000)</SelectItem>
+                    <SelectItem value="right">Right (1,000{company?.currencySymbol || 'Rs.'})</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

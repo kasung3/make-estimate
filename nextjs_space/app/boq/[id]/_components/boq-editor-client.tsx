@@ -85,6 +85,11 @@ interface EditItemDialogData {
 // =============================================================================
 // SORTABLE ITEM COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
+// Helper function to generate the grid template string
+function getGridTemplateColumns(columnWidths: Record<string, number>): string {
+  return `${columnWidths.grip}px ${columnWidths.number}px minmax(200px, 1fr) ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
+}
+
 interface SortableItemRowProps {
   item: BoqItemType;
   itemNumber: string | null;
@@ -147,16 +152,23 @@ function SortableItemRow({
   };
 
   // Use div-based layout instead of tr for proper CSS transform support
+  const gridStyle = {
+    ...style,
+    display: 'grid',
+    gridTemplateColumns: getGridTemplateColumns(columnWidths),
+  } as React.CSSProperties;
+
   if (item?.isNote) {
-    // Render note row
+    // Render note row - note content spans columns 3-9 (description through amount)
     return (
       <div
         ref={setNodeRef}
-        style={style as React.CSSProperties}
+        style={gridStyle}
         {...attributes}
-        className={`grid items-center border-b border-gray-100 bg-amber-50 ${isDragging ? 'opacity-50 bg-amber-100 shadow-lg z-50' : ''}`}
+        className={`items-center border-b border-gray-100 bg-amber-50 ${isDragging ? 'opacity-50 bg-amber-100 shadow-lg z-50' : ''}`}
         role="row"
       >
+        {/* Drag handle */}
         <div className="py-2 px-1 flex items-center justify-center" role="cell">
           <div
             ref={setActivatorNodeRef}
@@ -167,10 +179,12 @@ function SortableItemRow({
             <GripVertical className="w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
-        <div className="py-2 px-2 flex items-center" role="cell">
+        {/* Note icon instead of item number */}
+        <div className="py-2 px-2 flex items-center justify-center" role="cell">
           <StickyNote className="w-4 h-4 text-amber-500" />
         </div>
-        <div className="py-2 px-2 col-span-6" role="cell">
+        {/* Note content - spans description through amount columns (7 columns) */}
+        <div className="py-2 px-2" role="cell" style={{ gridColumn: '3 / 10' }}>
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               {inlineEditingNoteId === item.id ? (
@@ -267,6 +281,7 @@ function SortableItemRow({
             </div>
           </div>
         </div>
+        {/* Delete button */}
         <div className="py-2 px-2 flex items-center justify-center" role="cell">
           <Button
             variant="ghost"
@@ -291,11 +306,12 @@ function SortableItemRow({
   return (
     <div
       ref={setNodeRef}
-      style={style as React.CSSProperties}
+      style={gridStyle}
       {...attributes}
-      className={`grid items-center border-b border-gray-100 hover:bg-gray-50 ${isDragging ? 'opacity-50 bg-gray-100 shadow-lg z-50' : ''}`}
+      className={`items-center border-b border-gray-100 hover:bg-gray-50 ${isDragging ? 'opacity-50 bg-gray-100 shadow-lg z-50' : ''}`}
       role="row"
     >
+      {/* Drag handle */}
       <div className="py-2 px-1 flex items-center justify-center" role="cell">
         <div
           ref={setActivatorNodeRef}
@@ -306,13 +322,15 @@ function SortableItemRow({
           <GripVertical className="w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
       </div>
+      {/* Item number */}
       <div className="py-2 px-2 text-gray-500 text-sm" role="cell">{itemNumber}</div>
-      <div className="py-2 px-2" role="cell">
+      {/* Description */}
+      <div className="py-2 px-2 min-w-0" role="cell">
         <div className="flex items-center space-x-1">
           <Input
             value={getItemValue(item.id, 'description', item?.description) ?? ''}
             onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
-            className="h-8 text-sm flex-1"
+            className="h-8 text-sm w-full"
             placeholder="Description"
           />
           <Button
@@ -326,14 +344,16 @@ function SortableItemRow({
           </Button>
         </div>
       </div>
+      {/* Unit */}
       <div className="py-2 px-2" role="cell">
         <Input
           value={getItemValue(item.id, 'unit', item?.unit) ?? ''}
           onChange={(e) => handleUpdateItem(item?.id, { unit: e.target.value })}
-          className="h-8 text-sm"
+          className="h-8 text-sm w-full"
           placeholder="Unit"
         />
       </div>
+      {/* Unit Cost */}
       <div className="py-2 px-2" role="cell">
         <Input
           type="number"
@@ -344,9 +364,10 @@ function SortableItemRow({
               unitCost: parseFloat(e.target.value) || 0,
             })
           }
-          className="h-8 text-sm text-right"
+          className="h-8 text-sm text-right w-full"
         />
       </div>
+      {/* Markup % */}
       <div className="py-2 px-2" role="cell">
         <Input
           type="number"
@@ -357,10 +378,12 @@ function SortableItemRow({
               markupPct: parseFloat(e.target.value) || 0,
             })
           }
-          className="h-8 text-sm text-right"
+          className="h-8 text-sm text-right w-full"
         />
       </div>
-      <div className="py-2 px-2 text-right font-medium text-gray-700 text-sm" role="cell">{formatNumber(unitPrice)}</div>
+      {/* Unit Price (readonly) */}
+      <div className="py-2 px-2 text-right font-medium text-gray-700 text-sm whitespace-nowrap" role="cell">{formatNumber(unitPrice)}</div>
+      {/* Qty */}
       <div className="py-2 px-2" role="cell">
         <Input
           type="number"
@@ -371,10 +394,12 @@ function SortableItemRow({
               quantity: parseFloat(e.target.value) || 0,
             })
           }
-          className="h-8 text-sm text-right"
+          className="h-8 text-sm text-right w-full"
         />
       </div>
-      <div className="py-2 px-2 text-right font-semibold text-cyan-600 text-sm" role="cell">{formatCurrency(amount)}</div>
+      {/* Amount */}
+      <div className="py-2 px-2 text-right font-semibold text-cyan-600 text-sm whitespace-nowrap" role="cell">{formatCurrency(amount)}</div>
+      {/* Delete button */}
       <div className="py-2 px-2 flex items-center justify-center" role="cell">
         <Button
           variant="ghost"
@@ -557,31 +582,34 @@ function SortableCategory({
                 <div className="overflow-x-auto">
                   {/* Grid-based table using divs for proper CSS transform support */}
                   <div 
-                    className="text-sm min-w-full" 
+                    className="text-sm flex flex-col" 
                     role="table"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: `${columnWidths.grip}px ${columnWidths.number}px ${columnWidths.description}px ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`,
-                    }}
+                    style={{ minWidth: '900px' }}
                   >
                     {/* Header row */}
-                    <div className="contents" role="row">
-                      <div className="text-left py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
-                      <div className="text-left py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                    <div 
+                      role="row"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: getGridTemplateColumns(columnWidths),
+                      }}
+                    >
+                      <div className="py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         #
                         <div
                           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'number')}
                         />
                       </div>
-                      <div className="text-left py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Description
                         <div
                           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'description')}
                         />
                       </div>
-                      <div className="text-left py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit
                         <div
                           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
@@ -722,18 +750,18 @@ export function BoqEditorClient({
   const [localCategoryNames, setLocalCategoryNames] = useState<Record<string, string>>({});
   const [localItemValues, setLocalItemValues] = useState<Record<string, Partial<BoqItemType>>>({});
 
-  // Column resize state
+  // Column resize state - widths match the previous table layout
   const DEFAULT_COLUMN_WIDTHS = {
-    grip: 28,
-    number: 48,
-    description: 220,
+    grip: 32,
+    number: 52,
+    description: 280, // wider for description content, also uses minmax in grid
     unit: 80,
-    unitCost: 96,
+    unitCost: 100,
     markup: 80,
-    unitPrice: 96,
-    qty: 80,
-    amount: 112,
-    actions: 40,
+    unitPrice: 100,
+    qty: 70,
+    amount: 130,
+    actions: 44,
   };
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { CoverPageConfig, CoverElement } from '@/lib/types';
 
 // Format number with thousand separators
 const formatNumber = (num: number, decimals: number = 2): string => {
@@ -12,6 +13,167 @@ const formatNumber = (num: number, decimals: number = 2): string => {
     maximumFractionDigits: decimals,
   });
 };
+
+// Default cover template configuration (matches the current hardcoded output)
+const getDefaultCoverConfig = (): CoverPageConfig => ({
+  page: {
+    backgroundColor: '#ffffff',
+    padding: 40,
+    defaultFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  },
+  elements: [
+    {
+      id: 'project_name',
+      type: 'project_name',
+      enabled: true,
+      style: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        italic: false,
+        underline: false,
+        color: '#0891b2',
+        align: 'center',
+        marginTop: 0,
+        marginBottom: 20,
+      },
+    },
+    {
+      id: 'subtitle',
+      type: 'subtitle',
+      enabled: true,
+      text: 'Bill of Quantities',
+      style: {
+        fontSize: 18,
+        fontWeight: 'normal',
+        italic: false,
+        underline: false,
+        color: '#666666',
+        align: 'center',
+        marginTop: 0,
+        marginBottom: 10,
+      },
+    },
+    {
+      id: 'prepared_for',
+      type: 'prepared_for',
+      enabled: true,
+      style: {
+        fontSize: 18,
+        fontWeight: 'normal',
+        italic: false,
+        underline: false,
+        color: '#666666',
+        align: 'center',
+        marginTop: 0,
+        marginBottom: 40,
+      },
+    },
+    {
+      id: 'company_name',
+      type: 'company_name',
+      enabled: true,
+      style: {
+        fontSize: 16,
+        fontWeight: 'normal',
+        italic: false,
+        underline: false,
+        color: '#333333',
+        align: 'center',
+        marginTop: 0,
+        marginBottom: 0,
+      },
+    },
+  ],
+});
+
+// Generate cover page HTML from template config
+function generateCoverPageHtml(
+  config: CoverPageConfig,
+  projectName: string,
+  customerName: string | null,
+  companyName: string
+): string {
+  const renderElement = (element: CoverElement): string => {
+    if (!element.enabled) return '';
+
+    const style = `
+      font-size: ${element.style.fontSize}px;
+      font-weight: ${element.style.fontWeight};
+      font-style: ${element.style.italic ? 'italic' : 'normal'};
+      text-decoration: ${element.style.underline ? 'underline' : 'none'};
+      color: ${element.style.color};
+      text-align: ${element.style.align};
+      margin-top: ${element.style.marginTop}px;
+      margin-bottom: ${element.style.marginBottom}px;
+    `;
+
+    let content = '';
+
+    switch (element.type) {
+      case 'project_name':
+        content = projectName || 'Project';
+        break;
+      case 'subtitle':
+        content = element.text || 'Bill of Quantities';
+        break;
+      case 'prepared_for':
+        if (customerName) {
+          content = `Prepared for: ${customerName}`;
+        } else {
+          return ''; // Don't show if no customer
+        }
+        break;
+      case 'company_name':
+        content = companyName || 'Company';
+        break;
+      case 'logo':
+        if (element.logoUrl) {
+          return `<div style="${style}; display: flex; justify-content: ${element.style.align};">
+            <img src="${element.logoUrl}" alt="Logo" style="max-height: ${element.style.fontSize * 3}px; max-width: 200px;" />
+          </div>`;
+        }
+        return '';
+      case 'date':
+        if (element.dateMode === 'custom' && element.customDate) {
+          const date = new Date(element.customDate);
+          content = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        } else {
+          const today = new Date();
+          content = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+        break;
+      case 'prepared_by':
+        content = element.text || '';
+        if (!content) return '';
+        break;
+      case 'custom_text':
+        content = element.text || '';
+        if (!content) return '';
+        break;
+    }
+
+    return `<div style="${style}">${content}</div>`;
+  };
+
+  const elementsHtml = config.elements.map(renderElement).join('');
+
+  return `
+    <div class="cover-page" style="
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      page-break-after: always;
+      background-color: ${config.page.backgroundColor || '#ffffff'};
+      padding: ${config.page.padding || 40}px;
+      font-family: ${config.page.defaultFontFamily || "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"};
+    ">
+      ${elementsHtml}
+    </div>
+  `;
+}
 
 export async function POST(
   request: Request,
@@ -33,6 +195,7 @@ export async function POST(
         },
         include: {
           customer: true,
+          coverTemplate: true,
           categories: {
             include: { items: { orderBy: { sortOrder: 'asc' } } },
             orderBy: { sortOrder: 'asc' },
@@ -41,6 +204,12 @@ export async function POST(
       }),
       prisma.company.findUnique({
         where: { id: companyId },
+        include: {
+          pdfCoverTemplates: {
+            where: { isDefault: true },
+            take: 1,
+          },
+        },
       }),
     ]);
 
@@ -85,6 +254,24 @@ export async function POST(
     const vatAmount = boq?.vatEnabled ? afterDiscount * ((boq?.vatPercent ?? 0) / 100) : 0;
     const finalTotal = afterDiscount + vatAmount;
 
+    // Get cover template config - use BOQ's template, company default, or fallback
+    let coverConfig: CoverPageConfig;
+    if (boq.coverTemplate?.configJson) {
+      coverConfig = boq.coverTemplate.configJson as unknown as CoverPageConfig;
+    } else if (company?.pdfCoverTemplates?.[0]?.configJson) {
+      coverConfig = company.pdfCoverTemplates[0].configJson as unknown as CoverPageConfig;
+    } else {
+      coverConfig = getDefaultCoverConfig();
+    }
+
+    // Generate cover page HTML
+    const coverPageHtml = generateCoverPageHtml(
+      coverConfig,
+      boq?.projectName ?? 'Project',
+      boq?.customer?.name ?? null,
+      company?.name ?? 'Company'
+    );
+
     // Generate HTML
     const html = `
 <!DOCTYPE html>
@@ -102,31 +289,6 @@ export async function POST(
       font-size: 11px;
       line-height: 1.4;
       color: #333;
-    }
-    .cover-page {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      page-break-after: always;
-    }
-    .cover-title {
-      font-size: 36px;
-      font-weight: bold;
-      color: #0891b2;
-      margin-bottom: 20px;
-    }
-    .cover-subtitle {
-      font-size: 18px;
-      color: #666;
-      margin-bottom: 10px;
-    }
-    .cover-company {
-      font-size: 16px;
-      color: #333;
-      margin-top: 40px;
     }
     .content-page {
       padding: 20px 30px;
@@ -220,12 +382,7 @@ export async function POST(
   </style>
 </head>
 <body>
-  <div class="cover-page">
-    <h1 class="cover-title">${boq?.projectName ?? 'Project'}</h1>
-    <p class="cover-subtitle">Bill of Quantities</p>
-    ${boq?.customer ? `<p class="cover-subtitle">Prepared for: ${boq.customer.name}</p>` : ''}
-    <p class="cover-company">${company?.name ?? 'Company'}</p>
-  </div>
+  ${coverPageHtml}
 
   <div class="content-page">
     <div class="header">

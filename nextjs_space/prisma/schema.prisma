@@ -40,6 +40,22 @@ model Company {
   memberships       CompanyMembership[]
   customers         Customer[]
   boqs              Boq[]
+  pdfCoverTemplates PdfCoverTemplate[]
+}
+
+model PdfCoverTemplate {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  configJson Json
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  boqs       Boq[]
+
+  @@index([companyId])
+  @@index([companyId, isDefault])
 }
 
 model CompanyMembership {
@@ -69,20 +85,22 @@ model Customer {
 }
 
 model Boq {
-  id              String       @id @default(cuid())
+  id              String            @id @default(cuid())
   companyId       String
   customerId      String?
+  coverTemplateId String?
   projectName     String
-  discountEnabled Boolean      @default(false)
-  discountType    DiscountType @default(percent)
-  discountValue   Float        @default(0)
-  vatEnabled      Boolean      @default(false)
-  vatPercent      Float        @default(18)
-  status          String       @default("draft")
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  customer        Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  discountEnabled Boolean           @default(false)
+  discountType    DiscountType      @default(percent)
+  discountValue   Float             @default(0)
+  vatEnabled      Boolean           @default(false)
+  vatPercent      Float             @default(18)
+  status          String            @default("draft")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer        Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  coverTemplate   PdfCoverTemplate? @relation(fields: [coverTemplateId], references: [id], onDelete: SetNull)
   categories      BoqCategory[]
 
   @@index([companyId])

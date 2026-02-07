@@ -48,7 +48,7 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings } from '@/lib/types';
+import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType } from '@/lib/types';
 import {
   DndContext,
   closestCenter,
@@ -73,6 +73,7 @@ interface BoqEditorClientProps {
   boq: BoqWithRelations;
   customers: CustomerType[];
   company: CompanySettings;
+  coverTemplates: PdfCoverTemplateType[];
 }
 
 interface EditItemDialogData {
@@ -717,10 +718,12 @@ export function BoqEditorClient({
   boq: initialBoq,
   customers: initialCustomers,
   company,
+  coverTemplates: initialCoverTemplates,
 }: BoqEditorClientProps) {
   const router = useRouter();
   const [boq, setBoq] = useState<BoqWithRelations>(initialBoq);
   const [customers, setCustomers] = useState(initialCustomers ?? []);
+  const [coverTemplates, setCoverTemplates] = useState<PdfCoverTemplateType[]>(initialCoverTemplates ?? []);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set((initialBoq?.categories ?? []).map((c) => c?.id))
   );
@@ -1661,6 +1664,28 @@ export function BoqEditorClient({
                 </>
               ) : null}
             </div>
+            {/* Cover Template Selector */}
+            {coverTemplates.length > 0 && (
+              <Select
+                value={boq?.coverTemplateId || 'default'}
+                onValueChange={(value) => {
+                  const newValue = value === 'default' ? null : value;
+                  updateBoq({ coverTemplateId: newValue });
+                }}
+              >
+                <SelectTrigger className="w-40 h-9">
+                  <SelectValue placeholder="Cover Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Company Default</SelectItem>
+                  {coverTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} {template.isDefault && '(Default)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
               {exportingPdf ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

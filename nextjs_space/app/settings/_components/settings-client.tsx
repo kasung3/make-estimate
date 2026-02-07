@@ -13,9 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building2, DollarSign, Loader2, Save, Percent } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Building2, DollarSign, Loader2, Save, Percent, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanySettings } from '@/lib/types';
+import { CoverTemplateEditor } from './cover-template-editor';
 
 interface SettingsClientProps {
   company: CompanySettings;
@@ -24,6 +26,7 @@ interface SettingsClientProps {
 export function SettingsClient({ company: initialCompany }: SettingsClientProps) {
   const [company, setCompany] = useState<CompanySettings>(initialCompany);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('company');
 
   const handleSave = async () => {
     setSaving(true);
@@ -53,13 +56,25 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your company settings</p>
+          <p className="text-gray-500 mt-1">Manage your company and PDF settings</p>
         </div>
 
-        <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="company" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Company
+            </TabsTrigger>
+            <TabsTrigger value="pdf" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              PDF Templates
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="company" className="space-y-6">
           <Card className="shadow-md border-0">
             <CardHeader>
               <div className="flex items-center space-x-3">
@@ -185,7 +200,12 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
               </>
             )}
           </Button>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="pdf" className="space-y-6">
+            <CoverTemplateEditor companyName={company?.name ?? 'Company'} />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );

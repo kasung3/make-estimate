@@ -556,11 +556,21 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
   // Open edit item dialog
   const openEditItemDialog = (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => {
+    // Get the latest note content from the boq state (source of truth)
+    // This ensures we have the most up-to-date content after saves
+    let latestNoteContent: string | null = item.noteContent;
+    
+    // Check localItemValues for any pending updates
+    const localNote = localItemValues[item.id]?.noteContent;
+    if (localNote !== undefined) {
+      latestNoteContent = localNote;
+    }
+    
     // Reset the editor initialization tracker to force re-initialization
     noteEditorInitializedRef.current = null;
     
     setEditItemDialog({
-      item,
+      item: { ...item, noteContent: latestNoteContent }, // Use latest content
       categoryId,
       categoryName,
       itemNumber,
@@ -571,27 +581,25 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       unitCost: item.unitCost,
       markupPct: item.markupPct,
       quantity: item.quantity,
-      noteContent: item.noteContent,
+      noteContent: latestNoteContent,
       includeInPdf: item.includeInPdf,
     });
   };
 
   // Initialize note editor content when dialog opens
   useEffect(() => {
-    if (editItemDialog?.item.isNote && noteEditorRef.current && editItemDialog.item.id !== noteEditorInitializedRef.current) {
-      // Set the initial content from the item's noteContent (not editItemValues which may lag)
-      const content = editItemDialog.item.noteContent ?? '';
-      noteEditorRef.current.innerHTML = sanitizeHtml(content);
-      noteEditorInitializedRef.current = editItemDialog.item.id;
+    if (editItemDialog?.item.isNote && editItemDialog.item.id !== noteEditorInitializedRef.current) {
+      // Small delay to ensure the contentEditable div is mounted
+      const timeoutId = setTimeout(() => {
+        if (noteEditorRef.current) {
+          const content = editItemValues.noteContent ?? '';
+          noteEditorRef.current.innerHTML = sanitizeHtml(content);
+          noteEditorInitializedRef.current = editItemDialog.item.id;
+        }
+      }, 50);
+      return () => clearTimeout(timeoutId);
     }
-  }, [editItemDialog, sanitizeHtml]);
-  
-  // Also handle when the ref becomes available after dialog renders
-  useEffect(() => {
-    if (editItemDialog?.item.isNote && noteEditorRef.current && !noteEditorRef.current.innerHTML && editItemValues.noteContent) {
-      noteEditorRef.current.innerHTML = sanitizeHtml(editItemValues.noteContent);
-    }
-  });
+  }, [editItemDialog?.item.id, editItemDialog?.item.isNote, editItemValues.noteContent, sanitizeHtml]);
 
   // Save edit item dialog
   const saveEditItemDialog = async () => {

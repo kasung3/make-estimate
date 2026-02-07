@@ -579,11 +579,19 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   // Initialize note editor content when dialog opens
   useEffect(() => {
     if (editItemDialog?.item.isNote && noteEditorRef.current && editItemDialog.item.id !== noteEditorInitializedRef.current) {
-      // Set the initial content
-      noteEditorRef.current.innerHTML = sanitizeHtml(editItemValues.noteContent ?? '');
+      // Set the initial content from the item's noteContent (not editItemValues which may lag)
+      const content = editItemDialog.item.noteContent ?? '';
+      noteEditorRef.current.innerHTML = sanitizeHtml(content);
       noteEditorInitializedRef.current = editItemDialog.item.id;
     }
-  }, [editItemDialog, editItemValues.noteContent, sanitizeHtml]);
+  }, [editItemDialog, sanitizeHtml]);
+  
+  // Also handle when the ref becomes available after dialog renders
+  useEffect(() => {
+    if (editItemDialog?.item.isNote && noteEditorRef.current && !noteEditorRef.current.innerHTML && editItemValues.noteContent) {
+      noteEditorRef.current.innerHTML = sanitizeHtml(editItemValues.noteContent);
+    }
+  });
 
   // Save edit item dialog
   const saveEditItemDialog = async () => {
@@ -1028,11 +1036,9 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       <td colSpan={6} className="py-2 px-2">
                                         <div className="space-y-2">
                                           <div className="flex items-center space-x-2">
-                                            {/* Render formatted note content with click to edit */}
+                                            {/* Render formatted note content - read only display */}
                                             <div 
-                                              className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-pointer hover:border-cyan-400 transition-colors"
-                                              onClick={() => openEditItemDialog(item, category.id, category.name ?? '', null)}
-                                              title="Click to edit with formatting"
+                                              className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm"
                                             >
                                               {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
                                                 <div 
@@ -1042,7 +1048,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                                   }}
                                                 />
                                               ) : (
-                                                <span className="text-gray-400">Click to add note...</span>
+                                                <span className="text-gray-400">Click expand to add note...</span>
                                               )}
                                             </div>
                                             <Button
@@ -1050,7 +1056,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                               size="icon"
                                               className="h-8 w-8 text-gray-400 hover:text-cyan-600"
                                               onClick={() => openEditItemDialog(item, category.id, category.name ?? '', null)}
-                                              title="Expand to edit with formatting"
+                                              title="Edit note with formatting"
                                             >
                                               <Expand className="w-4 h-4" />
                                             </Button>

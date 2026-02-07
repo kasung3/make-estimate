@@ -91,7 +91,6 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   // Inline note editing state
   const [inlineEditingNoteId, setInlineEditingNoteId] = useState<string | null>(null);
   const [inlineEditText, setInlineEditText] = useState('');
-  const [showFormattingWarning, setShowFormattingWarning] = useState<{ noteId: string; itemId: string } | null>(null);
   const inlineTextareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Local input states to prevent typing lag
@@ -149,12 +148,25 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     return tempDiv.innerHTML;
   }, []);
 
-  // Check if HTML contains formatting tags (beyond basic structure)
-  const hasFormattingTags = useCallback((html: string): boolean => {
+  // Check if HTML contains formatting tags (beyond basic structure like br, p)
+  // Returns true if the note has rich formatting that should be preserved
+  const noteHasFormatting = useCallback((html: string): boolean => {
     if (!html) return false;
-    // Check for formatting tags: strong, b, em, i, u
-    const formattingPattern = /<(strong|b|em|i|u)(\s[^>]*)?>.*?<\/\1>/i;
-    return formattingPattern.test(html);
+    
+    // List of formatting tags that indicate rich text
+    const formattingTags = ['strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'];
+    
+    // Check for any formatting tags
+    const tagPattern = new RegExp(`<(${formattingTags.join('|')})(\\s[^>]*)?>`, 'i');
+    if (tagPattern.test(html)) return true;
+    
+    // Check for span with style attribute
+    if (/<span\s+[^>]*style\s*=/i.test(html)) return true;
+    
+    // Check for any tag with style attribute
+    if (/<[^>]+\s+style\s*=/i.test(html)) return true;
+    
+    return false;
   }, []);
 
   // Convert HTML to plain text (strip tags, convert breaks to newlines)
@@ -510,58 +522,6 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   };
 
   // Inline note editing functions
-  const startInlineNoteEdit = useCallback((itemId: string, currentHtml: string) => {
-    // Check if note has formatting
-    if (hasFormattingTags(currentHtml)) {
-      // Show warning dialog
-      setShowFormattingWarning({ noteId: itemId, itemId });
-      return;
-    }
-    
-    // No formatting, start editing directly
-    const plainText = htmlToPlainText(currentHtml);
-    setInlineEditText(plainText);
-    setInlineEditingNoteId(itemId);
-    
-    // Focus textarea after render
-    setTimeout(() => {
-      inlineTextareaRef.current?.focus();
-    }, 50);
-  }, [hasFormattingTags, htmlToPlainText]);
-
-  const confirmInlineEditWithFormatting = useCallback(() => {
-    if (!showFormattingWarning) return;
-    
-    // Get the current note content
-    const itemId = showFormattingWarning.itemId;
-    let currentHtml = '';
-    
-    // Find the note content from localItemValues or boq state
-    const localNote = localItemValues[itemId]?.noteContent;
-    if (localNote !== undefined) {
-      currentHtml = localNote ?? '';
-    } else {
-      // Find from boq state
-      for (const cat of boq?.categories ?? []) {
-        const item = cat?.items?.find(i => i.id === itemId);
-        if (item) {
-          currentHtml = item.noteContent ?? '';
-          break;
-        }
-      }
-    }
-    
-    const plainText = htmlToPlainText(currentHtml);
-    setInlineEditText(plainText);
-    setInlineEditingNoteId(itemId);
-    setShowFormattingWarning(null);
-    
-    // Focus textarea after render
-    setTimeout(() => {
-      inlineTextareaRef.current?.focus();
-    }, 50);
-  }, [showFormattingWarning, localItemValues, boq?.categories, htmlToPlainText]);
-
   const cancelInlineEdit = useCallback(() => {
     setInlineEditingNoteId(null);
     setInlineEditText('');
@@ -720,6 +680,30 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       noteContent: latestNoteContent,
       includeInPdf: item.includeInPdf,
     });
+  };
+
+  // Handler for clicking on note content - opens modal for formatted, inline edit for plain
+  const handleNoteClick = (
+    item: BoqItemType, 
+    categoryId: string, 
+    categoryName: string, 
+    currentHtml: string
+  ) => {
+    // If note has formatting, open the modal to preserve formatting
+    if (noteHasFormatting(currentHtml)) {
+      openEditItemDialog(item, categoryId, categoryName, null);
+      return;
+    }
+    
+    // Plain note - allow inline editing
+    const plainText = htmlToPlainText(currentHtml);
+    setInlineEditText(plainText);
+    setInlineEditingNoteId(item.id);
+    
+    // Focus textarea after render
+    setTimeout(() => {
+      inlineTextareaRef.current?.focus();
+    }, 50);
   };
 
   // Initialize note editor content when dialog opens
@@ -1226,11 +1210,11 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                                 </div>
                                               </div>
                                             ) : (
-                                              // Preview mode - clickable to edit
+                                              // Preview mode - click opens inline edit (plain) or modal (formatted)
                                               <div 
                                                 className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-cyan-400 transition-colors"
-                                                onClick={() => startInlineNoteEdit(item.id, getItemValue(item.id, 'noteContent', item?.noteContent) ?? '')}
-                                                title="Click to edit (basic text). Use expand for formatting."
+                                                onClick={() => handleNoteClick(item, category.id, category.name ?? '', getItemValue(item.id, 'noteContent', item?.noteContent) ?? '')}
+                                                title="Click to edit"
                                               >
                                                 {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
                                                   <div 
@@ -1438,34 +1422,6 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
             </div>
           </div>
         </div>
-
-        {/* Formatting Warning Dialog */}
-        <Dialog open={!!showFormattingWarning} onOpenChange={(open) => !open && setShowFormattingWarning(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Note Has Formatting</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm text-gray-600 mb-4">
-                This note contains formatting (bold, italic, underline). Inline editing will convert it to plain text and <strong>remove all formatting</strong>.
-              </p>
-              <p className="text-sm text-gray-600">
-                To edit while keeping formatting, click <strong>Cancel</strong> and use the expand button (⤢) instead.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowFormattingWarning(null)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={confirmInlineEditWithFormatting}
-              >
-                Edit Anyway (Remove Formatting)
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* New Customer Dialog */}
         <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>

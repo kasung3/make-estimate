@@ -357,11 +357,24 @@ describe('Rich Text Note Display Tests', () => {
 });
 
 describe('Inline Note Editing Tests', () => {
-  // Helper: Check if HTML has formatting tags
-  const hasFormattingTags = (html: string): boolean => {
+  // Helper: Check if note has formatting (matches the app's noteHasFormatting function)
+  const noteHasFormatting = (html: string): boolean => {
     if (!html) return false;
-    const formattingPattern = /<(strong|b|em|i|u)(\s[^>]*)?>.*?<\/\1>/i;
-    return formattingPattern.test(html);
+    
+    // List of formatting tags that indicate rich text
+    const formattingTags = ['strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'];
+    
+    // Check for any formatting tags
+    const tagPattern = new RegExp(`<(${formattingTags.join('|')})(\\s[^>]*)?>`, 'i');
+    if (tagPattern.test(html)) return true;
+    
+    // Check for span with style attribute
+    if (/<span\s+[^>]*style\s*=/i.test(html)) return true;
+    
+    // Check for any tag with style attribute
+    if (/<[^>]+\s+style\s*=/i.test(html)) return true;
+    
+    return false;
   };
 
   // Helper: Convert HTML to plain text
@@ -387,18 +400,58 @@ describe('Inline Note Editing Tests', () => {
     return escaped.replace(/\n/g, '<br>');
   };
 
-  test('hasFormattingTags detects bold/italic/underline', () => {
-    expect(hasFormattingTags('<strong>Bold</strong>')).toBe(true);
-    expect(hasFormattingTags('<em>Italic</em>')).toBe(true);
-    expect(hasFormattingTags('<u>Underline</u>')).toBe(true);
-    expect(hasFormattingTags('<b>Bold alt</b>')).toBe(true);
-    expect(hasFormattingTags('<i>Italic alt</i>')).toBe(true);
+  // Simulate the click behavior
+  const simulateNoteClick = (html: string): 'modal' | 'inline' => {
+    if (noteHasFormatting(html)) {
+      return 'modal'; // Opens modal directly for formatted notes
+    }
+    return 'inline'; // Allows inline editing for plain notes
+  };
+
+  test('noteHasFormatting detects bold/italic/underline tags', () => {
+    expect(noteHasFormatting('<strong>Bold</strong>')).toBe(true);
+    expect(noteHasFormatting('<em>Italic</em>')).toBe(true);
+    expect(noteHasFormatting('<u>Underline</u>')).toBe(true);
+    expect(noteHasFormatting('<b>Bold alt</b>')).toBe(true);
+    expect(noteHasFormatting('<i>Italic alt</i>')).toBe(true);
   });
 
-  test('hasFormattingTags returns false for plain text', () => {
-    expect(hasFormattingTags('Plain text')).toBe(false);
-    expect(hasFormattingTags('')).toBe(false);
-    expect(hasFormattingTags('Text with <br> only')).toBe(false);
+  test('noteHasFormatting detects list tags', () => {
+    expect(noteHasFormatting('<ul><li>Item</li></ul>')).toBe(true);
+    expect(noteHasFormatting('<ol><li>Item</li></ol>')).toBe(true);
+  });
+
+  test('noteHasFormatting detects heading and code tags', () => {
+    expect(noteHasFormatting('<h1>Title</h1>')).toBe(true);
+    expect(noteHasFormatting('<code>code</code>')).toBe(true);
+    expect(noteHasFormatting('<blockquote>Quote</blockquote>')).toBe(true);
+  });
+
+  test('noteHasFormatting detects style attributes', () => {
+    expect(noteHasFormatting('<span style="color:red">Styled</span>')).toBe(true);
+    expect(noteHasFormatting('<p style="font-weight:bold">Bold paragraph</p>')).toBe(true);
+  });
+
+  test('noteHasFormatting returns false for plain text and structure tags', () => {
+    expect(noteHasFormatting('Plain text')).toBe(false);
+    expect(noteHasFormatting('')).toBe(false);
+    expect(noteHasFormatting('Text with <br> line break')).toBe(false);
+    expect(noteHasFormatting('<p>Hello<br>World</p>')).toBe(false);
+  });
+
+  test('Formatted note click opens modal directly (no warning)', () => {
+    const formattedNote = '<strong><u>Grade 15 Concrete</u></strong>';
+    expect(simulateNoteClick(formattedNote)).toBe('modal');
+  });
+
+  test('Plain note click allows inline editing', () => {
+    const plainNote = 'All concrete work shall be in accordance with BS 8110';
+    expect(simulateNoteClick(plainNote)).toBe('inline');
+  });
+
+  test('Plain note with br/p tags allows inline editing', () => {
+    const plainNoteWithBreaks = '<p>Line 1<br>Line 2</p>';
+    expect(simulateNoteClick(plainNoteWithBreaks)).toBe('inline');
   });
 
   test('htmlToPlainText strips formatting tags', () => {
@@ -411,7 +464,7 @@ describe('Inline Note Editing Tests', () => {
     expect(htmlToPlainText('Line 1<br/>Line 2')).toBe('Line 1\nLine 2');
   });
 
-  test('plainTextToSafeHtml escapes HTML entities', () => {
+  test('plainTextToSafeHtml escapes HTML entities (XSS prevention)', () => {
     expect(plainTextToSafeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(plainTextToSafeHtml('A & B')).toBe('A &amp; B');
   });
@@ -425,17 +478,5 @@ describe('Inline Note Editing Tests', () => {
     const html = plainTextToSafeHtml(original);
     const result = htmlToPlainText(html);
     expect(result).toBe(original);
-  });
-
-  test('Warning should trigger for formatted note', () => {
-    const formattedNote = '<strong><u>Grade 15 Concrete</u></strong>';
-    const shouldWarn = hasFormattingTags(formattedNote);
-    expect(shouldWarn).toBe(true);
-  });
-
-  test('No warning for plain note', () => {
-    const plainNote = 'All concrete work shall be in accordance with BS 8110';
-    const shouldWarn = hasFormattingTags(plainNote);
-    expect(shouldWarn).toBe(false);
   });
 });

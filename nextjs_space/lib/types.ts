@@ -1,6 +1,36 @@
-import { Role, DiscountType, DateMode } from '@prisma/client';
+import { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType } from '@prisma/client';
 
-export type { Role, DiscountType, DateMode };
+export type { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType };
+
+// Billing Types
+export interface BillingStatus {
+  hasActiveSubscription: boolean;
+  isBlocked: boolean;
+  planKey: PlanKey | null;
+  status: string | null;
+  currentPeriodEnd: Date | string | null;
+  cancelAtPeriodEnd: boolean;
+  boqsUsedThisPeriod: number;
+  boqLimit: number | null;
+  canCreateBoq: boolean;
+  isAdmin?: boolean;
+  planInfo?: {
+    key: string;
+    name: string;
+    price: number;
+    boqLimit: number | null;
+    description: string;
+  } | null;
+}
+
+export interface PlanInfo {
+  key: 'starter' | 'business';
+  name: string;
+  priceId: string;
+  price: number;
+  boqLimit: number | null;
+  description: string;
+}
 
 export interface SessionUser {
   id: string;

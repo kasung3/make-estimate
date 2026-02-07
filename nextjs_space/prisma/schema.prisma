@@ -24,11 +24,33 @@ enum DateMode {
   preparation_date
 }
 
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  incomplete
+  incomplete_expired
+  unpaid
+}
+
+enum PlanKey {
+  starter
+  business
+}
+
+enum CouponType {
+  trial_days
+  free_forever
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
   password      String
   name          String?
+  isBlocked     Boolean  @default(false)
+  blockReason   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   memberships   CompanyMembership[]
@@ -40,6 +62,8 @@ model Company {
   currencySymbol    String   @default("Rs.")
   currencyPosition  String   @default("left")
   defaultVatPercent Float    @default(18)
+  isBlocked         Boolean  @default(false)
+  blockReason       String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   memberships       CompanyMembership[]
@@ -47,6 +71,8 @@ model Company {
   boqs              Boq[]
   pdfCoverTemplates PdfCoverTemplate[]
   pdfThemes         PdfTheme[]
+  billing           CompanyBilling?
+  boqCreationEvents BoqCreationEvent[]
 }
 
 model PdfCoverTemplate {
@@ -162,4 +188,58 @@ model BoqItem {
 
   @@index([categoryId])
   @@index([categoryId, sortOrder])
+}
+
+// ============== BILLING MODELS ==============
+
+model CompanyBilling {
+  id                   String              @id @default(cuid())
+  companyId            String              @unique
+  stripeCustomerId     String?             @unique
+  stripeSubscriptionId String?             @unique
+  planKey              PlanKey?
+  status               SubscriptionStatus?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  company              Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model BoqCreationEvent {
+  id        String   @id @default(cuid())
+  companyId String
+  boqId     String
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+}
+
+model PlatformCoupon {
+  id                 String     @id @default(cuid())
+  code               String     @unique
+  type               CouponType
+  trialDays          Int?
+  allowedPlans       PlanKey[]
+  stripePromoCodeId  String?    @unique
+  stripeCouponId     String?
+  maxRedemptions     Int?
+  currentRedemptions Int        @default(0)
+  expiresAt          DateTime?
+  active             Boolean    @default(true)
+  archived           Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  @@index([code, active, archived])
+}
+
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([id])
 }

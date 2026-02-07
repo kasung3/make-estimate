@@ -98,6 +98,24 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const [localCategoryNames, setLocalCategoryNames] = useState<Record<string, string>>({});
   const [localItemValues, setLocalItemValues] = useState<Record<string, Partial<BoqItemType>>>({});
   
+  // Column resize state
+  const DEFAULT_COLUMN_WIDTHS = {
+    grip: 28,
+    number: 48,
+    description: 220,
+    unit: 80,
+    unitCost: 96,
+    markup: 80,
+    unitPrice: 96,
+    qty: 80,
+    amount: 112,
+    actions: 40,
+  };
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const resizeStartXRef = useRef<number>(0);
+  const resizeStartWidthRef = useRef<number>(0);
+  
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
@@ -332,6 +350,85 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   useEffect(() => {
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
+
+  // Load column widths from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedWidths = localStorage.getItem('boq_column_widths');
+      if (savedWidths) {
+        const parsed = JSON.parse(savedWidths);
+        setColumnWidths(prev => ({ ...prev, ...parsed }));
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Save column widths to localStorage
+  const saveColumnWidths = useCallback((widths: Record<string, number>) => {
+    try {
+      localStorage.setItem('boq_column_widths', JSON.stringify(widths));
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Column resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent, columnKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnKey);
+    resizeStartXRef.current = e.clientX;
+    resizeStartWidthRef.current = columnWidths[columnKey];
+  }, [columnWidths]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizingColumn) return;
+    
+    const diff = e.clientX - resizeStartXRef.current;
+    const newWidth = Math.max(40, resizeStartWidthRef.current + diff); // Min width 40px
+    
+    setColumnWidths(prev => {
+      const updated = { ...prev, [resizingColumn]: newWidth };
+      return updated;
+    });
+  }, [resizingColumn]);
+
+  const handleResizeEnd = useCallback(() => {
+    if (resizingColumn) {
+      saveColumnWidths(columnWidths);
+    }
+    setResizingColumn(null);
+  }, [resizingColumn, columnWidths, saveColumnWidths]);
+
+  // Add/remove mouse event listeners for resize
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
+
+  const resetColumnWidths = useCallback(() => {
+    setColumnWidths(DEFAULT_COLUMN_WIDTHS);
+    try {
+      localStorage.removeItem('boq_column_widths');
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+    toast.success('Column widths reset to default');
+  }, []);
 
   const updateBoq = (updates: Partial<BoqWithRelations>) => {
     setBoq((prev) => ({ ...(prev ?? {}), ...updates } as BoqWithRelations));
@@ -1067,6 +1164,16 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
             {/* Categories & Items - Full Width */}
             <div className="space-y-4">
+              {/* Column width reset */}
+              <div className="flex justify-end">
+                <button
+                  onClick={resetColumnWidths}
+                  className="text-xs text-gray-500 hover:text-cyan-600 transition-colors"
+                  title="Reset column widths to default"
+                >
+                  Reset column widths
+                </button>
+              </div>
               {(boq?.categories ?? []).map((category, catIndex) => (
                 <Card key={category?.id} className="shadow-md border-0 overflow-hidden">
                   <Collapsible
@@ -1118,19 +1225,79 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                     <CollapsibleContent>
                       <CardContent className="pt-0">
                         <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
+                          <table className="text-sm" style={{ tableLayout: 'fixed', minWidth: '100%' }}>
+                            <colgroup>
+                              <col style={{ width: columnWidths.grip }} />
+                              <col style={{ width: columnWidths.number }} />
+                              <col style={{ width: columnWidths.description }} />
+                              <col style={{ width: columnWidths.unit }} />
+                              <col style={{ width: columnWidths.unitCost }} />
+                              <col style={{ width: columnWidths.markup }} />
+                              <col style={{ width: columnWidths.unitPrice }} />
+                              <col style={{ width: columnWidths.qty }} />
+                              <col style={{ width: columnWidths.amount }} />
+                              <col style={{ width: columnWidths.actions }} />
+                            </colgroup>
                             <thead>
                               <tr className="border-b border-gray-200">
-                                <th className="text-left py-2 px-1 font-medium text-gray-500 w-6"></th>
-                                <th className="text-left py-2 px-2 font-medium text-gray-500 w-12">#</th>
-                                <th className="text-left py-2 px-2 font-medium text-gray-500">Description</th>
-                                <th className="text-left py-2 px-2 font-medium text-gray-500 w-20">Unit</th>
-                                <th className="text-right py-2 px-2 font-medium text-gray-500 w-24">Unit Cost</th>
-                                <th className="text-right py-2 px-2 font-medium text-gray-500 w-20">Markup %</th>
-                                <th className="text-right py-2 px-2 font-medium text-gray-500 w-24">Unit Price</th>
-                                <th className="text-right py-2 px-2 font-medium text-gray-500 w-20">Qty</th>
-                                <th className="text-right py-2 px-2 font-medium text-gray-500 w-28">Amount</th>
-                                <th className="w-10"></th>
+                                <th className="text-left py-2 px-1 font-medium text-gray-500"></th>
+                                <th className="text-left py-2 px-2 font-medium text-gray-500 relative">
+                                  #
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'number')}
+                                  />
+                                </th>
+                                <th className="text-left py-2 px-2 font-medium text-gray-500 relative">
+                                  Description
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'description')}
+                                  />
+                                </th>
+                                <th className="text-left py-2 px-2 font-medium text-gray-500 relative">
+                                  Unit
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'unit')}
+                                  />
+                                </th>
+                                <th className="text-right py-2 px-2 font-medium text-gray-500 relative">
+                                  Unit Cost
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
+                                  />
+                                </th>
+                                <th className="text-right py-2 px-2 font-medium text-gray-500 relative">
+                                  Markup %
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'markup')}
+                                  />
+                                </th>
+                                <th className="text-right py-2 px-2 font-medium text-gray-500 relative">
+                                  Unit Price
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
+                                  />
+                                </th>
+                                <th className="text-right py-2 px-2 font-medium text-gray-500 relative">
+                                  Qty
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'qty')}
+                                  />
+                                </th>
+                                <th className="text-right py-2 px-2 font-medium text-gray-500 relative">
+                                  Amount
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                                    onMouseDown={(e) => handleResizeStart(e, 'amount')}
+                                  />
+                                </th>
+                                <th className=""></th>
                               </tr>
                             </thead>
                             <tbody>

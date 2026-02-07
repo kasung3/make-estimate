@@ -71,6 +71,7 @@ export async function PUT(
     if (body?.projectName !== undefined) updateData.projectName = body.projectName;
     if (body?.customerId !== undefined) updateData.customerId = body.customerId || null;
     if (body?.coverTemplateId !== undefined) updateData.coverTemplateId = body.coverTemplateId || null;
+    if (body?.pdfThemeId !== undefined) updateData.pdfThemeId = body.pdfThemeId || null;
     if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled;
     if (body?.discountType !== undefined) updateData.discountType = body.discountType;
     if (body?.discountValue !== undefined) updateData.discountValue = body.discountValue;

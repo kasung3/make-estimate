@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { CoverPageConfig, CoverElement } from '@/lib/types';
+import { CoverPageConfig, CoverElement, PdfThemeConfig } from '@/lib/types';
 
 // Format number with thousand separators
 const formatNumber = (num: number, decimals: number = 2): string => {
@@ -13,6 +13,39 @@ const formatNumber = (num: number, decimals: number = 2): string => {
     maximumFractionDigits: decimals,
   });
 };
+
+// Default theme configuration (matches current hardcoded colors)
+const getDefaultThemeConfig = (): PdfThemeConfig => ({
+  header: {
+    borderColor: '#0891b2',
+    titleColor: '#0891b2',
+    subtitleColor: '#666666',
+  },
+  categoryHeader: {
+    backgroundPrimary: '#0891b2',
+    backgroundSecondary: '#14b8a6',
+    textColor: '#ffffff',
+  },
+  table: {
+    headerBackground: '#f9fafb',
+    headerTextColor: '#6b7280',
+    borderColor: '#e5e7eb',
+    bodyTextColor: '#333333',
+  },
+  subtotalRow: {
+    background: '#f0fdfa',
+    borderColor: '#14b8a6',
+    textColor: '#333333',
+  },
+  noteRow: {
+    background: '#fffbeb',
+    textColor: '#92400e',
+  },
+  totals: {
+    finalTotalBackground: '#0891b2',
+    finalTotalTextColor: '#ffffff',
+  },
+});
 
 // Default cover template configuration (matches the current hardcoded output)
 const getDefaultCoverConfig = (): CoverPageConfig => ({
@@ -196,6 +229,7 @@ export async function POST(
         include: {
           customer: true,
           coverTemplate: true,
+          pdfTheme: true,
           categories: {
             include: { items: { orderBy: { sortOrder: 'asc' } } },
             orderBy: { sortOrder: 'asc' },
@@ -206,6 +240,10 @@ export async function POST(
         where: { id: companyId },
         include: {
           pdfCoverTemplates: {
+            where: { isDefault: true },
+            take: 1,
+          },
+          pdfThemes: {
             where: { isDefault: true },
             take: 1,
           },
@@ -264,6 +302,16 @@ export async function POST(
       coverConfig = getDefaultCoverConfig();
     }
 
+    // Get PDF theme config - use BOQ's theme, company default, or fallback
+    let themeConfig: PdfThemeConfig;
+    if (boq.pdfTheme?.configJson) {
+      themeConfig = boq.pdfTheme.configJson as unknown as PdfThemeConfig;
+    } else if (company?.pdfThemes?.[0]?.configJson) {
+      themeConfig = company.pdfThemes[0].configJson as unknown as PdfThemeConfig;
+    } else {
+      themeConfig = getDefaultThemeConfig();
+    }
+
     // Generate cover page HTML
     const coverPageHtml = generateCoverPageHtml(
       coverConfig,
@@ -272,7 +320,7 @@ export async function POST(
       company?.name ?? 'Company'
     );
 
-    // Generate HTML
+    // Generate HTML with theme colors
     const html = `
 <!DOCTYPE html>
 <html>
@@ -288,30 +336,30 @@ export async function POST(
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-size: 11px;
       line-height: 1.4;
-      color: #333;
+      color: ${themeConfig.table.bodyTextColor};
     }
     .content-page {
       padding: 20px 30px;
     }
     .header {
-      border-bottom: 2px solid #0891b2;
+      border-bottom: 2px solid ${themeConfig.header.borderColor};
       padding-bottom: 10px;
       margin-bottom: 20px;
     }
     .header h1 {
       font-size: 18px;
-      color: #0891b2;
+      color: ${themeConfig.header.titleColor};
     }
     .header p {
       font-size: 11px;
-      color: #666;
+      color: ${themeConfig.header.subtitleColor};
     }
     .category {
       margin-bottom: 25px;
     }
     .category-header {
-      background: linear-gradient(135deg, #0891b2, #14b8a6);
-      color: white;
+      background: linear-gradient(135deg, ${themeConfig.categoryHeader.backgroundPrimary}, ${themeConfig.categoryHeader.backgroundSecondary});
+      color: ${themeConfig.categoryHeader.textColor};
       padding: 8px 12px;
       font-weight: bold;
       font-size: 12px;
@@ -322,16 +370,16 @@ export async function POST(
       border-collapse: collapse;
     }
     th, td {
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${themeConfig.table.borderColor};
       padding: 6px 8px;
       text-align: left;
     }
     th {
-      background-color: #f9fafb;
+      background-color: ${themeConfig.table.headerBackground};
       font-weight: 600;
       font-size: 10px;
       text-transform: uppercase;
-      color: #6b7280;
+      color: ${themeConfig.table.headerTextColor};
     }
     td {
       font-size: 11px;
@@ -340,18 +388,19 @@ export async function POST(
       text-align: right;
     }
     .subtotal-row {
-      background-color: #f0fdfa;
+      background-color: ${themeConfig.subtotalRow.background};
       font-weight: bold;
+      color: ${themeConfig.subtotalRow.textColor};
     }
     .subtotal-row td {
-      border-top: 2px solid #14b8a6;
+      border-top: 2px solid ${themeConfig.subtotalRow.borderColor};
     }
     .note-row {
-      background-color: #fffbeb;
+      background-color: ${themeConfig.noteRow.background};
       font-style: italic;
     }
     .note-row td {
-      color: #92400e;
+      color: ${themeConfig.noteRow.textColor};
     }
     .totals-section {
       margin-top: 30px;
@@ -373,8 +422,8 @@ export async function POST(
       font-weight: bold;
     }
     .final-total {
-      background-color: #0891b2;
-      color: white;
+      background-color: ${themeConfig.totals.finalTotalBackground};
+      color: ${themeConfig.totals.finalTotalTextColor};
     }
     .final-total td {
       font-size: 14px;

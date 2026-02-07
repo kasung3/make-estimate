@@ -16,6 +16,7 @@ export interface BoqWithRelations {
   companyId: string;
   customerId: string | null;
   coverTemplateId: string | null;
+  pdfThemeId: string | null;
   projectName: string;
   discountEnabled: boolean;
   discountType: DiscountType;
@@ -31,6 +32,7 @@ export interface BoqWithRelations {
     email: string | null;
   } | null;
   coverTemplate?: PdfCoverTemplateType | null;
+  pdfTheme?: PdfThemeType | null;
   categories: CategoryWithItems[];
 }
 
@@ -113,6 +115,55 @@ export interface PdfCoverTemplateType {
   companyId: string;
   name: string;
   configJson: CoverPageConfig;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// PDF Theme Types (for BOQ pages color/shading)
+export interface PdfThemeConfig {
+  // Page header section
+  header: {
+    borderColor: string;       // Bottom border of header
+    titleColor: string;        // Project name color
+    subtitleColor: string;     // Customer info color
+  };
+  // Category header band
+  categoryHeader: {
+    backgroundPrimary: string; // Gradient start
+    backgroundSecondary: string; // Gradient end
+    textColor: string;
+  };
+  // Table styling
+  table: {
+    headerBackground: string;  // Table header row background
+    headerTextColor: string;   // Table header text color
+    borderColor: string;       // All table borders
+    bodyTextColor: string;     // Table body text
+  };
+  // Subtotal row at end of each category
+  subtotalRow: {
+    background: string;
+    borderColor: string;
+    textColor: string;
+  };
+  // Note rows
+  noteRow: {
+    background: string;
+    textColor: string;
+  };
+  // Final totals section
+  totals: {
+    finalTotalBackground: string;
+    finalTotalTextColor: string;
+  };
+}
+
+export interface PdfThemeType {
+  id: string;
+  companyId: string;
+  name: string;
+  configJson: PdfThemeConfig;
   isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;

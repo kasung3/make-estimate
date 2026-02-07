@@ -23,7 +23,7 @@ export default async function BoqEditorPage({
     redirect('/login');
   }
 
-  const [boq, customers, company, coverTemplates] = await Promise.all([
+  const [boq, customers, company, coverTemplates, pdfThemes] = await Promise.all([
     prisma.boq.findFirst({
       where: {
         id: params?.id,
@@ -32,6 +32,7 @@ export default async function BoqEditorPage({
       include: {
         customer: true,
         coverTemplate: true,
+        pdfTheme: true,
         categories: {
           include: { items: { orderBy: { sortOrder: 'asc' } } },
           orderBy: { sortOrder: 'asc' },
@@ -49,6 +50,10 @@ export default async function BoqEditorPage({
       where: { companyId },
       orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
     }),
+    prisma.pdfTheme.findMany({
+      where: { companyId },
+      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+    }),
   ]);
 
   if (!boq) {
@@ -61,6 +66,7 @@ export default async function BoqEditorPage({
       customers={JSON.parse(JSON.stringify(customers ?? []))}
       company={JSON.parse(JSON.stringify(company ?? {}))}
       coverTemplates={JSON.parse(JSON.stringify(coverTemplates ?? []))}
+      pdfThemes={JSON.parse(JSON.stringify(pdfThemes ?? []))}
     />
   );
 }

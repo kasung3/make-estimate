@@ -41,9 +41,25 @@ model Company {
   customers         Customer[]
   boqs              Boq[]
   pdfCoverTemplates PdfCoverTemplate[]
+  pdfThemes         PdfTheme[]
 }
 
 model PdfCoverTemplate {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  configJson Json
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  boqs       Boq[]
+
+  @@index([companyId])
+  @@index([companyId, isDefault])
+}
+
+model PdfTheme {
   id         String   @id @default(cuid())
   companyId  String
   name       String
@@ -89,6 +105,7 @@ model Boq {
   companyId       String
   customerId      String?
   coverTemplateId String?
+  pdfThemeId      String?
   projectName     String
   discountEnabled Boolean           @default(false)
   discountType    DiscountType      @default(percent)
@@ -101,6 +118,7 @@ model Boq {
   company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customer        Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
   coverTemplate   PdfCoverTemplate? @relation(fields: [coverTemplateId], references: [id], onDelete: SetNull)
+  pdfTheme        PdfTheme?         @relation(fields: [pdfThemeId], references: [id], onDelete: SetNull)
   categories      BoqCategory[]
 
   @@index([companyId])

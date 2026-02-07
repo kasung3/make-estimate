@@ -48,7 +48,7 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType } from '@/lib/types';
+import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType, PdfThemeType } from '@/lib/types';
 import {
   DndContext,
   closestCenter,
@@ -74,6 +74,7 @@ interface BoqEditorClientProps {
   customers: CustomerType[];
   company: CompanySettings;
   coverTemplates: PdfCoverTemplateType[];
+  pdfThemes: PdfThemeType[];
 }
 
 interface EditItemDialogData {
@@ -719,11 +720,13 @@ export function BoqEditorClient({
   customers: initialCustomers,
   company,
   coverTemplates: initialCoverTemplates,
+  pdfThemes: initialPdfThemes,
 }: BoqEditorClientProps) {
   const router = useRouter();
   const [boq, setBoq] = useState<BoqWithRelations>(initialBoq);
   const [customers, setCustomers] = useState(initialCustomers ?? []);
   const [coverTemplates, setCoverTemplates] = useState<PdfCoverTemplateType[]>(initialCoverTemplates ?? []);
+  const [pdfThemes, setPdfThemes] = useState<PdfThemeType[]>(initialPdfThemes ?? []);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set((initialBoq?.categories ?? []).map((c) => c?.id))
   );
@@ -1681,6 +1684,28 @@ export function BoqEditorClient({
                   {coverTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name} {template.isDefault && '(Default)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {/* PDF Theme Selector */}
+            {pdfThemes.length > 0 && (
+              <Select
+                value={boq?.pdfThemeId || 'default'}
+                onValueChange={(value) => {
+                  const newValue = value === 'default' ? null : value;
+                  updateBoq({ pdfThemeId: newValue });
+                }}
+              >
+                <SelectTrigger className="w-36 h-9">
+                  <SelectValue placeholder="Color Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default Theme</SelectItem>
+                  {pdfThemes.map((theme) => (
+                    <SelectItem key={theme.id} value={theme.id}>
+                      {theme.name} {theme.isDefault && '(Default)'}
                     </SelectItem>
                   ))}
                 </SelectContent>

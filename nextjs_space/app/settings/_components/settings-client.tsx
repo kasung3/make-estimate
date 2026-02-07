@@ -14,10 +14,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, DollarSign, Loader2, Save, Percent, FileText } from 'lucide-react';
+import { Building2, DollarSign, Loader2, Save, Percent, FileText, Palette } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanySettings } from '@/lib/types';
 import { CoverTemplateEditor } from './cover-template-editor';
+import { PdfThemeEditor } from './pdf-theme-editor';
 
 interface SettingsClientProps {
   company: CompanySettings;
@@ -202,8 +203,40 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
           </Button>
           </TabsContent>
 
-          <TabsContent value="pdf" className="space-y-6">
-            <CoverTemplateEditor companyName={company?.name ?? 'Company'} />
+          <TabsContent value="pdf" className="space-y-8">
+            <Card className="shadow-md border-0">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Cover Page Templates</CardTitle>
+                    <CardDescription>Customize cover page content and formatting</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CoverTemplateEditor companyName={company?.name ?? 'Company'} />
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-md border-0">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">BOQ Color Themes</CardTitle>
+                    <CardDescription>Customize colors and shading for BOQ pages</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <PdfThemeEditor companyName={company?.name ?? 'Company'} />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

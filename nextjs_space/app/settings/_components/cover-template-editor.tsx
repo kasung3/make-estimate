@@ -169,16 +169,15 @@ function SortableElementRow({
                 onCheckedChange={(checked) => onUpdate(element.id, { enabled: checked })}
               />
             </div>
-            {element.type === 'custom_text' && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-red-500"
-                onClick={() => onDelete(element.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-400 hover:text-red-500"
+              onClick={() => onDelete(element.id)}
+              title="Delete element"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
 
           {element.enabled && (
@@ -571,13 +570,40 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
 
   const handleAddElement = (type: CoverElement['type']) => {
     if (!editingConfig) return;
+    
+    // Set default text and styles based on element type
+    let text: string | undefined;
+    let style: CoverElement['style'] = { ...DEFAULT_ELEMENT_STYLE };
+    
+    switch (type) {
+      case 'project_name':
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 };
+        break;
+      case 'subtitle':
+        text = 'Bill of Quantities';
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 18, color: '#666666', marginBottom: 10 };
+        break;
+      case 'prepared_for':
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 18, color: '#666666', marginBottom: 40 };
+        break;
+      case 'company_name':
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 16, color: '#333333' };
+        break;
+      case 'prepared_by':
+        text = 'Prepared by: [Name]';
+        break;
+      case 'custom_text':
+        text = 'Custom text here';
+        break;
+    }
+    
     const newElement: CoverElement = {
       id: `${type}_${Date.now()}`,
       type,
       enabled: true,
-      text: type === 'custom_text' ? 'Custom text here' : type === 'prepared_by' ? 'Prepared by: [Name]' : undefined,
+      text,
       dateMode: type === 'date' ? 'today' : undefined,
-      style: { ...DEFAULT_ELEMENT_STYLE },
+      style,
     };
     setEditingConfig({
       ...editingConfig,
@@ -675,15 +701,15 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
 
       {/* Template Editor Dialog */}
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
             <DialogTitle>{editingTemplate ? 'Edit Template' : 'New Template'}</DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden">
-            <div className="grid grid-cols-2 gap-6 h-full">
-              {/* Editor Panel */}
-              <div className="overflow-y-auto pr-4 space-y-4">
+          <div className="flex-1 min-h-0 flex">
+            {/* Editor Panel */}
+            <div className="w-1/2 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                 <div className="space-y-2">
                   <Label>Template Name</Label>
                   <Input
@@ -731,6 +757,10 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
                         <span className="text-sm">Add Element</span>
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="project_name">Project Name</SelectItem>
+                        <SelectItem value="subtitle">Subtitle</SelectItem>
+                        <SelectItem value="prepared_for">Prepared For</SelectItem>
+                        <SelectItem value="company_name">Company Name</SelectItem>
                         <SelectItem value="logo">Logo</SelectItem>
                         <SelectItem value="date">Date</SelectItem>
                         <SelectItem value="prepared_by">Prepared By</SelectItem>
@@ -765,16 +795,18 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* Preview Panel */}
-              <div className="overflow-y-auto pl-4 border-l">
-                <div className="flex items-center justify-between mb-4">
-                  <Label>Preview</Label>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)}>
-                    <Eye className="w-4 h-4 mr-1" />
-                    {showPreview ? 'Hide' : 'Show'} Preview
-                  </Button>
-                </div>
+            {/* Preview Panel */}
+            <div className="w-1/2 border-l flex flex-col min-h-0">
+              <div className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0">
+                <Label>Preview</Label>
+                <Button variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)}>
+                  <Eye className="w-4 h-4 mr-1" />
+                  {showPreview ? 'Hide Preview' : 'Show Preview'}
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4">
                 {showPreview !== false && editingConfig && (
                   <CoverPreview
                     config={editingConfig}
@@ -787,7 +819,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
             </div>
           </div>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
             <Button variant="outline" onClick={() => setShowEditor(false)}>
               Cancel
             </Button>

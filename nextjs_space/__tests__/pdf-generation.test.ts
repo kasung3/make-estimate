@@ -355,3 +355,87 @@ describe('Rich Text Note Display Tests', () => {
     expect(result.hasFormatting).toBe(true);
   });
 });
+
+describe('Inline Note Editing Tests', () => {
+  // Helper: Check if HTML has formatting tags
+  const hasFormattingTags = (html: string): boolean => {
+    if (!html) return false;
+    const formattingPattern = /<(strong|b|em|i|u)(\s[^>]*)?>.*?<\/\1>/i;
+    return formattingPattern.test(html);
+  };
+
+  // Helper: Convert HTML to plain text
+  const htmlToPlainText = (html: string): string => {
+    if (!html) return '';
+    // Simplified version for testing
+    return html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<p>/gi, '')
+      .replace(/<[^>]+>/g, ''); // Strip all tags
+  };
+
+  // Helper: Convert plain text to safe HTML
+  const plainTextToSafeHtml = (text: string): string => {
+    if (!text) return '';
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    return escaped.replace(/\n/g, '<br>');
+  };
+
+  test('hasFormattingTags detects bold/italic/underline', () => {
+    expect(hasFormattingTags('<strong>Bold</strong>')).toBe(true);
+    expect(hasFormattingTags('<em>Italic</em>')).toBe(true);
+    expect(hasFormattingTags('<u>Underline</u>')).toBe(true);
+    expect(hasFormattingTags('<b>Bold alt</b>')).toBe(true);
+    expect(hasFormattingTags('<i>Italic alt</i>')).toBe(true);
+  });
+
+  test('hasFormattingTags returns false for plain text', () => {
+    expect(hasFormattingTags('Plain text')).toBe(false);
+    expect(hasFormattingTags('')).toBe(false);
+    expect(hasFormattingTags('Text with <br> only')).toBe(false);
+  });
+
+  test('htmlToPlainText strips formatting tags', () => {
+    expect(htmlToPlainText('<strong>Bold</strong> text')).toBe('Bold text');
+    expect(htmlToPlainText('<u><strong>Grade 25 Concrete</strong></u>')).toBe('Grade 25 Concrete');
+  });
+
+  test('htmlToPlainText converts br to newlines', () => {
+    expect(htmlToPlainText('Line 1<br>Line 2')).toBe('Line 1\nLine 2');
+    expect(htmlToPlainText('Line 1<br/>Line 2')).toBe('Line 1\nLine 2');
+  });
+
+  test('plainTextToSafeHtml escapes HTML entities', () => {
+    expect(plainTextToSafeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(plainTextToSafeHtml('A & B')).toBe('A &amp; B');
+  });
+
+  test('plainTextToSafeHtml converts newlines to br', () => {
+    expect(plainTextToSafeHtml('Line 1\nLine 2')).toBe('Line 1<br>Line 2');
+  });
+
+  test('Round-trip: plain text -> HTML -> plain text', () => {
+    const original = 'Line 1\nLine 2\nLine 3';
+    const html = plainTextToSafeHtml(original);
+    const result = htmlToPlainText(html);
+    expect(result).toBe(original);
+  });
+
+  test('Warning should trigger for formatted note', () => {
+    const formattedNote = '<strong><u>Grade 15 Concrete</u></strong>';
+    const shouldWarn = hasFormattingTags(formattedNote);
+    expect(shouldWarn).toBe(true);
+  });
+
+  test('No warning for plain note', () => {
+    const plainNote = 'All concrete work shall be in accordance with BS 8110';
+    const shouldWarn = hasFormattingTags(plainNote);
+    expect(shouldWarn).toBe(false);
+  });
+});

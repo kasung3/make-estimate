@@ -88,6 +88,12 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   // Track if the editor has been initialized for this dialog session
   const noteEditorInitializedRef = useRef<string | null>(null);
   
+  // Inline note editing state
+  const [inlineEditingNoteId, setInlineEditingNoteId] = useState<string | null>(null);
+  const [inlineEditText, setInlineEditText] = useState('');
+  const [showFormattingWarning, setShowFormattingWarning] = useState<{ noteId: string; itemId: string } | null>(null);
+  const inlineTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
   // Local input states to prevent typing lag
   const [localProjectName, setLocalProjectName] = useState(initialBoq?.projectName ?? '');
   const [localCategoryNames, setLocalCategoryNames] = useState<Record<string, string>>({});
@@ -141,6 +147,48 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     
     removeUnsafe(tempDiv);
     return tempDiv.innerHTML;
+  }, []);
+
+  // Check if HTML contains formatting tags (beyond basic structure)
+  const hasFormattingTags = useCallback((html: string): boolean => {
+    if (!html) return false;
+    // Check for formatting tags: strong, b, em, i, u
+    const formattingPattern = /<(strong|b|em|i|u)(\s[^>]*)?>.*?<\/\1>/i;
+    return formattingPattern.test(html);
+  }, []);
+
+  // Convert HTML to plain text (strip tags, convert breaks to newlines)
+  const htmlToPlainText = useCallback((html: string): string => {
+    if (!html) return '';
+    if (typeof window === 'undefined') return html;
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Replace <br> and </p> with newlines
+    tempDiv.innerHTML = tempDiv.innerHTML
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<p>/gi, '');
+    
+    // Get text content (strips all remaining tags)
+    return tempDiv.textContent || tempDiv.innerText || '';
+  }, []);
+
+  // Convert plain text to safe HTML (escape entities, convert newlines to <br>)
+  const plainTextToSafeHtml = useCallback((text: string): string => {
+    if (!text) return '';
+    
+    // Escape HTML entities
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    
+    // Convert newlines to <br>
+    return escaped.replace(/\n/g, '<br>');
   }, []);
 
   // Format number with thousand separators
@@ -460,6 +508,94 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
       toast.error('Failed to delete item');
     }
   };
+
+  // Inline note editing functions
+  const startInlineNoteEdit = useCallback((itemId: string, currentHtml: string) => {
+    // Check if note has formatting
+    if (hasFormattingTags(currentHtml)) {
+      // Show warning dialog
+      setShowFormattingWarning({ noteId: itemId, itemId });
+      return;
+    }
+    
+    // No formatting, start editing directly
+    const plainText = htmlToPlainText(currentHtml);
+    setInlineEditText(plainText);
+    setInlineEditingNoteId(itemId);
+    
+    // Focus textarea after render
+    setTimeout(() => {
+      inlineTextareaRef.current?.focus();
+    }, 50);
+  }, [hasFormattingTags, htmlToPlainText]);
+
+  const confirmInlineEditWithFormatting = useCallback(() => {
+    if (!showFormattingWarning) return;
+    
+    // Get the current note content
+    const itemId = showFormattingWarning.itemId;
+    let currentHtml = '';
+    
+    // Find the note content from localItemValues or boq state
+    const localNote = localItemValues[itemId]?.noteContent;
+    if (localNote !== undefined) {
+      currentHtml = localNote ?? '';
+    } else {
+      // Find from boq state
+      for (const cat of boq?.categories ?? []) {
+        const item = cat?.items?.find(i => i.id === itemId);
+        if (item) {
+          currentHtml = item.noteContent ?? '';
+          break;
+        }
+      }
+    }
+    
+    const plainText = htmlToPlainText(currentHtml);
+    setInlineEditText(plainText);
+    setInlineEditingNoteId(itemId);
+    setShowFormattingWarning(null);
+    
+    // Focus textarea after render
+    setTimeout(() => {
+      inlineTextareaRef.current?.focus();
+    }, 50);
+  }, [showFormattingWarning, localItemValues, boq?.categories, htmlToPlainText]);
+
+  const cancelInlineEdit = useCallback(() => {
+    setInlineEditingNoteId(null);
+    setInlineEditText('');
+  }, []);
+
+  const saveInlineEdit = useCallback(async (itemId: string) => {
+    // Convert plain text to safe HTML
+    const safeHtml = plainTextToSafeHtml(inlineEditText);
+    
+    // Save using existing update function
+    await handleUpdateItem(itemId, { noteContent: safeHtml }, true);
+    
+    // Exit inline edit mode
+    setInlineEditingNoteId(null);
+    setInlineEditText('');
+  }, [inlineEditText, plainTextToSafeHtml, handleUpdateItem]);
+
+  const handleInlineNoteKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => {
+    // Escape to cancel
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelInlineEdit();
+      return;
+    }
+    
+    // Ctrl/Cmd + Enter to save
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modifier = isMac ? e.metaKey : e.ctrlKey;
+    
+    if (modifier && e.key === 'Enter') {
+      e.preventDefault();
+      saveInlineEdit(itemId);
+    }
+  }, [cancelInlineEdit, saveInlineEdit]);
 
   // Track if drag was initiated from grip handle
   const [canDrag, setCanDrag] = useState(false);
@@ -1044,27 +1180,76 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                       <td colSpan={6} className="py-2 px-2">
                                         <div className="space-y-2">
                                           <div className="flex items-center space-x-2">
-                                            {/* Render formatted note content - read only display */}
-                                            <div 
-                                              className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm"
-                                            >
-                                              {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
-                                                <div 
-                                                  className="prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
-                                                  dangerouslySetInnerHTML={{ 
-                                                    __html: sanitizeHtml(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') 
-                                                  }}
+                                            {/* Inline edit mode or formatted preview */}
+                                            {inlineEditingNoteId === item.id ? (
+                                              // Inline edit mode - textarea
+                                              <div className="flex-1 space-y-1">
+                                                <Textarea
+                                                  ref={inlineTextareaRef}
+                                                  value={inlineEditText}
+                                                  onChange={(e) => setInlineEditText(e.target.value)}
+                                                  onBlur={() => saveInlineEdit(item.id)}
+                                                  onKeyDown={(e) => handleInlineNoteKeyDown(e, item.id)}
+                                                  className="min-h-[60px] text-sm resize-none"
+                                                  placeholder="Enter note text..."
                                                 />
-                                              ) : (
-                                                <span className="text-gray-400">Click expand to add note...</span>
-                                              )}
-                                            </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-xs text-gray-400">
+                                                    Basic edit (Ctrl+Enter to save, Esc to cancel). Use expand for formatting.
+                                                  </span>
+                                                  <div className="flex items-center space-x-1">
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                                                      onClick={(e) => {
+                                                        e.preventDefault();
+                                                        cancelInlineEdit();
+                                                      }}
+                                                    >
+                                                      <X className="w-3 h-3 mr-1" />
+                                                      Cancel
+                                                    </Button>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
+                                                      onClick={(e) => {
+                                                        e.preventDefault();
+                                                        saveInlineEdit(item.id);
+                                                      }}
+                                                    >
+                                                      <Check className="w-3 h-3 mr-1" />
+                                                      Save
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              // Preview mode - clickable to edit
+                                              <div 
+                                                className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-cyan-400 transition-colors"
+                                                onClick={() => startInlineNoteEdit(item.id, getItemValue(item.id, 'noteContent', item?.noteContent) ?? '')}
+                                                title="Click to edit (basic text). Use expand for formatting."
+                                              >
+                                                {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
+                                                  <div 
+                                                    className="prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
+                                                    dangerouslySetInnerHTML={{ 
+                                                      __html: sanitizeHtml(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') 
+                                                    }}
+                                                  />
+                                                ) : (
+                                                  <span className="text-gray-400">Click to add note...</span>
+                                                )}
+                                              </div>
+                                            )}
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              className="h-8 w-8 text-gray-400 hover:text-cyan-600"
+                                              className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
                                               onClick={() => openEditItemDialog(item, category.id, category.name ?? '', null)}
-                                              title="Edit note with formatting"
+                                              title="Edit note with formatting (B/I/U)"
                                             >
                                               <Expand className="w-4 h-4" />
                                             </Button>
@@ -1253,6 +1438,34 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
             </div>
           </div>
         </div>
+
+        {/* Formatting Warning Dialog */}
+        <Dialog open={!!showFormattingWarning} onOpenChange={(open) => !open && setShowFormattingWarning(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Note Has Formatting</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-gray-600 mb-4">
+                This note contains formatting (bold, italic, underline). Inline editing will convert it to plain text and <strong>remove all formatting</strong>.
+              </p>
+              <p className="text-sm text-gray-600">
+                To edit while keeping formatting, click <strong>Cancel</strong> and use the expand button (⤢) instead.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowFormattingWarning(null)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={confirmInlineEditWithFormatting}
+              >
+                Edit Anyway (Remove Formatting)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* New Customer Dialog */}
         <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>

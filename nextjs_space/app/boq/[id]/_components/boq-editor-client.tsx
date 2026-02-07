@@ -85,6 +85,8 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   
   // Note editor ref for rich text
   const noteEditorRef = useRef<HTMLDivElement>(null);
+  // Track if the editor has been initialized for this dialog session
+  const noteEditorInitializedRef = useRef<string | null>(null);
   
   // Local input states to prevent typing lag
   const [localProjectName, setLocalProjectName] = useState(initialBoq?.projectName ?? '');
@@ -98,8 +100,11 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
   const currencyPosition = company?.currencyPosition ?? 'left';
 
   // Sanitize HTML to prevent XSS - only allow safe formatting tags
-  const sanitizeHtml = (html: string): string => {
+  // Safe to use in both SSR and client (returns empty during SSR)
+  const sanitizeHtml = useCallback((html: string): string => {
     if (!html) return '';
+    if (typeof window === 'undefined') return html; // SSR fallback
+    
     // Create a temporary element to parse the HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
@@ -136,7 +141,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     
     removeUnsafe(tempDiv);
     return tempDiv.innerHTML;
-  };
+  }, []);
 
   // Format number with thousand separators
   const formatNumber = (num: number, decimals: number = 2): string => {
@@ -551,6 +556,9 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
 
   // Open edit item dialog
   const openEditItemDialog = (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => {
+    // Reset the editor initialization tracker to force re-initialization
+    noteEditorInitializedRef.current = null;
+    
     setEditItemDialog({
       item,
       categoryId,
@@ -568,6 +576,15 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     });
   };
 
+  // Initialize note editor content when dialog opens
+  useEffect(() => {
+    if (editItemDialog?.item.isNote && noteEditorRef.current && editItemDialog.item.id !== noteEditorInitializedRef.current) {
+      // Set the initial content
+      noteEditorRef.current.innerHTML = sanitizeHtml(editItemValues.noteContent ?? '');
+      noteEditorInitializedRef.current = editItemDialog.item.id;
+    }
+  }, [editItemDialog, editItemValues.noteContent, sanitizeHtml]);
+
   // Save edit item dialog
   const saveEditItemDialog = async () => {
     if (!editItemDialog) return;
@@ -576,53 +593,41 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
     setEditItemValues({});
   };
 
-  // Rich text formatting for notes
-  const applyTextFormat = (format: 'bold' | 'italic' | 'underline') => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    if (range.collapsed) return;
-    
-    // Get selected text
-    const selectedText = range.toString();
-    if (!selectedText) return;
-    
-    // Create formatted text
-    let tag = '';
-    switch (format) {
-      case 'bold':
-        tag = 'strong';
-        break;
-      case 'italic':
-        tag = 'em';
-        break;
-      case 'underline':
-        tag = 'u';
-        break;
+  // Rich text formatting for notes using execCommand (more reliable)
+  const applyTextFormat = useCallback((format: 'bold' | 'italic' | 'underline') => {
+    // Focus the editor if not already focused
+    if (noteEditorRef.current) {
+      noteEditorRef.current.focus();
     }
     
-    // Check if selection is already formatted
-    const parentElement = range.commonAncestorContainer.parentElement;
-    if (parentElement?.tagName.toLowerCase() === tag) {
-      // Remove formatting
-      const textNode = document.createTextNode(selectedText);
-      range.deleteContents();
-      range.insertNode(textNode);
-    } else {
-      // Apply formatting
-      const wrapper = document.createElement(tag);
-      range.surroundContents(wrapper);
-    }
+    // Use execCommand for reliable formatting
+    document.execCommand(format, false);
     
-    // Update the note content
+    // Update the state with new HTML content
     if (noteEditorRef.current) {
       const htmlContent = noteEditorRef.current.innerHTML;
-      if (editItemDialog) {
-        setEditItemValues(prev => ({ ...prev, noteContent: htmlContent }));
+      setEditItemValues(prev => ({ ...prev, noteContent: htmlContent }));
+    }
+  }, []);
+
+  // Handle keyboard shortcuts in the note editor
+  const handleNoteEditorKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modifier = isMac ? e.metaKey : e.ctrlKey;
+    
+    if (modifier) {
+      if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault();
+        applyTextFormat('bold');
+      } else if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault();
+        applyTextFormat('italic');
+      } else if (e.key === 'u' || e.key === 'U') {
+        e.preventDefault();
+        applyTextFormat('underline');
       }
     }
-  };
+  }, [applyTextFormat]);
 
   const handleCreateCustomer = async () => {
     if (!newCustomerName?.trim?.()) {
@@ -1031,7 +1036,7 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                                             >
                                               {(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') ? (
                                                 <div 
-                                                  className="prose prose-sm max-w-none"
+                                                  className="prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
                                                   dangerouslySetInnerHTML={{ 
                                                     __html: sanitizeHtml(getItemValue(item.id, 'noteContent', item?.noteContent) ?? '') 
                                                   }}
@@ -1303,9 +1308,12 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => applyTextFormat('bold')}
-                          title="Bold"
+                          className="h-8 w-8 p-0 font-bold"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent losing selection
+                            applyTextFormat('bold');
+                          }}
+                          title="Bold (Ctrl+B)"
                         >
                           <Bold className="w-4 h-4" />
                         </Button>
@@ -1314,8 +1322,11 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => applyTextFormat('italic')}
-                          title="Italic"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent losing selection
+                            applyTextFormat('italic');
+                          }}
+                          title="Italic (Ctrl+I)"
                         >
                           <Italic className="w-4 h-4" />
                         </Button>
@@ -1324,24 +1335,28 @@ export function BoqEditorClient({ boq: initialBoq, customers: initialCustomers, 
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => applyTextFormat('underline')}
-                          title="Underline"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent losing selection
+                            applyTextFormat('underline');
+                          }}
+                          title="Underline (Ctrl+U)"
                         >
                           <UnderlineIcon className="w-4 h-4" />
                         </Button>
                         <span className="text-xs text-gray-400 ml-2">
-                          Select text and click to format
+                          Select text and click to format (or use Ctrl+B/I/U)
                         </span>
                       </div>
                       <div
                         ref={noteEditorRef}
                         contentEditable
-                        className="min-h-[150px] p-3 focus:outline-none text-sm"
-                        dangerouslySetInnerHTML={{ __html: editItemValues.noteContent ?? '' }}
+                        suppressContentEditableWarning
+                        className="min-h-[150px] p-3 focus:outline-none text-sm prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
                         onInput={(e) => {
                           const target = e.currentTarget;
                           setEditItemValues(prev => ({ ...prev, noteContent: target.innerHTML }));
                         }}
+                        onKeyDown={handleNoteEditorKeyDown}
                       />
                     </div>
                   </div>

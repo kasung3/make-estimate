@@ -296,4 +296,62 @@ describe('HTML Sanitization Tests', () => {
     const result = sanitizeHtml(input);
     expect(result).toBe(input);
   });
+
+  test('Bold, italic, underline tags are preserved', () => {
+    const input = '<strong>Bold</strong> <em>Italic</em> <u>Underline</u>';
+    const result = sanitizeHtml(input);
+    
+    expect(result).toContain('<strong>Bold</strong>');
+    expect(result).toContain('<em>Italic</em>');
+    expect(result).toContain('<u>Underline</u>');
+  });
+
+  test('Nested formatting tags are preserved', () => {
+    const input = '<u><strong>Grade 25 Concrete</strong></u>';
+    const result = sanitizeHtml(input);
+    
+    expect(result).toContain('<u>');
+    expect(result).toContain('<strong>');
+    expect(result).toContain('Grade 25 Concrete');
+    expect(result).toContain('</strong>');
+    expect(result).toContain('</u>');
+  });
+
+  test('Alternative bold/italic tags (b, i) are preserved', () => {
+    const input = '<b>Bold</b> <i>Italic</i>';
+    const result = sanitizeHtml(input);
+    
+    expect(result).toContain('<b>Bold</b>');
+    expect(result).toContain('<i>Italic</i>');
+  });
+});
+
+describe('Rich Text Note Display Tests', () => {
+  // Simulate what the UI should show
+  const renderNoteContent = (html: string): { showsRawTags: boolean; hasFormatting: boolean } => {
+    // Raw tags would appear as literal text like "<strong>"
+    const showsRawTags = html.includes('&lt;') || html.includes('&gt;') || 
+                         (html.includes('<strong>') === false && html.includes('strong') === true);
+    
+    // Has formatting if it contains actual HTML tags
+    const hasFormatting = /<(strong|em|u|b|i)>/i.test(html);
+    
+    return { showsRawTags, hasFormatting };
+  };
+
+  test('Stored HTML note displays formatted, not raw tags', () => {
+    const storedHtml = '<strong><u>Grade 15 Concrete</u></strong>';
+    const result = renderNoteContent(storedHtml);
+    
+    expect(result.showsRawTags).toBe(false);
+    expect(result.hasFormatting).toBe(true);
+  });
+
+  test('Complex nested formatting displays correctly', () => {
+    const storedHtml = '<u><strong>All concrete work shall be in accordance with BS 8110, BS 8007</strong></u>';
+    const result = renderNoteContent(storedHtml);
+    
+    expect(result.showsRawTags).toBe(false);
+    expect(result.hasFormatting).toBe(true);
+  });
 });

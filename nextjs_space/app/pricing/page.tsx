@@ -115,8 +115,8 @@ function PricingContent() {
         throw new Error('Invalid checkout URL received from server');
       }
 
-      // Redirect to Stripe checkout (use top window for iframe support)
-      (window.top || window).location.href = data.url;
+      // Open Stripe checkout in new window (required for sandboxed iframes)
+      window.open(data.url, '_blank');
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start checkout. Please try again.');

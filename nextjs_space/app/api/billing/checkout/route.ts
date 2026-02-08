@@ -181,11 +181,38 @@ export async function POST(request: Request) {
 
     const checkoutSession = await stripe.checkout.sessions.create(checkoutParams);
 
+    // Validate that we got a valid checkout URL
+    if (!checkoutSession.url) {
+      console.error('Stripe returned session without URL:', checkoutSession.id);
+      return NextResponse.json(
+        { error: 'Failed to get checkout URL from Stripe' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Checkout session created:', {
+      sessionId: checkoutSession.id,
+      companyId,
+      planKey,
+      hasUrl: !!checkoutSession.url,
+    });
+
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error('Checkout error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to create checkout session';
+    if (error instanceof Error) {
+      if (error.message.includes('No such price')) {
+        errorMessage = 'Invalid price configuration. Please contact support.';
+      } else if (error.message.includes('api_key')) {
+        errorMessage = 'Payment system configuration error. Please contact support.';
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

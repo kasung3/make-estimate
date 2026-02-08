@@ -109,10 +109,17 @@ function PricingContent() {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
+      // Validate that we got a valid Stripe URL
+      if (!data.url || typeof data.url !== 'string' || !data.url.startsWith('https://')) {
+        console.error('Invalid checkout URL received:', data.url);
+        throw new Error('Invalid checkout URL received from server');
+      }
+
+      // Redirect to Stripe checkout
       window.location.href = data.url;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to start checkout');
-    } finally {
+      console.error('Checkout error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to start checkout. Please try again.');
       setCheckoutLoading(null);
     }
   };

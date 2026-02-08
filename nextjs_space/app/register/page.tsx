@@ -12,9 +12,12 @@ import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession() || {};
@@ -30,6 +33,25 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          companyName,
+          firstName,
+          lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.error || 'Failed to create account');
+        return;
+      }
+
       const result = await signIn('credentials', {
         email,
         password,
@@ -37,8 +59,10 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        toast.error('Invalid email or password');
+        toast.error('Account created but failed to sign in');
+        router.replace('/login');
       } else {
+        toast.success('Account created successfully!');
         router.replace('/app/dashboard');
       }
     } catch (error) {
@@ -69,20 +93,55 @@ export default function LoginPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
-              Welcome Back
+              Create Your Account
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              Sign in to your MakeEstimate account
+              Start creating professional BOQs in minutes
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="John"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name</Label>
+                <Input
+                  id="companyName"
+                  type="text"
+                  placeholder="Enter your company name"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="john@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -93,27 +152,28 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Create a password (min 6 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    Creating account...
                   </>
                 ) : (
-                  'Sign In'
+                  'Create Account'
                 )}
               </Button>
             </form>
             <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don&apos;t have an account? </span>
-              <Link href="/register" className="text-primary font-medium hover:underline">
-                Sign up
+              <span className="text-muted-foreground">Already have an account? </span>
+              <Link href="/login" className="text-primary font-medium hover:underline">
+                Sign in
               </Link>
             </div>
           </CardContent>

@@ -6,7 +6,7 @@ import { prisma } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, companyName } = await request.json();
+    const { email, password, companyName, firstName, lastName } = await request.json();
 
     if (!email || !password || !companyName) {
       return NextResponse.json(
@@ -28,11 +28,17 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Build full name from firstName and lastName, fallback to email prefix
+    let name = email.split('@')[0];
+    if (firstName || lastName) {
+      name = [firstName, lastName].filter(Boolean).join(' ');
+    }
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        name: email.split('@')[0],
+        name,
       },
     });
 

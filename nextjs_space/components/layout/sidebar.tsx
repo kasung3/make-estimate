@@ -17,9 +17,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
+  { name: 'Customers', href: '/app/customers', icon: Users },
+  { name: 'Settings', href: '/app/settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -36,7 +36,7 @@ export function Sidebar() {
     >
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center space-x-3">
+          <Link href="/app/dashboard" className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-md">
               <FileText className="w-5 h-5 text-white" />
             </div>

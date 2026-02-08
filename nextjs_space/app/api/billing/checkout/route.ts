@@ -147,8 +147,8 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/dashboard?billing=success`,
-      cancel_url: `${baseUrl}/dashboard?billing=canceled`,
+      success_url: `${baseUrl}/app/dashboard?billing=success`,
+      cancel_url: `${baseUrl}/pricing?checkout=canceled`,
       metadata: {
         companyId,
         planKey,

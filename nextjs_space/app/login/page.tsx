@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,18 +12,21 @@ import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession() || {};
+
+  const nextUrl = searchParams?.get('next') || '/app/dashboard';
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/app/dashboard');
+      router.replace(nextUrl);
     }
-  }, [status, router]);
+  }, [status, router, nextUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +42,7 @@ export default function LoginPage() {
       if (result?.error) {
         toast.error('Invalid email or password');
       } else {
-        router.replace('/app/dashboard');
+        router.replace(nextUrl);
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.');
@@ -120,5 +123,17 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-teal-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

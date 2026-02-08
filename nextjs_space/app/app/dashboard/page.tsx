@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth-options';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { DashboardClient } from './_components/dashboard-client';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,12 @@ export default async function DashboardPage() {
 
   if (!companyId) {
     redirect('/login');
+  }
+
+  // Check subscription status - redirect to pricing if not subscribed
+  const billingStatus = await getCompanyBillingStatus(companyId);
+  if (!billingStatus.hasActiveSubscription) {
+    redirect('/pricing?subscription=required');
   }
 
   const [boqs, customers, company] = await Promise.all([

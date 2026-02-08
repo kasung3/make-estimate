@@ -38,7 +38,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
-import { Paywall } from '@/components/paywall';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -275,22 +274,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
     }
   };
 
-  // Show paywall if no active subscription
-  if (!billingLoading && billingStatus && !billingStatus.hasActiveSubscription) {
-    return (
-      <AppLayout>
-        <Paywall
-          title="Subscribe to Get Started"
-          description="Choose a plan to start creating professional BOQs and estimates"
-        />
-      </AppLayout>
-    );
-  }
-
-  // Show limit reached paywall
-  if (!billingLoading && billingStatus && billingStatus.hasActiveSubscription && !billingStatus.canCreateBoq && billingStatus.boqLimit !== null) {
-    // Still allow viewing existing BOQs but show banner
-  }
+  // Note: Subscription check is done server-side in page.tsx, redirects to /pricing if needed
 
   const usagePercentage = billingStatus?.boqLimit 
     ? Math.min(100, (billingStatus.boqsUsedThisPeriod / billingStatus.boqLimit) * 100)

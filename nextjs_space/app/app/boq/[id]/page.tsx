@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth-options';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { BoqEditorClient } from './_components/boq-editor-client';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,12 @@ export default async function BoqEditorPage({
 
   if (!companyId) {
     redirect('/login');
+  }
+
+  // Check subscription status - redirect to pricing if not subscribed
+  const billingStatus = await getCompanyBillingStatus(companyId);
+  if (!billingStatus.hasActiveSubscription) {
+    redirect('/pricing?subscription=required');
   }
 
   const [boq, customers, company, coverTemplates, pdfThemes] = await Promise.all([

@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth-options';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { CustomersClient } from './_components/customers-client';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,12 @@ export default async function CustomersPage() {
 
   if (!companyId) {
     redirect('/login');
+  }
+
+  // Check subscription status - redirect to pricing if not subscribed
+  const billingStatus = await getCompanyBillingStatus(companyId);
+  if (!billingStatus.hasActiveSubscription) {
+    redirect('/pricing?subscription=required');
   }
 
   const customers = await prisma.customer.findMany({

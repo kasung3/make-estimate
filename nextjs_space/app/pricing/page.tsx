@@ -1,16 +1,23 @@
 'use client';
 
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { MarketingFooter } from '@/components/marketing/footer';
-import { Check, Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Check, Sparkles, Loader2, Tag, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 const plans = [
   {
+    key: 'starter',
     name: 'Starter',
     price: '$19',
     period: '/month',
@@ -23,10 +30,10 @@ const plans = [
       'Custom themes & templates',
       'Notes & specifications',
     ],
-    cta: 'Get Started',
     popular: false,
   },
   {
+    key: 'business',
     name: 'Business',
     price: '$39',
     period: '/month',
@@ -40,7 +47,6 @@ const plans = [
       'Notes & specifications',
       'Priority support',
     ],
-    cta: 'Get Started',
     popular: true,
   },
 ];
@@ -57,8 +63,87 @@ const comparisonFeatures = [
   { name: 'Priority Support', starter: '—', business: '✓' },
 ];
 
-export default function PricingPage() {
-  const { data: session } = useSession() || {};
+function PricingContent() {
+  const { data: session, status } = useSession() || {};
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoValidating, setPromoValidating] = useState(false);
+  const [promoResult, setPromoResult] = useState<{ valid: boolean; message: string } | null>(null);
+
+  const subscriptionRequired = searchParams?.get('subscription') === 'required';
+  const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
+
+  // Show toasts for URL params
+  useEffect(() => {
+    if (checkoutCanceled) {
+      toast.error('Checkout was canceled. Select a plan to continue.');
+      // Clear the URL parameter
+      window.history.replaceState({}, '', '/pricing');
+    }
+  }, [checkoutCanceled]);
+
+  const handlePlanSelect = async (planKey: string) => {
+    // If not logged in, go to register with plan
+    if (status !== 'authenticated') {
+      router.push(`/register?plan=${planKey}`);
+      return;
+    }
+
+    // If logged in, start checkout directly
+    setCheckoutLoading(planKey);
+    try {
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planKey,
+          promoCode: promoCode || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const validatePromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoResult(null);
+      return;
+    }
+
+    setPromoValidating(true);
+    try {
+      const response = await fetch('/api/billing/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode }),
+      });
+
+      const data = await response.json();
+      setPromoResult({
+        valid: response.ok,
+        message: data.message || (response.ok ? 'Valid promo code!' : 'Invalid promo code'),
+      });
+    } catch (error) {
+      setPromoResult({ valid: false, message: 'Failed to validate promo code' });
+    } finally {
+      setPromoValidating(false);
+    }
+  };
+
+  const isLoggedIn = status === 'authenticated';
 
   return (
     <div className="min-h-screen bg-white">
@@ -86,13 +171,65 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Alert for subscription required */}
+      {(subscriptionRequired || (isLoggedIn && checkoutCanceled)) && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-4">
+          <Alert variant="default" className="bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              {subscriptionRequired
+                ? 'Please select a plan to access your dashboard and start creating BOQs.'
+                : 'Your checkout was canceled. Select a plan to continue.'}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* Promo Code Section (only for logged in users) */}
+      {isLoggedIn && (
+        <section className="py-4 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md mx-auto">
+            <div className="space-y-2">
+              <Label htmlFor="promoCode" className="flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Have a promo code?
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="promoCode"
+                  value={promoCode}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value.toUpperCase());
+                    setPromoResult(null);
+                  }}
+                  placeholder="Enter promo code"
+                  className="uppercase"
+                />
+                <Button
+                  variant="outline"
+                  onClick={validatePromoCode}
+                  disabled={promoValidating || !promoCode.trim()}
+                >
+                  {promoValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                </Button>
+              </div>
+              {promoResult && (
+                <p className={`text-sm ${promoResult.valid ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {promoResult.message}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Pricing Cards */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 -mt-8">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {plans.map((plan, index) => (
               <motion.div
-                key={plan.name}
+                key={plan.key}
                 className={cn(
                   'relative p-8 rounded-2xl border-2 transition-shadow',
                   plan.popular
@@ -131,49 +268,44 @@ export default function PricingPage() {
                 </ul>
 
                 <div className="mt-8">
-                  {session ? (
-                    <Link href="/app/settings?tab=billing">
-                      <Button
-                        className={cn(
-                          'w-full py-6',
-                          plan.popular
-                            ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
-                            : ''
-                        )}
-                        variant={plan.popular ? 'default' : 'outline'}
-                      >
-                        Choose Plan
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href="/register">
-                      <Button
-                        className={cn(
-                          'w-full py-6',
-                          plan.popular
-                            ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
-                            : ''
-                        )}
-                        variant={plan.popular ? 'default' : 'outline'}
-                      >
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  )}
+                  <Button
+                    className={cn(
+                      'w-full py-6',
+                      plan.popular
+                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
+                        : ''
+                    )}
+                    variant={plan.popular ? 'default' : 'outline'}
+                    onClick={() => handlePlanSelect(plan.key)}
+                    disabled={checkoutLoading === plan.key}
+                  >
+                    {checkoutLoading === plan.key ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : isLoggedIn ? (
+                      'Continue to Checkout'
+                    ) : (
+                      'Get Started'
+                    )}
+                  </Button>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Coupon Note */}
-          <motion.p
-            className="mt-8 text-center text-gray-500"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            Have a coupon? You can apply it at checkout.
-          </motion.p>
+          {/* Coupon Note for logged out users */}
+          {!isLoggedIn && (
+            <motion.p
+              className="mt-8 text-center text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              Have a coupon? You can apply it at checkout.
+            </motion.p>
+          )}
         </div>
       </section>
 
@@ -231,5 +363,17 @@ export default function PricingPage() {
 
       <MarketingFooter />
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-teal-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <PricingContent />
+    </Suspense>
   );
 }

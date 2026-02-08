@@ -12,8 +12,9 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
@@ -26,6 +27,15 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession() || {};
   const [collapsed, setCollapsed] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if user is platform admin
+    fetch('/api/admin/check')
+      .then(res => res.json())
+      .then(data => setIsPlatformAdmin(data.isAdmin))
+      .catch(() => setIsPlatformAdmin(false));
+  }, [session?.user?.email]);
 
   return (
     <div
@@ -80,6 +90,20 @@ export function Sidebar() {
             </Link>
           );
         })}
+        {isPlatformAdmin && (
+          <Link
+            href="/app/admin"
+            className={cn(
+              'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
+              pathname === '/app/admin'
+                ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium'
+                : 'text-amber-600 hover:bg-amber-50'
+            )}
+          >
+            <Shield className={cn('h-5 w-5', pathname === '/app/admin' ? 'text-amber-600' : '')} />
+            {!collapsed && <span>Admin</span>}
+          </Link>
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-200">

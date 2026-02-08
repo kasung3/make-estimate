@@ -72,7 +72,8 @@ function RegisterForm() {
         throw new Error('Invalid checkout URL received from server');
       }
 
-      window.location.href = data.url;
+      // Use top window for redirect (required for Stripe in iframes)
+      (window.top || window).location.href = data.url;
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start checkout. Please try again.');

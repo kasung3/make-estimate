@@ -93,8 +93,8 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      // Redirect to Stripe Checkout (use top window for iframe support)
+      (window.top || window).location.href = data.url;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to start checkout');
     } finally {
@@ -120,8 +120,8 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
         throw new Error(data.error || 'Failed to open billing portal');
       }
 
-      // Redirect to Stripe Customer Portal
-      window.location.href = data.url;
+      // Redirect to Stripe Customer Portal (use top window for iframe support)
+      (window.top || window).location.href = data.url;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to open billing portal');
     } finally {

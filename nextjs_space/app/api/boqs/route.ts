@@ -54,12 +54,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
 
-    // Get company's default VAT percentage
-    const company = await prisma.company.findUnique({
-      where: { id: companyId },
-      select: { defaultVatPercent: true },
-    });
+    // Check company billing status and quota
+    const [company, billing] = await Promise.all([
+      prisma.company.findUnique({
+        where: { id: companyId },
+        select: { defaultVatPercent: true, isBlocked: true },
+      }),
+      prisma.companyBilling.findUnique({
+        where: { companyId },
+      }),
+    ]);
 
+    // Check if company is blocked
+    if (company?.isBlocked) {
+      return NextResponse.json(
+        { error: 'Your company has been blocked. Please contact support.' },
+        { status: 403 }
+      );
+    }
+
+    // Check subscription status
+    if (!billing || !['active', 'trialing'].includes(billing.status || '')) {
+      return NextResponse.json(
+        { error: 'Active subscription required to create BOQs' },
+        { status: 403 }
+      );
+    }
+
+    // Check quota for Starter plan
+    if (billing.planKey === 'starter' && billing.currentPeriodStart && billing.currentPeriodEnd) {
+      const boqsThisPeriod = await prisma.boqCreationEvent.count({
+        where: {
+          companyId,
+          createdAt: {
+            gte: billing.currentPeriodStart,
+            lte: billing.currentPeriodEnd,
+          },
+        },
+      });
+
+      if (boqsThisPeriod >= 10) {
+        return NextResponse.json(
+          { error: 'You have reached your BOQ limit for this billing period. Please upgrade to Business plan.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Create the BOQ
     const boq = await prisma.boq.create({
       data: {
         companyId,
@@ -80,6 +122,14 @@ export async function POST(request: Request) {
         categories: {
           include: { items: true },
         },
+      },
+    });
+
+    // Record BOQ creation event for quota tracking
+    await prisma.boqCreationEvent.create({
+      data: {
+        companyId,
+        boqId: boq.id,
       },
     });
 

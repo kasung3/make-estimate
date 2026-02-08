@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,20 +15,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, DollarSign, Loader2, Save, Percent, FileText, Palette } from 'lucide-react';
+import { Building2, DollarSign, Loader2, Save, Percent, FileText, Palette, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanySettings } from '@/lib/types';
 import { CoverTemplateEditor } from './cover-template-editor';
 import { PdfThemeEditor } from './pdf-theme-editor';
+import { BillingSection } from './billing-section';
 
 interface SettingsClientProps {
   company: CompanySettings;
+  isAdmin: boolean;
 }
 
-export function SettingsClient({ company: initialCompany }: SettingsClientProps) {
+export function SettingsClient({ company: initialCompany, isAdmin }: SettingsClientProps) {
+  const searchParams = useSearchParams();
   const [company, setCompany] = useState<CompanySettings>(initialCompany);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('company');
+
+  // Handle tab from URL params
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && ['company', 'pdf', 'billing'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -64,7 +76,7 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="company" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Company
@@ -72,6 +84,10 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
             <TabsTrigger value="pdf" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               PDF Templates
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Billing
             </TabsTrigger>
           </TabsList>
 
@@ -237,6 +253,10 @@ export function SettingsClient({ company: initialCompany }: SettingsClientProps)
                 <PdfThemeEditor companyName={company?.name ?? 'Company'} />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <BillingSection isAdmin={isAdmin} />
           </TabsContent>
         </Tabs>
       </div>

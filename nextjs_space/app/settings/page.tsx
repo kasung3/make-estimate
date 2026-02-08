@@ -14,18 +14,31 @@ export default async function SettingsPage() {
   }
 
   const companyId = (session.user as any)?.companyId;
+  const userId = (session.user as any)?.id;
 
   if (!companyId) {
     redirect('/login');
   }
 
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
-  });
+  const [company, membership] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: companyId },
+    }),
+    prisma.companyMembership.findFirst({
+      where: { userId, companyId },
+    }),
+  ]);
 
   if (!company) {
     redirect('/dashboard');
   }
 
-  return <SettingsClient company={JSON.parse(JSON.stringify(company))} />;
+  const isAdmin = membership?.role === 'ADMIN';
+
+  return (
+    <SettingsClient 
+      company={JSON.parse(JSON.stringify(company))} 
+      isAdmin={isAdmin}
+    />
+  );
 }

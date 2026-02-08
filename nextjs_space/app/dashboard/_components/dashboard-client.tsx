@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -31,9 +33,12 @@ import {
   TrendingUp,
   Loader2,
   Trash2,
+  CreditCard,
+  AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BoqWithRelations, CustomerType, CompanySettings } from '@/lib/types';
+import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
+import { Paywall } from '@/components/paywall';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -43,6 +48,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers, company }: DashboardClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [boqs, setBoqs] = useState(initialBoqs ?? []);
   const [customers, setCustomers] = useState(initialCustomers ?? []);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,9 +60,42 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [billingLoading, setBillingLoading] = useState(true);
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
+
+  // Handle billing success/canceled toast
+  useEffect(() => {
+    const billing = searchParams?.get('billing');
+    if (billing === 'success') {
+      toast.success('Subscription activated! You can now create BOQs.');
+      // Clear the URL parameter
+      window.history.replaceState({}, '', '/dashboard');
+    } else if (billing === 'canceled') {
+      toast.error('Checkout was canceled');
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [searchParams]);
+
+  // Fetch billing status on mount
+  useEffect(() => {
+    const fetchBillingStatus = async () => {
+      try {
+        const response = await fetch('/api/billing/status');
+        if (response.ok) {
+          const data = await response.json();
+          setBillingStatus(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch billing status:', error);
+      } finally {
+        setBillingLoading(false);
+      }
+    };
+    fetchBillingStatus();
+  }, []);
 
   // Prefetch top BOQs on mount for faster navigation
   useEffect(() => {
@@ -123,6 +162,19 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const totalValue = (boqs ?? []).reduce((sum, boq) => sum + calculateBoqTotal(boq), 0);
 
   const handleCreateBoq = async () => {
+    // Check billing status first
+    if (!billingStatus?.hasActiveSubscription) {
+      toast.error('Please subscribe to a plan to create BOQs');
+      router.push('/settings?tab=billing');
+      return;
+    }
+
+    if (!billingStatus?.canCreateBoq) {
+      toast.error(`You've reached your BOQ limit for this period. Upgrade to continue.`);
+      router.push('/settings?tab=billing');
+      return;
+    }
+
     if (!newProjectName?.trim?.()) {
       toast.error('Please enter a project name');
       return;
@@ -145,6 +197,13 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
         toast.error(data?.error || 'Failed to create BOQ');
         return;
       }
+
+      // Update billing status (refresh usage count)
+      setBillingStatus(prev => prev ? {
+        ...prev,
+        boqsUsedThisPeriod: (prev.boqsUsedThisPeriod ?? 0) + 1,
+        canCreateBoq: prev.boqLimit === null || (prev.boqsUsedThisPeriod + 1) < prev.boqLimit,
+      } : null);
 
       setShowNewBoqDialog(false);
       setNewProjectName('');
@@ -216,6 +275,27 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
     }
   };
 
+  // Show paywall if no active subscription
+  if (!billingLoading && billingStatus && !billingStatus.hasActiveSubscription) {
+    return (
+      <AppLayout>
+        <Paywall
+          title="Subscribe to Get Started"
+          description="Choose a plan to start creating professional BOQs and estimates"
+        />
+      </AppLayout>
+    );
+  }
+
+  // Show limit reached paywall
+  if (!billingLoading && billingStatus && billingStatus.hasActiveSubscription && !billingStatus.canCreateBoq && billingStatus.boqLimit !== null) {
+    // Still allow viewing existing BOQs but show banner
+  }
+
+  const usagePercentage = billingStatus?.boqLimit 
+    ? Math.min(100, (billingStatus.boqsUsedThisPeriod / billingStatus.boqLimit) * 100)
+    : 0;
+
   return (
     <AppLayout>
       <div className="p-6 max-w-7xl mx-auto">
@@ -224,11 +304,68 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-500 mt-1">Manage your BOQs and estimates</p>
           </div>
-          <Button onClick={() => setShowNewBoqDialog(true)} className="shadow-md">
+          <Button 
+            onClick={() => setShowNewBoqDialog(true)} 
+            className="shadow-md"
+            disabled={!billingStatus?.canCreateBoq}
+          >
             <Plus className="w-4 h-4 mr-2" />
             New BOQ
           </Button>
         </div>
+
+        {/* Billing Status Banner */}
+        {billingStatus && billingStatus.hasActiveSubscription && billingStatus.boqLimit !== null && (
+          <Card className={`mb-6 border-0 shadow-md ${
+            !billingStatus.canCreateBoq 
+              ? 'bg-gradient-to-br from-amber-50 to-orange-50' 
+              : 'bg-gradient-to-br from-violet-50 to-purple-50'
+          }`}>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {!billingStatus.canCreateBoq ? (
+                    <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+                      <AlertTriangle className="w-5 h-5 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {billingStatus.boqsUsedThisPeriod} of {billingStatus.boqLimit} BOQs used
+                      </p>
+                      <Badge variant={billingStatus.canCreateBoq ? 'secondary' : 'destructive'}>
+                        {billingStatus.planInfo?.name || 'Starter'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {!billingStatus.canCreateBoq 
+                        ? 'Upgrade to Business for unlimited BOQs'
+                        : `${billingStatus.boqLimit - billingStatus.boqsUsedThisPeriod} BOQs remaining this period`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-32 hidden sm:block">
+                    <Progress value={usagePercentage} className="h-2" />
+                  </div>
+                  {!billingStatus.canCreateBoq && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => router.push('/settings?tab=billing')}
+                    >
+                      Upgrade
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">

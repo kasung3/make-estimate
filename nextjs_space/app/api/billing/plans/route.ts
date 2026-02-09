@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const plans = await getActivePlans();
 
-    // Convert to BillingPlanInfo format with new 3-plan model fields
+    // Convert to BillingPlanInfo format with all plan fields
     const planInfos: BillingPlanInfo[] = plans.map((plan) => ({
       id: plan.id,
       planKey: plan.planKey,
@@ -18,10 +18,13 @@ export async function GET() {
       priceAnnualUsdCents: plan.priceAnnualUsdCents,
       seatModel: plan.seatModel,
       boqLimitPerPeriod: plan.boqLimitPerPeriod,
+      boqItemsLimit: plan.boqItemsLimit,
       boqTemplatesLimit: plan.boqTemplatesLimit,
       coverTemplatesLimit: plan.coverTemplatesLimit,
       logoUploadAllowed: plan.logoUploadAllowed,
       sharingAllowed: plan.sharingAllowed,
+      watermarkEnabled: plan.watermarkEnabled,
+      watermarkText: plan.watermarkText,
       maxActiveMembers: plan.maxActiveMembers,
       features: (plan.features as string[]) || [],
       isMostPopular: plan.isMostPopular,

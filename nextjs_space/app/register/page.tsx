@@ -12,16 +12,27 @@ import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2, Check, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const PLANS: Record<string, { name: string; price: string; features: string[] }> = {
+const PLANS: Record<string, { name: string; price: string; features: string[]; isFree?: boolean }> = {
+  free: {
+    name: 'Free Forever',
+    price: '$0',
+    features: ['Unlimited BOQ creations', '15 items per BOQ', 'PDF exports with watermark'],
+    isFree: true,
+  },
   starter: {
     name: 'Starter',
     price: '$19/month',
-    features: ['10 BOQ creations per month', 'PDF export with themes', 'Custom cover pages'],
+    features: ['5 BOQ creations per month', 'PDF export with themes', 'Custom cover pages'],
+  },
+  advance: {
+    name: 'Advance',
+    price: '$39/month',
+    features: ['Unlimited BOQ creations', 'PDF export with themes', '10 BOQ templates'],
   },
   business: {
     name: 'Business',
-    price: '$39/month',
-    features: ['Unlimited BOQ creations', 'PDF export with themes', 'Custom cover pages', 'Priority support'],
+    price: '$49/user/month',
+    features: ['Unlimited everything', 'Team collaboration', 'Priority support'],
   },
 };
 
@@ -64,6 +75,22 @@ function RegisterForm() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Handle Free plan activation (no Stripe redirect needed)
+      if (data.freePlanActivated) {
+        toast.success('Free plan activated! Redirecting...');
+        router.push(data.url);
+        return;
+      }
+
+      // Handle grant-based access (no Stripe redirect)
+      if (data.grantCreated) {
+        toast.success(data.grantType === 'trial' 
+          ? 'Trial activated! Redirecting...'
+          : 'Access granted! Redirecting...');
+        router.push(data.url);
+        return;
       }
 
       // Validate that we got a valid Stripe URL
@@ -179,7 +206,9 @@ function RegisterForm() {
                 </div>
                 <div className="mt-3 pt-3 border-t border-cyan-200">
                   <p className="text-xs text-gray-500">
-                    You&apos;ll be taken to secure payment after creating your account.
+                    {planInfo.isFree 
+                      ? 'No payment required. Start using MakeEstimate immediately after signup.'
+                      : "You'll be taken to secure payment after creating your account."}
                   </p>
                 </div>
               </CardContent>

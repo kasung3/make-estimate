@@ -35,6 +35,7 @@ enum SubscriptionStatus {
 }
 
 enum PlanKey {
+  free
   starter
   advance
   business
@@ -233,16 +234,19 @@ enum GrantType {
 // Dynamic billing plans - admin editable
 model BillingPlan {
   id                     String                 @id @default(cuid())
-  planKey                String                 @unique  // 'starter', 'advance', 'business'
+  planKey                String                 @unique  // 'free', 'starter', 'advance', 'business'
   name                   String                 // Display name
-  priceMonthlyUsdCents   Int                    // Monthly price in cents (1900 = $19)
+  priceMonthlyUsdCents   Int                    // Monthly price in cents (0 for free, 1900 = $19)
   priceAnnualUsdCents    Int?                   // Annual price in cents (null = no annual option)
   seatModel              SeatModel              @default(single) // single or per_seat (business)
   boqLimitPerPeriod      Int?                   // null = unlimited
+  boqItemsLimit          Int?                   // null = unlimited, max items per BOQ
   boqTemplatesLimit      Int?                   // null = unlimited
   coverTemplatesLimit    Int?                   // null = unlimited
   logoUploadAllowed      Boolean                @default(false)
   sharingAllowed         Boolean                @default(false) // Only Business
+  watermarkEnabled       Boolean                @default(false) // Add watermark to PDFs
+  watermarkText          String?                // Custom watermark text (defaults to "BOQ generated with MakeEstimate.com")
   maxActiveMembers       Int                    @default(1)     // 1 for single, null for unlimited
   features               Json                   @default("[]")  // Array of feature strings
   isMostPopular          Boolean                @default(false)

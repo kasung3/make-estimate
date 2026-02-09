@@ -97,6 +97,13 @@ function PricingContent() {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
+      // Handle Free plan activation (no Stripe redirect)
+      if (data.freePlanActivated) {
+        toast.success('Free plan activated! Redirecting...');
+        router.push(data.url);
+        return;
+      }
+
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
         toast.success(data.grantType === 'trial' 
@@ -124,7 +131,17 @@ function PricingContent() {
   const isLoggedIn = status === 'authenticated';
 
   // Get current price based on billing cycle
-  const getDisplayPrice = (plan: BillingPlanInfo): { price: string; period: string; perUser: boolean } => {
+  const getDisplayPrice = (plan: BillingPlanInfo): { price: string; period: string; perUser: boolean; isFree: boolean } => {
+    // Free plan special handling
+    if (plan.planKey === 'free' || plan.priceMonthlyUsdCents === 0) {
+      return {
+        price: 'Free',
+        period: '',
+        perUser: false,
+        isFree: true,
+      };
+    }
+    
     const isAnnual = billingCycle === 'annual';
     const priceInCents = isAnnual && plan.priceAnnualUsdCents 
       ? plan.priceAnnualUsdCents 
@@ -136,11 +153,14 @@ function PricingContent() {
       price: formatPrice(priceInCents),
       period: isAnnual ? '/year' : '/month',
       perUser,
+      isFree: false,
     };
   };
 
   // Get savings info for annual billing
   const getSavingsInfo = (plan: BillingPlanInfo): { amount: string; percent: number } | null => {
+    // No savings for free plan
+    if (plan.planKey === 'free' || plan.priceMonthlyUsdCents === 0) return null;
     if (billingCycle !== 'annual' || !plan.priceAnnualUsdCents) return null;
     const savings = calculateSavings(plan.priceMonthlyUsdCents, plan.priceAnnualUsdCents);
     return {
@@ -237,7 +257,7 @@ function PricingContent() {
             </div>
           ) : (
           <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {plans.map((plan, index) => {
               const displayPrice = getDisplayPrice(plan);
               const savings = getSavingsInfo(plan);
@@ -328,6 +348,8 @@ function PricingContent() {
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
                           Processing...
                         </>
+                      ) : displayPrice.isFree ? (
+                        isLoggedIn ? 'Start Free' : 'Get Started Free'
                       ) : isLoggedIn ? (
                         'Continue to Checkout'
                       ) : (
@@ -355,68 +377,86 @@ function PricingContent() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="px-4 lg:px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <th className="px-3 lg:px-4 py-4 text-left text-sm font-semibold text-gray-900">
                         Feature
                       </th>
-                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-emerald-600">
+                        Free
+                      </th>
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-gray-900">
                         Starter
                       </th>
-                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-cyan-600">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-cyan-600">
                         Advance
                       </th>
-                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-gray-900">
                         Business
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">BOQ Creations</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">5 / period</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">BOQ Creations</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">5 / period</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Team Members</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">1</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">1</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Items per BOQ</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">15</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">BOQ Templates</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">2</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">10</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Team Members</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Cover Templates</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">2</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">10</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">BOQ Templates</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">2</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">10</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Upload Own Logo</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Cover Templates</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">2</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">10</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Team Collaboration</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">—</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Upload Own Logo</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">PDF Export</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Team Collaboration</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
                     </tr>
                     <tr>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Priority Support</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">PDF Export</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">With watermark</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Priority Support</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
                     </tr>
                   </tbody>
                 </table>

@@ -32,6 +32,10 @@ export interface BillingStatus {
   coverTemplatesLimit?: number | null;
   logoUploadAllowed?: boolean;
   sharingAllowed?: boolean;
+  // Free plan specific
+  boqItemsLimit?: number | null;  // Max items per BOQ (null = unlimited)
+  watermarkEnabled?: boolean;      // Whether PDFs have watermark
+  watermarkText?: string | null;   // Custom watermark text
 }
 
 export interface BillingPlanInfo {
@@ -42,10 +46,13 @@ export interface BillingPlanInfo {
   priceAnnualUsdCents: number | null;
   seatModel: SeatModel;
   boqLimitPerPeriod: number | null;
+  boqItemsLimit: number | null;        // Max items per BOQ (null = unlimited)
   boqTemplatesLimit: number | null;
   coverTemplatesLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
+  watermarkEnabled: boolean;           // Whether PDFs have watermark
+  watermarkText: string | null;        // Custom watermark text
   maxActiveMembers: number;
   features: string[];
   isMostPopular: boolean;

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export async function POST(request: Request) {
   try {
@@ -20,10 +21,44 @@ export async function POST(request: Request) {
         id: categoryId,
         boq: { companyId },
       },
+      include: {
+        boq: true,
+      },
     });
 
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+    }
+
+    // Check item limit for non-note items
+    if (!isNote) {
+      const billingStatus = await getCompanyBillingStatus(companyId);
+      const itemLimit = billingStatus.boqItemsLimit;
+      
+      if (itemLimit !== null && itemLimit !== undefined) {
+        // Count current items in this BOQ (only non-note items)
+        const currentItemCount = await prisma.boqItem.count({
+          where: {
+            category: {
+              boqId: category.boqId,
+            },
+            isNote: false,
+          },
+        });
+
+        if (currentItemCount >= itemLimit) {
+          return NextResponse.json(
+            { 
+              error: 'Item limit reached',
+              message: `Your ${billingStatus.planKey === 'free' ? 'Free Forever' : 'current'} plan allows up to ${itemLimit} items per BOQ. Upgrade to add more items.`,
+              itemLimit,
+              currentCount: currentItemCount,
+              upgradeUrl: '/pricing',
+            }, 
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const item = await prisma.boqItem.create({

@@ -50,6 +50,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
+    // Handle Free plan activation (no Stripe checkout required)
+    if (planKey === 'free' || plan.priceMonthlyUsdCents === 0) {
+      // Get or create billing record
+      const billing = await getOrCreateBilling(companyId);
+      
+      // Update billing record to activate free plan
+      await prisma.companyBilling.update({
+        where: { id: billing.id },
+        data: {
+          planKey: 'free' as any,
+          status: 'active' as any,
+          billingInterval: 'month',
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: null, // No end for free plan
+          cancelAtPeriodEnd: false,
+        },
+      });
+
+      console.log('Free plan activated:', { companyId, planKey: 'free' });
+
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      return NextResponse.json({ 
+        url: `${baseUrl}/app/dashboard?billing=success&plan=free`,
+        freePlanActivated: true,
+      });
+    }
+
     // Determine which Stripe price ID to use based on interval
     const stripePriceId = billingInterval === 'year' 
       ? plan.stripePriceIdAnnual 

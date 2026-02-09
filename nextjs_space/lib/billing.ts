@@ -16,12 +16,16 @@ export interface BillingStatus {
   hasTrialGrant: boolean;
   accessOverride: string | null;
   trialEndsAt: Date | null;
-  accessSource: 'subscription' | 'grant' | 'admin_override' | null;
+  accessSource: 'subscription' | 'grant' | 'admin_override' | 'free_plan' | null;
   // Template limits
   boqTemplatesLimit: number | null;
   coverTemplatesLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
+  // Free plan specific
+  boqItemsLimit: number | null;
+  watermarkEnabled: boolean;
+  watermarkText: string | null;
 }
 
 /**
@@ -128,6 +132,9 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
+      boqItemsLimit: plan?.boqItemsLimit ?? null,
+      watermarkEnabled: plan?.watermarkEnabled ?? false,
+      watermarkText: plan?.watermarkText ?? null,
     };
   }
 
@@ -165,10 +172,48 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
+      boqItemsLimit: plan?.boqItemsLimit ?? null,
+      watermarkEnabled: plan?.watermarkEnabled ?? false,
+      watermarkText: plan?.watermarkText ?? null,
     };
   }
 
-  // 3) Check Stripe subscription
+  // 3) Check for Free plan (no Stripe subscription required)
+  if (billing && billing.planKey === 'free' && billing.status === 'active' && !isBlocked) {
+    const plan = await getPlanDetails('free');
+    const periodStart = startOfMonth(now);
+    const periodEnd = endOfMonth(now);
+    const boqsUsedThisPeriod = await computeUsage(periodStart, periodEnd);
+    const boqLimit = plan?.boqLimitPerPeriod ?? null;
+    const canCreateBoq = boqLimit === null || boqsUsedThisPeriod < boqLimit;
+
+    return {
+      hasActiveSubscription: true, // Free plan counts as "active" for access control
+      isBlocked: false,
+      planKey: 'free',
+      status: 'active',
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: false,
+      boqsUsedThisPeriod,
+      boqLimit,
+      canCreateBoq,
+      hasAdminGrant: false,
+      hasTrialGrant: false,
+      accessOverride: null,
+      trialEndsAt: null,
+      accessSource: 'free_plan',
+      boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      logoUploadAllowed: plan?.logoUploadAllowed ?? false,
+      sharingAllowed: plan?.sharingAllowed ?? false,
+      boqItemsLimit: plan?.boqItemsLimit ?? null,
+      watermarkEnabled: plan?.watermarkEnabled ?? true,
+      watermarkText: plan?.watermarkText ?? 'BOQ generated with MakeEstimate.com',
+    };
+  }
+
+  // 4) Check Stripe subscription
   if (!billing || !billing.planKey || !billing.status) {
     return {
       hasActiveSubscription: false,
@@ -190,6 +235,9 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       coverTemplatesLimit: null,
       logoUploadAllowed: false,
       sharingAllowed: false,
+      boqItemsLimit: null,
+      watermarkEnabled: false,
+      watermarkText: null,
     };
   }
 
@@ -246,6 +294,9 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
     logoUploadAllowed: plan?.logoUploadAllowed ?? true,
     sharingAllowed: plan?.sharingAllowed ?? true,
+    boqItemsLimit: plan?.boqItemsLimit ?? null,
+    watermarkEnabled: plan?.watermarkEnabled ?? false,
+    watermarkText: plan?.watermarkText ?? null,
   };
 }
 

@@ -461,6 +461,11 @@ interface SortableCategoryProps {
   cancelInlineEdit: () => void;
   sanitizeHtml: (html: string) => string;
   formatNumber: (num: number, decimals?: number) => string;
+  // Item limit props
+  itemLimit: number | null;
+  currentItemCount: number;
+  isAtItemLimit: boolean;
+  planKey: string | null;
 }
 
 function SortableCategory({
@@ -748,6 +753,10 @@ export function BoqEditorClient({
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [exportingPdf, setExportingPdf] = useState(false);
 
+  // Item limit tracking (for Free plan)
+  const [itemLimit, setItemLimit] = useState<number | null>(null);
+  const [planKey, setPlanKey] = useState<string | null>(null);
+
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
   const [editItemValues, setEditItemValues] = useState<Partial<BoqItemType>>({});
@@ -988,6 +997,35 @@ export function BoqEditorClient({
     };
   }, []);
 
+  // Fetch billing status to check item limits
+  useEffect(() => {
+    const fetchBillingStatus = async () => {
+      try {
+        const response = await fetch('/api/billing/status');
+        if (response.ok) {
+          const data = await response.json();
+          setItemLimit(data.boqItemsLimit ?? null);
+          setPlanKey(data.planKey ?? null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch billing status:', error);
+      }
+    };
+    fetchBillingStatus();
+  }, []);
+
+  // Compute current item count (non-note items only)
+  const currentItemCount = useMemo(() => {
+    if (!boq?.categories) return 0;
+    return boq.categories.reduce((total, cat) => {
+      if (!cat?.items) return total;
+      return total + cat.items.filter(item => !item?.isNote).length;
+    }, 0);
+  }, [boq?.categories]);
+
+  // Check if at item limit
+  const isAtItemLimit = itemLimit !== null && currentItemCount >= itemLimit;
+
   useEffect(() => {
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
@@ -1178,12 +1216,25 @@ export function BoqEditorClient({
         }),
       });
 
-      const newItem = await response.json();
+      const data = await response.json();
+      
+      // Handle item limit exceeded error
+      if (response.status === 403 && data.error === 'Item limit reached') {
+        toast.error(data.message || `Item limit reached. Upgrade to add more items.`, {
+          duration: 5000,
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add item');
+      }
+
       setBoq((prev) => ({
         ...(prev ?? {}),
         categories: (prev?.categories ?? []).map((cat) =>
           cat?.id === categoryId
-            ? { ...(cat ?? {}), items: [...(cat?.items ?? []), newItem] }
+            ? { ...(cat ?? {}), items: [...(cat?.items ?? []), data] }
             : cat
         ),
       } as BoqWithRelations));

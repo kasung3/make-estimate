@@ -10,8 +10,73 @@ async function main() {
   const hashedPassword = await bcrypt.hash('johndoe123', 10);
 
   // Always seed billing plans first (they should exist regardless of user state)
-  console.log('Seeding billing plans (3-plan model with monthly+annual)...');
+  console.log('Seeding billing plans (4-plan model: free + 3 paid with monthly+annual)...');
   
+  // Plan 0: Free Forever - $0 (no Stripe)
+  const freePlan = await prisma.billingPlan.upsert({
+    where: { planKey: 'free' },
+    update: {
+      name: 'Free Forever',
+      priceMonthlyUsdCents: 0,
+      priceAnnualUsdCents: 0,
+      seatModel: 'single',
+      boqLimitPerPeriod: null,       // Unlimited BOQs
+      boqItemsLimit: 15,             // Max 15 items per BOQ
+      boqTemplatesLimit: 1,          // 1 BOQ template
+      coverTemplatesLimit: 1,        // 1 cover template
+      logoUploadAllowed: false,      // No logo upload
+      sharingAllowed: false,
+      watermarkEnabled: true,        // Watermark on PDFs
+      watermarkText: 'BOQ generated with MakeEstimate.com',
+      maxActiveMembers: 1,
+      features: [
+        'Unlimited BOQ creations',
+        '15 items per BOQ',
+        'Single user',
+        '1 BOQ template',
+        '1 cover page template',
+        'PDF exports with watermark',
+        'Customer management',
+      ],
+      isMostPopular: false,
+      sortOrder: 0,
+      active: true,
+      // No Stripe fields for free plan
+      stripeProductId: null,
+      stripePriceIdMonthly: null,
+      stripePriceIdAnnual: null,
+    },
+    create: {
+      planKey: 'free',
+      name: 'Free Forever',
+      priceMonthlyUsdCents: 0,
+      priceAnnualUsdCents: 0,
+      seatModel: 'single',
+      boqLimitPerPeriod: null,
+      boqItemsLimit: 15,
+      boqTemplatesLimit: 1,
+      coverTemplatesLimit: 1,
+      logoUploadAllowed: false,
+      sharingAllowed: false,
+      watermarkEnabled: true,
+      watermarkText: 'BOQ generated with MakeEstimate.com',
+      maxActiveMembers: 1,
+      features: [
+        'Unlimited BOQ creations',
+        '15 items per BOQ',
+        'Single user',
+        '1 BOQ template',
+        '1 cover page template',
+        'PDF exports with watermark',
+        'Customer management',
+      ],
+      isMostPopular: false,
+      sortOrder: 0,
+      active: true,
+    },
+  });
+  console.log(`  Created/updated Free Forever plan: ${freePlan.id}`);
+
   // Plan 1: Starter - $19/month, $199/year
   const starterPlan = await prisma.billingPlan.upsert({
     where: { planKey: 'starter' },
@@ -21,10 +86,13 @@ async function main() {
       priceAnnualUsdCents: 19900,    // $199/year (saves $29)
       seatModel: 'single',
       boqLimitPerPeriod: 5,          // 5 BOQs per period
+      boqItemsLimit: null,           // Unlimited items per BOQ
       boqTemplatesLimit: 2,          // 2 BOQ templates
       coverTemplatesLimit: 2,        // 2 cover templates
       logoUploadAllowed: true,
       sharingAllowed: false,
+      watermarkEnabled: false,       // No watermark
+      watermarkText: null,
       maxActiveMembers: 1,
       features: [
         '5 BOQ creations per month',
@@ -46,10 +114,13 @@ async function main() {
       priceAnnualUsdCents: 19900,
       seatModel: 'single',
       boqLimitPerPeriod: 5,
+      boqItemsLimit: null,
       boqTemplatesLimit: 2,
       coverTemplatesLimit: 2,
       logoUploadAllowed: true,
       sharingAllowed: false,
+      watermarkEnabled: false,
+      watermarkText: null,
       maxActiveMembers: 1,
       features: [
         '5 BOQ creations per month',
@@ -76,10 +147,13 @@ async function main() {
       priceAnnualUsdCents: 41900,    // $419/year (saves $49)
       seatModel: 'single',
       boqLimitPerPeriod: null,       // Unlimited BOQs
+      boqItemsLimit: null,           // Unlimited items per BOQ
       boqTemplatesLimit: 10,         // 10 BOQ templates
       coverTemplatesLimit: 10,       // 10 cover templates
       logoUploadAllowed: true,
       sharingAllowed: false,
+      watermarkEnabled: false,
+      watermarkText: null,
       maxActiveMembers: 1,
       features: [
         'Unlimited BOQ creations',
@@ -102,10 +176,13 @@ async function main() {
       priceAnnualUsdCents: 41900,
       seatModel: 'single',
       boqLimitPerPeriod: null,
+      boqItemsLimit: null,
       boqTemplatesLimit: 10,
       coverTemplatesLimit: 10,
       logoUploadAllowed: true,
       sharingAllowed: false,
+      watermarkEnabled: false,
+      watermarkText: null,
       maxActiveMembers: 1,
       features: [
         'Unlimited BOQ creations',
@@ -133,10 +210,13 @@ async function main() {
       priceAnnualUsdCents: 51900,    // $519/user/year (saves $69/user)
       seatModel: 'per_seat',
       boqLimitPerPeriod: null,       // Unlimited BOQs
+      boqItemsLimit: null,           // Unlimited items per BOQ
       boqTemplatesLimit: null,       // Unlimited templates
       coverTemplatesLimit: null,     // Unlimited cover templates
       logoUploadAllowed: true,
       sharingAllowed: true,          // Only Business has sharing
+      watermarkEnabled: false,
+      watermarkText: null,
       maxActiveMembers: 999,         // Effectively unlimited
       features: [
         'Unlimited BOQ creations',
@@ -160,10 +240,13 @@ async function main() {
       priceAnnualUsdCents: 51900,
       seatModel: 'per_seat',
       boqLimitPerPeriod: null,
+      boqItemsLimit: null,
       boqTemplatesLimit: null,
       coverTemplatesLimit: null,
       logoUploadAllowed: true,
       sharingAllowed: true,
+      watermarkEnabled: false,
+      watermarkText: null,
       maxActiveMembers: 999,
       features: [
         'Unlimited BOQ creations',

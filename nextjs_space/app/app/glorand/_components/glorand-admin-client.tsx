@@ -59,6 +59,10 @@ import {
   Phone,
   Calendar,
   Crown,
+  DollarSign,
+  Settings2,
+  Check,
+  Pencil,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -135,13 +139,48 @@ interface Company {
   billing: { planKey: string | null; status: string | null; accessOverride: string | null } | null;
 }
 
+interface BillingPlan {
+  id: string;
+  planKey: string;
+  name: string;
+  priceMonthlyUsdCents: number;
+  interval: string;
+  boqLimitPerPeriod: number | null;
+  features: string[];
+  badgeText: string | null;
+  sortOrder: number;
+  active: boolean;
+  stripeProductId: string | null;
+  stripePriceIdCurrent: string | null;
+  createdAt: string;
+  updatedAt: string;
+  priceHistory?: { id: string; stripePriceId: string; amountCents: number; isCurrent: boolean; createdAt: string }[];
+}
+
 export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState<UserData[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [billingPlans, setBillingPlans] = useState<BillingPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [plansLoading, setPlansLoading] = useState(false);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, totalCount: 0, totalPages: 0 });
+  
+  // Plan editing state
+  const [editingPlan, setEditingPlan] = useState<BillingPlan | null>(null);
+  const [showEditPlanDialog, setShowEditPlanDialog] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    priceMonthlyUsdCents: 0,
+    boqLimitPerPeriod: '' as string | number,
+    features: [] as string[],
+    badgeText: '',
+    sortOrder: 0,
+    active: true,
+  });
+  const [newFeature, setNewFeature] = useState('');
+  const [savingPlan, setSavingPlan] = useState(false);
 
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,6 +242,8 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       fetchCoupons();
     } else if (activeTab === 'companies') {
       fetchCompanies();
+    } else if (activeTab === 'plans') {
+      fetchPlans();
     }
   }, [activeTab]);
 
@@ -257,6 +298,89 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPlans = async () => {
+    setPlansLoading(true);
+    try {
+      const res = await fetch('/api/admin/plans');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setBillingPlans(data || []);
+    } catch (err) {
+      toast.error('Failed to load billing plans');
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+  const openEditPlanDialog = (plan: BillingPlan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      priceMonthlyUsdCents: plan.priceMonthlyUsdCents,
+      boqLimitPerPeriod: plan.boqLimitPerPeriod ?? '',
+      features: plan.features || [],
+      badgeText: plan.badgeText || '',
+      sortOrder: plan.sortOrder,
+      active: plan.active,
+    });
+    setNewFeature('');
+    setShowEditPlanDialog(true);
+  };
+
+  const handleSavePlan = async () => {
+    if (!editingPlan) return;
+    setSavingPlan(true);
+    try {
+      const res = await fetch(`/api/admin/plans/${editingPlan.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: planForm.name,
+          priceMonthlyUsdCents: planForm.priceMonthlyUsdCents,
+          boqLimitPerPeriod: planForm.boqLimitPerPeriod === '' ? null : Number(planForm.boqLimitPerPeriod),
+          features: planForm.features,
+          badgeText: planForm.badgeText || null,
+          sortOrder: planForm.sortOrder,
+          active: planForm.active,
+        }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update plan');
+      }
+      toast.success('Plan updated successfully');
+      
+      // Check if price changed - warn about new Stripe price
+      if (editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents) {
+        toast.success('New Stripe price created for updated amount', { duration: 5000 });
+      }
+      
+      setShowEditPlanDialog(false);
+      fetchPlans();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update plan');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      setPlanForm(prev => ({
+        ...prev,
+        features: [...prev.features, newFeature.trim()],
+      }));
+      setNewFeature('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setPlanForm(prev => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index),
+    }));
   };
 
   const fetchUserDetail = async (userId: string) => {
@@ -543,6 +667,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
             </TabsTrigger>
             <TabsTrigger value="coupons" className="gap-2">
               <Ticket className="h-4 w-4" /> Coupons
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="gap-2">
+              <DollarSign className="h-4 w-4" /> Plans
             </TabsTrigger>
           </TabsList>
 
@@ -835,7 +962,232 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Plans Tab */}
+          <TabsContent value="plans">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings2 className="h-5 w-5" /> Billing Plans
+                </CardTitle>
+                <CardDescription>
+                  Manage pricing, quotas, and features. Price changes auto-create new Stripe prices.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {plansLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : billingPlans.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No billing plans found. Run the seed script to create plans.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {billingPlans.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className={`p-6 rounded-xl border-2 ${plan.active ? 'bg-white' : 'bg-gray-50 opacity-75'} ${plan.badgeText ? 'border-primary' : 'border-gray-200'}`}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-xl font-bold">{plan.name}</h3>
+                              {plan.badgeText && (
+                                <Badge className="bg-primary text-white">{plan.badgeText}</Badge>
+                              )}
+                              {!plan.active && (
+                                <Badge variant="secondary">Inactive</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Key: <code className="bg-gray-100 px-1 rounded">{plan.planKey}</code>
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditPlanDialog(plan)}
+                            className="gap-1"
+                          >
+                            <Pencil className="h-3 w-3" /> Edit
+                          </Button>
+                        </div>
+
+                        <div className="mb-4">
+                          <div className="text-3xl font-bold">
+                            ${(plan.priceMonthlyUsdCents / 100).toFixed(0)}
+                            <span className="text-lg font-normal text-muted-foreground">/mo</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            BOQ Limit: {plan.boqLimitPerPeriod === null ? (
+                              <span className="text-green-600 font-medium">Unlimited</span>
+                            ) : (
+                              <span>{plan.boqLimitPerPeriod}/period</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold mb-2">Features:</h4>
+                          <ul className="space-y-1">
+                            {(plan.features || []).map((feature, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm">
+                                <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="pt-4 border-t text-xs text-muted-foreground space-y-1">
+                          <div>Stripe Product: {plan.stripeProductId || 'Not configured'}</div>
+                          <div>Current Price ID: {plan.stripePriceIdCurrent || 'Not configured'}</div>
+                          <div>Sort Order: {plan.sortOrder}</div>
+                          {plan.priceHistory && plan.priceHistory.length > 0 && (
+                            <div className="mt-2">
+                              <span className="font-medium">Price History:</span>
+                              <ul className="ml-2">
+                                {plan.priceHistory.slice(0, 3).map((h) => (
+                                  <li key={h.id}>
+                                    ${(h.amountCents / 100).toFixed(0)} - {format(new Date(h.createdAt), 'MMM d, yyyy')}
+                                    {h.isCurrent && <Badge className="ml-1 text-xs" variant="outline">Current</Badge>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Edit Plan Dialog */}
+        <Dialog open={showEditPlanDialog} onOpenChange={setShowEditPlanDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Plan: {editingPlan?.name}</DialogTitle>
+              <DialogDescription>
+                Update pricing, quotas, and features. Price changes will create a new Stripe price.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Name</Label>
+                <Input
+                  value={planForm.name}
+                  onChange={(e) => setPlanForm((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Plan name"
+                />
+              </div>
+
+              <div>
+                <Label>Price (USD cents)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={planForm.priceMonthlyUsdCents}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, priceMonthlyUsdCents: parseInt(e.target.value) || 0 }))}
+                    placeholder="1900"
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    = ${(planForm.priceMonthlyUsdCents / 100).toFixed(2)}/mo
+                  </span>
+                </div>
+                {editingPlan && editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Changing price will create a new Stripe price. Existing subscribers keep their current price.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label>BOQ Limit Per Period</Label>
+                <Input
+                  type="number"
+                  value={planForm.boqLimitPerPeriod}
+                  onChange={(e) => setPlanForm((p) => ({ ...p, boqLimitPerPeriod: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                  placeholder="Leave empty for unlimited"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Leave empty for unlimited</p>
+              </div>
+
+              <div>
+                <Label>Badge Text (optional)</Label>
+                <Input
+                  value={planForm.badgeText}
+                  onChange={(e) => setPlanForm((p) => ({ ...p, badgeText: e.target.value }))}
+                  placeholder="e.g., Most Popular"
+                />
+              </div>
+
+              <div>
+                <Label>Sort Order</Label>
+                <Input
+                  type="number"
+                  value={planForm.sortOrder}
+                  onChange={(e) => setPlanForm((p) => ({ ...p, sortOrder: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="plan-active"
+                  checked={planForm.active}
+                  onCheckedChange={(checked) => setPlanForm((p) => ({ ...p, active: checked === true }))}
+                />
+                <Label htmlFor="plan-active">Active (visible on pricing page)</Label>
+              </div>
+
+              <div>
+                <Label>Features</Label>
+                <div className="space-y-2 mt-2">
+                  {planForm.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="flex-1 text-sm bg-gray-50 px-3 py-2 rounded">{feature}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFeature(i)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newFeature}
+                      onChange={(e) => setNewFeature(e.target.value)}
+                      placeholder="Add a feature..."
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={addFeature}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditPlanDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSavePlan} disabled={savingPlan}>
+                {savingPlan ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* User Detail Drawer */}
         <Sheet open={showUserDrawer} onOpenChange={setShowUserDrawer}>

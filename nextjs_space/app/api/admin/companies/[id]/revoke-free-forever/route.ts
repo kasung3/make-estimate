@@ -6,7 +6,7 @@ import { isPlatformAdmin } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
-// POST - Revoke free forever access from a company
+// POST - Revoke free forever access and any active grants from a company
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -29,27 +29,44 @@ export async function POST(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
-    if (!company.billing) {
-      return NextResponse.json({ error: 'Company has no billing record' }, { status: 400 });
-    }
+    const now = new Date();
 
-    // Remove admin grant
-    await prisma.companyBilling.update({
-      where: { id: company.billing.id },
+    // Revoke any active access grants (trials or free_forever from coupons)
+    const revokedGrants = await prisma.companyAccessGrant.updateMany({
+      where: {
+        companyId: id,
+        revokedAt: null,
+        OR: [
+          { endsAt: null }, // free_forever grants
+          { endsAt: { gt: now } }, // trials not yet expired
+        ],
+      },
       data: {
-        accessOverride: null,
-        overridePlan: null,
-        // Set status to canceled if they don't have a stripe subscription
-        status: company.billing.stripeSubscriptionId ? company.billing.status : 'canceled',
+        revokedAt: now,
       },
     });
 
+    // Remove admin grant from billing record if present
+    if (company.billing) {
+      await prisma.companyBilling.update({
+        where: { id: company.billing.id },
+        data: {
+          accessOverride: null,
+          overridePlan: null,
+          currentCouponCode: null,
+          // Set status to canceled if they don't have a stripe subscription
+          status: company.billing.stripeSubscriptionId ? company.billing.status : 'canceled',
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Free access revoked. Company must subscribe to continue.',
+      message: `Access revoked. ${revokedGrants.count} grant(s) revoked. Company must subscribe to continue.`,
+      revokedGrantsCount: revokedGrants.count,
     });
   } catch (error) {
-    console.error('Revoke free forever error:', error);
-    return NextResponse.json({ error: 'Failed to revoke free access' }, { status: 500 });
+    console.error('Revoke access error:', error);
+    return NextResponse.json({ error: 'Failed to revoke access' }, { status: 500 });
   }
 }

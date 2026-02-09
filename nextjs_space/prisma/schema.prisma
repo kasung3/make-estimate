@@ -208,6 +208,64 @@ model BoqItem {
 enum AccessOverride {
   free_forever
   admin_grant
+  trial
+}
+
+enum GrantType {
+  trial
+  free_forever
+}
+
+// Dynamic billing plans - admin editable
+model BillingPlan {
+  id                   String                 @id @default(cuid())
+  planKey              String                 @unique  // 'starter', 'business', etc.
+  name                 String                 // Display name
+  priceMonthlyUsdCents Int                    // Price in cents (1900 = $19)
+  interval             String                 @default("month")
+  boqLimitPerPeriod    Int?                   // null = unlimited
+  features             Json                   @default("[]") // Array of feature strings
+  badgeText            String?                // e.g. "Most Popular"
+  sortOrder            Int                    @default(0)
+  active               Boolean                @default(true)
+  stripeProductId      String?
+  stripePriceIdCurrent String?                // Current active Stripe price
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  priceHistory         BillingPlanPriceHistory[]
+
+  @@index([active, sortOrder])
+}
+
+model BillingPlanPriceHistory {
+  id             String       @id @default(cuid())
+  billingPlanId  String
+  stripePriceId  String
+  amountCents    Int
+  isCurrent      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  billingPlan    BillingPlan  @relation(fields: [billingPlanId], references: [id], onDelete: Cascade)
+
+  @@index([billingPlanId])
+  @@index([stripePriceId])
+}
+
+// Internal access grants (trials/free without Stripe)
+model CompanyAccessGrant {
+  id           String     @id @default(cuid())
+  companyId    String
+  grantType    GrantType
+  planKey      String?    // Which plan level they get access to
+  couponId     String?    // Optional link to coupon that created this
+  startsAt     DateTime   @default(now())
+  endsAt       DateTime?  // null = never expires (free_forever)
+  revokedAt    DateTime?
+  revokedById  String?    // Admin who revoked
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([companyId, revokedAt])
+  @@index([companyId, endsAt])
 }
 
 model CompanyBilling {

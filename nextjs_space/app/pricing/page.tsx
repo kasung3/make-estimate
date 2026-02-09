@@ -10,58 +10,97 @@ import { MarketingFooter } from '@/components/marketing/footer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Check, Sparkles, Loader2, Tag, AlertTriangle } from 'lucide-react';
+import { Check, Sparkles, Loader2, Tag, AlertTriangle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { BillingPlanInfo } from '@/lib/types';
 
-const plans = [
+interface PlanDisplay {
+  key: string;
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  popular: boolean;
+  boqLimit: number | null;
+}
+
+// Helper to get default features for a plan
+const getDefaultFeatures = (plan: BillingPlanInfo): string[] => {
+  const baseFeatures = [
+    'Unlimited editing & viewing',
+    'PDF export with cover page',
+    'Customer management',
+    'Custom themes & templates',
+    'Notes & specifications',
+  ];
+  
+  if (plan.boqLimitPerPeriod) {
+    return [`${plan.boqLimitPerPeriod} BOQ creations per month`, ...baseFeatures];
+  }
+  return ['Unlimited BOQ creations', ...baseFeatures, 'Priority support'];
+};
+
+// Fallback plans if API fails
+const getFallbackPlans = (): PlanDisplay[] => [
   {
     key: 'starter',
     name: 'Starter',
     price: '$19',
     period: '/month',
-    description: 'Perfect for freelancers and small teams getting started.',
+    description: 'Up to 10 BOQ creations per month',
     features: [
       '10 BOQ creations per month',
       'Unlimited editing & viewing',
       'PDF export with cover page',
       'Customer management',
       'Custom themes & templates',
-      'Notes & specifications',
     ],
     popular: false,
+    boqLimit: 10,
   },
   {
     key: 'business',
     name: 'Business',
     price: '$39',
     period: '/month',
-    description: 'For growing teams that need unlimited capacity.',
+    description: 'Unlimited BOQ creations',
     features: [
       'Unlimited BOQ creations',
       'Unlimited editing & viewing',
       'PDF export with cover page',
       'Customer management',
       'Custom themes & templates',
-      'Notes & specifications',
       'Priority support',
     ],
     popular: true,
+    boqLimit: null,
   },
 ];
 
-const comparisonFeatures = [
-  { name: 'BOQ Creations', starter: '10 / month', business: 'Unlimited' },
-  { name: 'Editing & Viewing', starter: 'Unlimited', business: 'Unlimited' },
-  { name: 'PDF Export', starter: '✓', business: '✓' },
-  { name: 'Custom Cover Page', starter: '✓', business: '✓' },
-  { name: 'Color Themes', starter: '✓', business: '✓' },
-  { name: 'Customer Management', starter: '✓', business: '✓' },
-  { name: 'Notes & Specifications', starter: '✓', business: '✓' },
-  { name: 'Team Members', starter: 'Unlimited', business: 'Unlimited' },
-  { name: 'Priority Support', starter: '—', business: '✓' },
-];
+// Fallback comparison features (dynamically built from plans if available)
+const getComparisonFeatures = (plans: PlanDisplay[]) => {
+  const starter = plans.find(p => p.key === 'starter');
+  const business = plans.find(p => p.key === 'business');
+  
+  return [
+    { 
+      name: 'BOQ Creations', 
+      starter: starter?.boqLimit ? `${starter.boqLimit} / month` : 'Limited',
+      business: business?.boqLimit ? `${business.boqLimit} / month` : 'Unlimited'
+    },
+    { name: 'Editing & Viewing', starter: 'Unlimited', business: 'Unlimited' },
+    { name: 'PDF Export', starter: '✓', business: '✓' },
+    { name: 'Custom Cover Page', starter: '✓', business: '✓' },
+    { name: 'Color Themes', starter: '✓', business: '✓' },
+    { name: 'Customer Management', starter: '✓', business: '✓' },
+    { name: 'Notes & Specifications', starter: '✓', business: '✓' },
+    { name: 'Team Members', starter: 'Unlimited', business: 'Unlimited' },
+    { name: 'Priority Support', starter: '—', business: '✓' },
+  ];
+};
 
 function PricingContent() {
   const { data: session, status } = useSession() || {};
@@ -71,18 +110,58 @@ function PricingContent() {
   const [promoCode, setPromoCode] = useState('');
   const [promoValidating, setPromoValidating] = useState(false);
   const [promoResult, setPromoResult] = useState<{ valid: boolean; message: string } | null>(null);
+  const [plans, setPlans] = useState<PlanDisplay[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
 
   const subscriptionRequired = searchParams?.get('subscription') === 'required';
   const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
+  const trialEnded = searchParams?.get('trial') === 'ended';
+
+  // Fetch plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await fetch('/api/billing/plans');
+        if (response.ok) {
+          const data: BillingPlanInfo[] = await response.json();
+          
+          // Convert to display format
+          const displayPlans: PlanDisplay[] = data.map((plan) => ({
+            key: plan.planKey,
+            name: plan.name,
+            price: `$${(plan.priceMonthlyUsdCents / 100).toFixed(0)}`,
+            period: `/${plan.interval}`,
+            description: plan.boqLimitPerPeriod 
+              ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per month`
+              : 'Unlimited BOQ creations',
+            features: plan.features.length > 0 ? plan.features : getDefaultFeatures(plan),
+            popular: plan.badgeText !== null || plan.planKey === 'business',
+            boqLimit: plan.boqLimitPerPeriod,
+          }));
+          
+          setPlans(displayPlans);
+        }
+      } catch (error) {
+        console.error('Failed to fetch plans:', error);
+        // Set fallback plans
+        setPlans(getFallbackPlans());
+      } finally {
+        setPlansLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   // Show toasts for URL params
   useEffect(() => {
     if (checkoutCanceled) {
       toast.error('Checkout was canceled. Select a plan to continue.');
-      // Clear the URL parameter
       window.history.replaceState({}, '', '/pricing');
     }
-  }, [checkoutCanceled]);
+    if (trialEnded) {
+      toast.error('Your trial period has ended. Please select a plan to continue.');
+    }
+  }, [checkoutCanceled, trialEnded]);
 
   const handlePlanSelect = async (planKey: string) => {
     // If not logged in, go to register with plan
@@ -178,15 +257,24 @@ function PricingContent() {
         </div>
       </section>
 
-      {/* Alert for subscription required */}
-      {(subscriptionRequired || (isLoggedIn && checkoutCanceled)) && (
+      {/* Alert for subscription required / trial ended */}
+      {(subscriptionRequired || trialEnded || (isLoggedIn && checkoutCanceled)) && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-4">
-          <Alert variant="default" className="bg-amber-50 border-amber-200">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              {subscriptionRequired
-                ? 'Please select a plan to access your dashboard and start creating BOQs.'
-                : 'Your checkout was canceled. Select a plan to continue.'}
+          <Alert variant="default" className={cn(
+            "border",
+            trialEnded ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
+          )}>
+            {trialEnded ? (
+              <Clock className="h-4 w-4 text-red-600" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            )}
+            <AlertDescription className={trialEnded ? "text-red-800" : "text-amber-800"}>
+              {trialEnded
+                ? 'Your trial period has ended. Please select a plan to continue using MakeEstimate.'
+                : subscriptionRequired
+                  ? 'Please select a plan to access your dashboard and start creating BOQs.'
+                  : 'Your checkout was canceled. Select a plan to continue.'}
             </AlertDescription>
           </Alert>
         </div>
@@ -233,6 +321,12 @@ function PricingContent() {
       {/* Pricing Cards */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 -mt-8">
         <div className="max-w-5xl mx-auto">
+          {plansLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+          <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {plans.map((plan, index) => (
               <motion.div
@@ -313,6 +407,8 @@ function PricingContent() {
               Have a coupon? You can apply it at checkout.
             </motion.p>
           )}
+          </>
+          )}
         </div>
       </section>
 
@@ -336,7 +432,7 @@ function PricingContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {comparisonFeatures.map((feature) => (
+                {getComparisonFeatures(plans).map((feature) => (
                   <tr key={feature.name}>
                     <td className="px-6 py-4 text-sm text-gray-700">{feature.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 text-center">

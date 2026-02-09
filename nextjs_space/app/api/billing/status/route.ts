@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
-import { getCompanyBillingStatus } from '@/lib/billing';
+import { getCompanyBillingStatus, getActivePlans, getPlanFromDb } from '@/lib/billing';
 import { prisma } from '@/lib/db';
-import { PLANS } from '@/lib/stripe';
+import { BillingPlanInfo } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export async function GET() {
     const userId = session.user.id;
 
     // Check user and company blocked status
-    const [user, company, membership] = await Promise.all([
+    const [user, company, membership, activePlans] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { isBlocked: true, blockReason: true },
@@ -30,6 +30,7 @@ export async function GET() {
       prisma.companyMembership.findFirst({
         where: { userId, companyId },
       }),
+      getActivePlans(),
     ]);
 
     // Check if user or company is blocked
@@ -41,13 +42,51 @@ export async function GET() {
     const isAdmin = membership?.role === 'ADMIN';
 
     const billingStatus = await getCompanyBillingStatus(companyId);
-    const planInfo = billingStatus.planKey ? PLANS[billingStatus.planKey] : null;
+    
+    // Get current plan info from DB
+    let planInfo: BillingPlanInfo | null = null;
+    if (billingStatus.planKey) {
+      const plan = await getPlanFromDb(billingStatus.planKey);
+      if (plan) {
+        planInfo = {
+          id: plan.id,
+          planKey: plan.planKey,
+          name: plan.name,
+          priceMonthlyUsdCents: plan.priceMonthlyUsdCents,
+          interval: plan.interval,
+          boqLimitPerPeriod: plan.boqLimitPerPeriod,
+          features: (plan.features as string[]) || [],
+          badgeText: plan.badgeText,
+          sortOrder: plan.sortOrder,
+          active: plan.active,
+          stripePriceIdCurrent: plan.stripePriceIdCurrent,
+        };
+      }
+    }
+
+    // Convert active plans to record for easy lookup
+    const plans: Record<string, BillingPlanInfo> = {};
+    for (const plan of activePlans) {
+      plans[plan.planKey] = {
+        id: plan.id,
+        planKey: plan.planKey,
+        name: plan.name,
+        priceMonthlyUsdCents: plan.priceMonthlyUsdCents,
+        interval: plan.interval,
+        boqLimitPerPeriod: plan.boqLimitPerPeriod,
+        features: (plan.features as string[]) || [],
+        badgeText: plan.badgeText,
+        sortOrder: plan.sortOrder,
+        active: plan.active,
+        stripePriceIdCurrent: plan.stripePriceIdCurrent,
+      };
+    }
 
     return NextResponse.json({
       ...billingStatus,
       isAdmin,
       planInfo,
-      plans: PLANS,
+      plans,
       isBlocked,
       blockReason,
       userBlocked,

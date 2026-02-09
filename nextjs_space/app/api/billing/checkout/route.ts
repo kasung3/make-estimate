@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { stripe, PLANS, PlanKey } from '@/lib/stripe';
-import { getOrCreateBilling } from '@/lib/billing';
+import { stripe } from '@/lib/stripe';
+import { getOrCreateBilling, getPlanFromDb } from '@/lib/billing';
+import { addDays } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,12 +35,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { planKey, promoCode } = body as { planKey: PlanKey; promoCode?: string };
+    const { planKey, promoCode } = body as { planKey: string; promoCode?: string };
 
-    // Validate plan
-    const plan = PLANS[planKey];
-    if (!plan) {
+    // Validate plan from DB (dynamic pricing)
+    const plan = await getPlanFromDb(planKey);
+    if (!plan || !plan.active) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+    }
+
+    // Ensure plan has a Stripe price ID
+    if (!plan.stripePriceIdCurrent) {
+      return NextResponse.json(
+        { error: 'Plan not configured for payment. Please contact support.' },
+        { status: 500 }
+      );
     }
 
     // Get company info
@@ -61,31 +70,16 @@ export async function POST(request: Request) {
     // Get or create billing record
     const billing = await getOrCreateBilling(companyId);
 
-    // Get or create Stripe customer
-    let stripeCustomerId = billing.stripeCustomerId;
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        name: company.name,
-        metadata: {
-          companyId,
-        },
-      });
-      stripeCustomerId = customer.id;
-
-      await prisma.companyBilling.update({
-        where: { id: billing.id },
-        data: { stripeCustomerId },
-      });
-    }
-
     // Validate promo code if provided
     let trialPeriodDays: number | undefined;
     let discounts: { promotion_code: string }[] = [];
+    let skipStripeCheckout = false;
+    let grantType: 'trial' | 'free_forever' | null = null;
+    let platformCoupon: any = null;
 
     if (promoCode) {
       // First check our database for the coupon
-      const platformCoupon = await prisma.platformCoupon.findFirst({
+      platformCoupon = await prisma.platformCoupon.findFirst({
         where: {
           code: promoCode.toUpperCase(),
           active: true,
@@ -128,10 +122,92 @@ export async function POST(request: Request) {
 
       // Apply based on coupon type
       if (platformCoupon.type === 'trial_days' && platformCoupon.trialDays) {
+        // Trial coupons bypass Stripe - create internal grant
+        skipStripeCheckout = true;
+        grantType = 'trial';
         trialPeriodDays = platformCoupon.trialDays;
-      } else if (platformCoupon.type === 'free_forever' && platformCoupon.stripePromoCodeId) {
-        discounts = [{ promotion_code: platformCoupon.stripePromoCodeId }];
+      } else if (platformCoupon.type === 'free_forever') {
+        // Free forever coupons bypass Stripe - create internal grant
+        skipStripeCheckout = true;
+        grantType = 'free_forever';
       }
+    }
+
+    // If coupon grants access without payment, skip Stripe checkout
+    if (skipStripeCheckout && grantType && platformCoupon) {
+      const now = new Date();
+      const endsAt = grantType === 'trial' && trialPeriodDays 
+        ? addDays(now, trialPeriodDays) 
+        : null;
+
+      // Create access grant
+      await prisma.companyAccessGrant.create({
+        data: {
+          companyId,
+          grantType,
+          planKey,
+          couponId: platformCoupon.id,
+          startsAt: now,
+          endsAt,
+        },
+      });
+
+      // Record coupon redemption
+      await prisma.couponRedemption.create({
+        data: {
+          companyBillingId: billing.id,
+          couponCode: platformCoupon.code,
+          couponType: platformCoupon.type,
+          source: 'checkout',
+        },
+      });
+
+      // Increment coupon usage
+      await prisma.platformCoupon.update({
+        where: { id: platformCoupon.id },
+        data: { currentRedemptions: { increment: 1 } },
+      });
+
+      // Update billing record with current coupon
+      await prisma.companyBilling.update({
+        where: { id: billing.id },
+        data: { currentCouponCode: platformCoupon.code },
+      });
+
+      console.log('Access grant created (no Stripe):', {
+        companyId,
+        planKey,
+        grantType,
+        endsAt,
+        couponCode: platformCoupon.code,
+      });
+
+      // Return success without Stripe URL - redirect to dashboard
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      return NextResponse.json({ 
+        url: `${baseUrl}/app/dashboard?billing=success&grant=${grantType}`,
+        grantCreated: true,
+        grantType,
+        endsAt,
+      });
+    }
+
+    // Continue with Stripe checkout for paid plans
+    let stripeCustomerId = billing.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        name: company.name,
+        metadata: {
+          companyId,
+        },
+      });
+      stripeCustomerId = customer.id;
+
+      await prisma.companyBilling.update({
+        where: { id: billing.id },
+        data: { stripeCustomerId },
+      });
     }
 
     // Build checkout session params
@@ -143,7 +219,7 @@ export async function POST(request: Request) {
       mode: 'subscription',
       line_items: [
         {
-          price: plan.priceId,
+          price: plan.stripePriceIdCurrent, // Use price from DB
           quantity: 1,
         },
       ],
@@ -154,29 +230,17 @@ export async function POST(request: Request) {
         planKey,
         promoCode: promoCode || '',
       },
+      subscription_data: {
+        metadata: {
+          companyId,
+          planKey,
+        },
+      },
     };
 
-    // Add trial period if applicable
-    if (trialPeriodDays) {
-      checkoutParams.subscription_data = {
-        trial_period_days: trialPeriodDays,
-        metadata: {
-          companyId,
-          planKey,
-        },
-      };
-    } else {
-      checkoutParams.subscription_data = {
-        metadata: {
-          companyId,
-          planKey,
-        },
-      };
-    }
-
-    // Add discount if applicable
-    if (discounts.length > 0) {
-      checkoutParams.discounts = discounts;
+    // Add discount if applicable (paid discount coupons that have Stripe promo code)
+    if (platformCoupon?.stripePromoCodeId && !skipStripeCheckout) {
+      checkoutParams.discounts = [{ promotion_code: platformCoupon.stripePromoCodeId }];
     }
 
     const checkoutSession = await stripe.checkout.sessions.create(checkoutParams);

@@ -1,30 +1,49 @@
-import { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType } from '@prisma/client';
+import { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType } from '@prisma/client';
 
-export type { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType };
+export type { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType };
 
 // Billing Types
 export interface BillingStatus {
   hasActiveSubscription: boolean;
   isBlocked: boolean;
-  planKey: PlanKey | null;
+  planKey: string | null;
   status: string | null;
+  currentPeriodStart: Date | string | null;
   currentPeriodEnd: Date | string | null;
   cancelAtPeriodEnd: boolean;
   boqsUsedThisPeriod: number;
   boqLimit: number | null;
   canCreateBoq: boolean;
+  hasAdminGrant?: boolean;
+  hasTrialGrant?: boolean;
+  trialEndsAt?: Date | string | null;
+  accessSource?: 'subscription' | 'grant' | 'admin_override' | null;
+  accessOverride?: string | null;
   isAdmin?: boolean;
-  planInfo?: {
-    key: string;
-    name: string;
-    price: number;
-    boqLimit: number | null;
-    description: string;
-  } | null;
+  planInfo?: BillingPlanInfo | null;
+  plans?: Record<string, BillingPlanInfo>;
+  userBlocked?: boolean;
+  companyBlocked?: boolean;
+  blockReason?: string | null;
 }
 
+export interface BillingPlanInfo {
+  id?: string;
+  planKey: string;
+  name: string;
+  priceMonthlyUsdCents: number;
+  interval: string;
+  boqLimitPerPeriod: number | null;
+  features: string[];
+  badgeText: string | null;
+  sortOrder: number;
+  active: boolean;
+  stripePriceIdCurrent: string | null;
+}
+
+// Legacy PlanInfo for backward compatibility
 export interface PlanInfo {
-  key: 'starter' | 'business';
+  key: string;
   name: string;
   priceId: string;
   price: number;

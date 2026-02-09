@@ -5,12 +5,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { processPdfExport } from '@/lib/pdf-processor';
+import { checkRateLimit, RATE_LIMITS, rateLimitKey, rateLimitResponse } from '@/lib/rate-limiter';
 
 /**
  * Async PDF Export API
  * 
  * This endpoint initiates a PDF export job and returns immediately.
  * The PDF generation happens in the background.
+ * 
+ * Rate Limit: 10 exports per minute per company
  * 
  * Flow:
  * 1. POST /api/boqs/[id]/pdf/async -> Returns { jobId }
@@ -31,6 +34,15 @@ export async function POST(
     const companyId = (session.user as any)?.companyId;
     const userId = (session.user as any)?.id;
     const boqId = params?.id;
+
+    // Rate limit check (10 PDF exports per minute per company)
+    const rateKey = rateLimitKey('PDF_EXPORT', companyId);
+    const rateResult = checkRateLimit(rateKey, RATE_LIMITS.PDF_EXPORT);
+    
+    if (!rateResult.allowed) {
+      console.log(`[PDF_EXPORT_RATE_LIMITED] Company: ${companyId}, Retry after: ${rateResult.retryAfter}s`);
+      return rateLimitResponse(rateResult);
+    }
 
     if (!companyId || !userId || !boqId) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });

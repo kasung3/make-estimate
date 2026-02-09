@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { checkRateLimit, RATE_LIMITS, rateLimitKey, rateLimitResponse } from '@/lib/rate-limiter';
 
 export async function GET() {
   try {
@@ -46,6 +47,15 @@ export async function POST(request: Request) {
     const companyId = (session.user as any)?.companyId;
     if (!companyId) {
       return NextResponse.json({ error: 'No company found' }, { status: 400 });
+    }
+
+    // Rate limit check (20 BOQ creations per minute per company)
+    const rateKey = rateLimitKey('BOQ_CREATE', companyId);
+    const rateResult = checkRateLimit(rateKey, RATE_LIMITS.BOQ_CREATE);
+    
+    if (!rateResult.allowed) {
+      console.log(`[BOQ_CREATE_RATE_LIMITED] Company: ${companyId}`);
+      return rateLimitResponse(rateResult);
     }
 
     const { projectName, customerId } = await request.json();

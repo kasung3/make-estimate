@@ -1,12 +1,13 @@
 /**
  * API Route Instrumentation
- * Wraps API handlers with timing, logging, and error tracking
+ * Wraps API handlers with timing, logging, error tracking, and rate limiting
  */
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { createTimer, logRequestMetrics, logError } from './performance';
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS, rateLimitKey, type RateLimitConfig } from './rate-limiter';
 
 export interface InstrumentedContext {
   session: any;
@@ -21,6 +22,14 @@ type RouteHandler = (
   instrumented: InstrumentedContext
 ) => Promise<NextResponse>;
 
+interface InstrumentOptions {
+  requireAuth?: boolean;
+  rateLimit?: {
+    type: keyof typeof RATE_LIMITS;
+    keyBy: 'company' | 'user';
+  };
+}
+
 /**
  * Wrap an API route handler with instrumentation
  */
@@ -28,7 +37,7 @@ export function instrumentRoute(
   endpoint: string,
   method: string,
   handler: RouteHandler,
-  options: { requireAuth?: boolean } = { requireAuth: true }
+  options: InstrumentOptions = { requireAuth: true }
 ) {
   return async (request: Request, context: { params: any }) => {
     const timer = createTimer();
@@ -48,6 +57,19 @@ export function instrumentRoute(
         }
         companyId = (session.user as any)?.companyId;
         userId = (session.user as any)?.id;
+      }
+
+      // Rate limit check if configured
+      if (options.rateLimit && (companyId || userId)) {
+        const identifier = options.rateLimit.keyBy === 'company' ? companyId! : userId!;
+        const rateKey = rateLimitKey(options.rateLimit.type, identifier);
+        const rateResult = checkRateLimit(rateKey, RATE_LIMITS[options.rateLimit.type]);
+        
+        if (!rateResult.allowed) {
+          statusCode = 429;
+          console.log(`[RATE_LIMITED] ${endpoint} ${options.rateLimit.type}:${identifier}`);
+          return rateLimitResponse(rateResult);
+        }
       }
 
       // Execute handler

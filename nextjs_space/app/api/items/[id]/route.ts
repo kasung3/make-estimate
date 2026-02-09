@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { instrumentRoute, timedOperation } from '@/lib/api-instrumentation';
 
+// Rate limited: 120 item updates per minute per user (autosave)
 export const PUT = instrumentRoute(
   '/api/items/[id]',
   'PUT',
@@ -42,7 +43,8 @@ export const PUT = instrumentRoute(
     );
 
     return NextResponse.json(item);
-  }
+  },
+  { requireAuth: true, rateLimit: { type: 'ITEM_UPDATE', keyBy: 'user' } }
 );
 
 export const DELETE = instrumentRoute(

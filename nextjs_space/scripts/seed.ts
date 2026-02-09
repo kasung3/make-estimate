@@ -124,13 +124,13 @@ async function main() {
   });
   console.log(`  Created/updated Advance plan: ${advancePlan.id}`);
 
-  // Plan 3: Business - $59/user/month, $599/user/year (per-seat)
+  // Plan 3: Business - $49/user/month, $519/user/year (per-seat)
   const businessPlan = await prisma.billingPlan.upsert({
     where: { planKey: 'business' },
     update: {
       name: 'Business',
-      priceMonthlyUsdCents: 5900,    // $59/user/month
-      priceAnnualUsdCents: 59900,    // $599/user/year (saves $109/user)
+      priceMonthlyUsdCents: 4900,    // $49/user/month
+      priceAnnualUsdCents: 51900,    // $519/user/year (saves $69/user)
       seatModel: 'per_seat',
       boqLimitPerPeriod: null,       // Unlimited BOQs
       boqTemplatesLimit: null,       // Unlimited templates
@@ -156,8 +156,8 @@ async function main() {
     create: {
       planKey: 'business',
       name: 'Business',
-      priceMonthlyUsdCents: 5900,
-      priceAnnualUsdCents: 59900,
+      priceMonthlyUsdCents: 4900,
+      priceAnnualUsdCents: 51900,
       seatModel: 'per_seat',
       boqLimitPerPeriod: null,
       boqTemplatesLimit: null,

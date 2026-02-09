@@ -7,11 +7,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { MarketingFooter } from '@/components/marketing/footer';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { Check, Sparkles, Loader2, Tag, AlertTriangle, Clock, Users } from 'lucide-react';
+import { Check, Sparkles, Loader2, AlertTriangle, Clock, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -38,9 +36,6 @@ function PricingContent() {
   const router = useRouter();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [promoCode, setPromoCode] = useState('');
-  const [promoValidating, setPromoValidating] = useState(false);
-  const [promoResult, setPromoResult] = useState<{ valid: boolean; message: string } | null>(null);
   const [plans, setPlans] = useState<BillingPlanInfo[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
 
@@ -93,7 +88,6 @@ function PricingContent() {
         body: JSON.stringify({
           planKey,
           interval: billingCycle,
-          promoCode: promoCode || undefined,
         }),
       });
 
@@ -124,32 +118,6 @@ function PricingContent() {
       console.error('Checkout error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start checkout. Please try again.');
       setCheckoutLoading(null);
-    }
-  };
-
-  const validatePromoCode = async () => {
-    if (!promoCode.trim()) {
-      setPromoResult(null);
-      return;
-    }
-
-    setPromoValidating(true);
-    try {
-      const response = await fetch('/api/billing/validate-promo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCode }),
-      });
-
-      const data = await response.json();
-      setPromoResult({
-        valid: response.ok,
-        message: data.message || (response.ok ? 'Valid promo code!' : 'Invalid promo code'),
-      });
-    } catch (error) {
-      setPromoResult({ valid: false, message: 'Failed to validate promo code' });
-    } finally {
-      setPromoValidating(false);
     }
   };
 
@@ -258,44 +226,6 @@ function PricingContent() {
             </AlertDescription>
           </Alert>
         </div>
-      )}
-
-      {/* Promo Code Section (only for logged in users) */}
-      {isLoggedIn && (
-        <section className="py-4 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md mx-auto">
-            <div className="space-y-2">
-              <Label htmlFor="promoCode" className="flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Have a promo code?
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="promoCode"
-                  value={promoCode}
-                  onChange={(e) => {
-                    setPromoCode(e.target.value.toUpperCase());
-                    setPromoResult(null);
-                  }}
-                  placeholder="Enter promo code"
-                  className="uppercase"
-                />
-                <Button
-                  variant="outline"
-                  onClick={validatePromoCode}
-                  disabled={promoValidating || !promoCode.trim()}
-                >
-                  {promoValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-                </Button>
-              </div>
-              {promoResult && (
-                <p className={`text-sm ${promoResult.valid ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {promoResult.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
       )}
 
       {/* Pricing Cards */}

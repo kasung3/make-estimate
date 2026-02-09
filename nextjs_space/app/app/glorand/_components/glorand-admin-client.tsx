@@ -144,17 +144,21 @@ interface BillingPlan {
   planKey: string;
   name: string;
   priceMonthlyUsdCents: number;
-  interval: string;
+  priceAnnualUsdCents: number | null;
+  seatModel: 'single' | 'per_seat';
   boqLimitPerPeriod: number | null;
+  boqTemplatesLimit: number | null;
+  coverTemplatesLimit: number | null;
   features: string[];
-  badgeText: string | null;
+  isMostPopular: boolean;
   sortOrder: number;
   active: boolean;
   stripeProductId: string | null;
-  stripePriceIdCurrent: string | null;
+  stripePriceIdMonthly: string | null;
+  stripePriceIdAnnual: string | null;
   createdAt: string;
   updatedAt: string;
-  priceHistory?: { id: string; stripePriceId: string; amountCents: number; isCurrent: boolean; createdAt: string }[];
+  priceHistory?: { id: string; stripePriceId: string; amountCents: number; interval: string; isCurrent: boolean; createdAt: string }[];
 }
 
 export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
@@ -173,9 +177,12 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const [planForm, setPlanForm] = useState({
     name: '',
     priceMonthlyUsdCents: 0,
+    priceAnnualUsdCents: '' as string | number,
     boqLimitPerPeriod: '' as string | number,
+    boqTemplatesLimit: '' as string | number,
+    coverTemplatesLimit: '' as string | number,
     features: [] as string[],
-    badgeText: '',
+    isMostPopular: false,
     sortOrder: 0,
     active: true,
   });
@@ -319,9 +326,12 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     setPlanForm({
       name: plan.name,
       priceMonthlyUsdCents: plan.priceMonthlyUsdCents,
+      priceAnnualUsdCents: plan.priceAnnualUsdCents ?? '',
       boqLimitPerPeriod: plan.boqLimitPerPeriod ?? '',
+      boqTemplatesLimit: plan.boqTemplatesLimit ?? '',
+      coverTemplatesLimit: plan.coverTemplatesLimit ?? '',
       features: plan.features || [],
-      badgeText: plan.badgeText || '',
+      isMostPopular: plan.isMostPopular || false,
       sortOrder: plan.sortOrder,
       active: plan.active,
     });
@@ -339,9 +349,12 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
         body: JSON.stringify({
           name: planForm.name,
           priceMonthlyUsdCents: planForm.priceMonthlyUsdCents,
+          priceAnnualUsdCents: planForm.priceAnnualUsdCents === '' ? null : Number(planForm.priceAnnualUsdCents),
           boqLimitPerPeriod: planForm.boqLimitPerPeriod === '' ? null : Number(planForm.boqLimitPerPeriod),
+          boqTemplatesLimit: planForm.boqTemplatesLimit === '' ? null : Number(planForm.boqTemplatesLimit),
+          coverTemplatesLimit: planForm.coverTemplatesLimit === '' ? null : Number(planForm.coverTemplatesLimit),
           features: planForm.features,
-          badgeText: planForm.badgeText || null,
+          isMostPopular: planForm.isMostPopular,
           sortOrder: planForm.sortOrder,
           active: planForm.active,
         }),
@@ -353,8 +366,10 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       toast.success('Plan updated successfully');
       
       // Check if price changed - warn about new Stripe price
-      if (editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents) {
-        toast.success('New Stripe price created for updated amount', { duration: 5000 });
+      const monthlyChanged = editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents;
+      const annualChanged = (editingPlan.priceAnnualUsdCents ?? '') !== planForm.priceAnnualUsdCents;
+      if (monthlyChanged || annualChanged) {
+        toast.success('New Stripe price(s) created for updated amounts', { duration: 5000 });
       }
       
       setShowEditPlanDialog(false);
@@ -984,18 +999,18 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                     No billing plans found. Run the seed script to create plans.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {billingPlans.map((plan) => (
                       <div
                         key={plan.id}
-                        className={`p-6 rounded-xl border-2 ${plan.active ? 'bg-white' : 'bg-gray-50 opacity-75'} ${plan.badgeText ? 'border-primary' : 'border-gray-200'}`}
+                        className={`p-6 rounded-xl border-2 ${plan.active ? 'bg-white' : 'bg-gray-50 opacity-75'} ${plan.isMostPopular ? 'border-primary' : 'border-gray-200'}`}
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="text-xl font-bold">{plan.name}</h3>
-                              {plan.badgeText && (
-                                <Badge className="bg-primary text-white">{plan.badgeText}</Badge>
+                              {plan.isMostPopular && (
+                                <Badge className="bg-primary text-white">Most Popular</Badge>
                               )}
                               {!plan.active && (
                                 <Badge variant="secondary">Inactive</Badge>
@@ -1003,6 +1018,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                             </div>
                             <p className="text-sm text-muted-foreground">
                               Key: <code className="bg-gray-100 px-1 rounded">{plan.planKey}</code>
+                              {plan.seatModel === 'per_seat' && (
+                                <Badge variant="outline" className="ml-2 text-xs">Per Seat</Badge>
+                              )}
                             </p>
                           </div>
                           <Button
@@ -1019,31 +1037,60 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                           <div className="text-3xl font-bold">
                             ${(plan.priceMonthlyUsdCents / 100).toFixed(0)}
                             <span className="text-lg font-normal text-muted-foreground">/mo</span>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            BOQ Limit: {plan.boqLimitPerPeriod === null ? (
-                              <span className="text-green-600 font-medium">Unlimited</span>
-                            ) : (
-                              <span>{plan.boqLimitPerPeriod}/period</span>
+                            {plan.seatModel === 'per_seat' && (
+                              <span className="text-sm font-normal text-muted-foreground">/user</span>
                             )}
+                          </div>
+                          {plan.priceAnnualUsdCents && (
+                            <div className="text-sm text-muted-foreground">
+                              ${(plan.priceAnnualUsdCents / 100).toFixed(0)}/year
+                              {plan.seatModel === 'per_seat' && '/user'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mb-4 text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">BOQ Limit:</span>
+                            <span className={plan.boqLimitPerPeriod === null ? 'text-green-600 font-medium' : ''}>
+                              {plan.boqLimitPerPeriod === null ? 'Unlimited' : `${plan.boqLimitPerPeriod}/period`}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">BOQ Templates:</span>
+                            <span className={plan.boqTemplatesLimit === null ? 'text-green-600 font-medium' : ''}>
+                              {plan.boqTemplatesLimit === null ? 'Unlimited' : plan.boqTemplatesLimit}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Cover Templates:</span>
+                            <span className={plan.coverTemplatesLimit === null ? 'text-green-600 font-medium' : ''}>
+                              {plan.coverTemplatesLimit === null ? 'Unlimited' : plan.coverTemplatesLimit}
+                            </span>
                           </div>
                         </div>
 
                         <div className="mb-4">
                           <h4 className="text-sm font-semibold mb-2">Features:</h4>
                           <ul className="space-y-1">
-                            {(plan.features || []).map((feature, i) => (
+                            {(plan.features || []).slice(0, 5).map((feature, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm">
                                 <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                                 <span>{feature}</span>
                               </li>
                             ))}
+                            {(plan.features || []).length > 5 && (
+                              <li className="text-xs text-muted-foreground">
+                                +{(plan.features || []).length - 5} more...
+                              </li>
+                            )}
                           </ul>
                         </div>
 
                         <div className="pt-4 border-t text-xs text-muted-foreground space-y-1">
                           <div>Stripe Product: {plan.stripeProductId || 'Not configured'}</div>
-                          <div>Current Price ID: {plan.stripePriceIdCurrent || 'Not configured'}</div>
+                          <div>Monthly Price ID: {plan.stripePriceIdMonthly || 'Not configured'}</div>
+                          <div>Annual Price ID: {plan.stripePriceIdAnnual || 'Not configured'}</div>
                           <div>Sort Order: {plan.sortOrder}</div>
                           {plan.priceHistory && plan.priceHistory.length > 0 && (
                             <div className="mt-2">
@@ -1051,7 +1098,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                               <ul className="ml-2">
                                 {plan.priceHistory.slice(0, 3).map((h) => (
                                   <li key={h.id}>
-                                    ${(h.amountCents / 100).toFixed(0)} - {format(new Date(h.createdAt), 'MMM d, yyyy')}
+                                    ${(h.amountCents / 100).toFixed(0)} ({h.interval}) - {format(new Date(h.createdAt), 'MMM d, yyyy')}
                                     {h.isCurrent && <Badge className="ml-1 text-xs" variant="outline">Current</Badge>}
                                   </li>
                                 ))}
@@ -1088,62 +1135,101 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                 />
               </div>
 
-              <div>
-                <Label>Price (USD cents)</Label>
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Monthly Price (USD cents)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={planForm.priceMonthlyUsdCents}
+                      onChange={(e) => setPlanForm((p) => ({ ...p, priceMonthlyUsdCents: parseInt(e.target.value) || 0 }))}
+                      placeholder="1900"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    = ${(planForm.priceMonthlyUsdCents / 100).toFixed(2)}/mo
+                  </p>
+                </div>
+                <div>
+                  <Label>Annual Price (USD cents)</Label>
                   <Input
                     type="number"
-                    value={planForm.priceMonthlyUsdCents}
-                    onChange={(e) => setPlanForm((p) => ({ ...p, priceMonthlyUsdCents: parseInt(e.target.value) || 0 }))}
-                    placeholder="1900"
+                    value={planForm.priceAnnualUsdCents}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, priceAnnualUsdCents: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                    placeholder="Leave empty if no annual"
                   />
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    = ${(planForm.priceMonthlyUsdCents / 100).toFixed(2)}/mo
-                  </span>
-                </div>
-                {editingPlan && editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    ⚠️ Changing price will create a new Stripe price. Existing subscribers keep their current price.
+                  <p className="text-xs text-muted-foreground mt-1">
+                    = ${planForm.priceAnnualUsdCents ? ((Number(planForm.priceAnnualUsdCents)) / 100).toFixed(2) : '0.00'}/yr
                   </p>
-                )}
+                </div>
+              </div>
+              {editingPlan && (editingPlan.priceMonthlyUsdCents !== planForm.priceMonthlyUsdCents || 
+                (editingPlan.priceAnnualUsdCents ?? '') !== planForm.priceAnnualUsdCents) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Changing price will create new Stripe price(s). Existing subscribers keep their current price.
+                </p>
+              )}
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>BOQ Limit/Period</Label>
+                  <Input
+                    type="number"
+                    value={planForm.boqLimitPerPeriod}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, boqLimitPerPeriod: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                    placeholder="∞"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Empty = unlimited</p>
+                </div>
+                <div>
+                  <Label>BOQ Templates</Label>
+                  <Input
+                    type="number"
+                    value={planForm.boqTemplatesLimit}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, boqTemplatesLimit: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                    placeholder="∞"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Empty = unlimited</p>
+                </div>
+                <div>
+                  <Label>Cover Templates</Label>
+                  <Input
+                    type="number"
+                    value={planForm.coverTemplatesLimit}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, coverTemplatesLimit: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                    placeholder="∞"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Empty = unlimited</p>
+                </div>
               </div>
 
-              <div>
-                <Label>BOQ Limit Per Period</Label>
-                <Input
-                  type="number"
-                  value={planForm.boqLimitPerPeriod}
-                  onChange={(e) => setPlanForm((p) => ({ ...p, boqLimitPerPeriod: e.target.value === '' ? '' : parseInt(e.target.value) }))}
-                  placeholder="Leave empty for unlimited"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Leave empty for unlimited</p>
-              </div>
-
-              <div>
-                <Label>Badge Text (optional)</Label>
-                <Input
-                  value={planForm.badgeText}
-                  onChange={(e) => setPlanForm((p) => ({ ...p, badgeText: e.target.value }))}
-                  placeholder="e.g., Most Popular"
-                />
-              </div>
-
-              <div>
-                <Label>Sort Order</Label>
-                <Input
-                  type="number"
-                  value={planForm.sortOrder}
-                  onChange={(e) => setPlanForm((p) => ({ ...p, sortOrder: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="plan-active"
-                  checked={planForm.active}
-                  onCheckedChange={(checked) => setPlanForm((p) => ({ ...p, active: checked === true }))}
-                />
-                <Label htmlFor="plan-active">Active (visible on pricing page)</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Sort Order</Label>
+                  <Input
+                    type="number"
+                    value={planForm.sortOrder}
+                    onChange={(e) => setPlanForm((p) => ({ ...p, sortOrder: parseInt(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="flex flex-col justify-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="plan-active"
+                      checked={planForm.active}
+                      onCheckedChange={(checked) => setPlanForm((p) => ({ ...p, active: checked === true }))}
+                    />
+                    <Label htmlFor="plan-active">Active (visible on pricing)</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="plan-popular"
+                      checked={planForm.isMostPopular}
+                      onCheckedChange={(checked) => setPlanForm((p) => ({ ...p, isMostPopular: checked === true }))}
+                    />
+                    <Label htmlFor="plan-popular">Most Popular badge</Label>
+                  </div>
+                </div>
               </div>
 
               <div>

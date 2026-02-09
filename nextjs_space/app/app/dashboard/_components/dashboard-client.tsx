@@ -78,23 +78,36 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
     }
   }, [searchParams]);
 
-  // Fetch billing status on mount
+  // Fetch billing status function - reusable for mount and after actions
+  const fetchBillingStatus = useCallback(async () => {
+    try {
+      setBillingLoading(true);
+      const response = await fetch('/api/billing/status', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setBillingStatus(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch billing status:', error);
+    } finally {
+      setBillingLoading(false);
+    }
+  }, []);
+
+  // Fetch billing status on mount and when page becomes visible (returning from navigation)
   useEffect(() => {
-    const fetchBillingStatus = async () => {
-      try {
-        const response = await fetch('/api/billing/status');
-        if (response.ok) {
-          const data = await response.json();
-          setBillingStatus(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch billing status:', error);
-      } finally {
-        setBillingLoading(false);
+    fetchBillingStatus();
+    
+    // Also refresh when page becomes visible (user returns to dashboard)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchBillingStatus();
       }
     };
-    fetchBillingStatus();
-  }, []);
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchBillingStatus]);
 
   // Prefetch top BOQs on mount for faster navigation
   useEffect(() => {
@@ -193,16 +206,20 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle quota exceeded with detailed error
+        if (data?.code === 'QUOTA_EXCEEDED') {
+          toast.error(`BOQ limit reached (${data.boqsUsed}/${data.boqLimit}). Upgrade or wait until ${data.resetDate}.`, {
+            duration: 5000,
+          });
+          router.push('/app/settings?tab=billing');
+          return;
+        }
         toast.error(data?.error || 'Failed to create BOQ');
         return;
       }
 
-      // Update billing status (refresh usage count)
-      setBillingStatus(prev => prev ? {
-        ...prev,
-        boqsUsedThisPeriod: (prev.boqsUsedThisPeriod ?? 0) + 1,
-        canCreateBoq: prev.boqLimit === null || (prev.boqsUsedThisPeriod + 1) < prev.boqLimit,
-      } : null);
+      // Refresh billing status from server to get accurate usage count
+      await fetchBillingStatus();
 
       setShowNewBoqDialog(false);
       setNewProjectName('');

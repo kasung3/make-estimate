@@ -34,7 +34,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return false;
   }, []);
 
-  // Check blocked status on mount (only for non-admin users)
+  // Check blocked status and subscription validity on mount (only for non-admin users)
   const checkBlockedStatus = useCallback(async () => {
     if (!session?.user) return;
     
@@ -42,8 +42,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/billing/status');
       if (res.ok) {
         const data = await res.json();
+        
+        // Check if user/company is blocked
         if (data.isBlocked) {
           router.replace(`/blocked${data.blockReason ? `?reason=${encodeURIComponent(data.blockReason)}` : ''}`);
+          return;
+        }
+
+        // Check if trial grant has expired (trialEndsAt in past and was a trial)
+        if (data.hasTrialGrant && data.trialEndsAt) {
+          const trialEnd = new Date(data.trialEndsAt);
+          if (trialEnd < new Date()) {
+            router.replace('/pricing?trial=ended');
+            return;
+          }
+        }
+
+        // Check if user has no active subscription and no active grant
+        if (!data.hasActiveSubscription && !data.hasAdminGrant && !data.hasTrialGrant) {
+          router.replace('/pricing?subscription=required');
           return;
         }
       }

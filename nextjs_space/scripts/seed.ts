@@ -9,12 +9,68 @@ async function main() {
   // Create test user with company
   const hashedPassword = await bcrypt.hash('johndoe123', 10);
 
+  // Always seed billing plans first (they should exist regardless of user state)
+  console.log('Seeding billing plans...');
+  
+  const starterPlan = await prisma.billingPlan.upsert({
+    where: { planKey: 'starter' },
+    update: {
+      name: 'Starter',
+      priceMonthlyUsdCents: 1900, // $19
+      interval: 'month',
+      boqLimitPerPeriod: 10,
+      features: ['Up to 10 BOQs per month', 'PDF exports', 'Customer management', 'Email support'],
+      badgeText: null,
+      sortOrder: 1,
+      active: true,
+    },
+    create: {
+      planKey: 'starter',
+      name: 'Starter',
+      priceMonthlyUsdCents: 1900,
+      interval: 'month',
+      boqLimitPerPeriod: 10,
+      features: ['Up to 10 BOQs per month', 'PDF exports', 'Customer management', 'Email support'],
+      badgeText: null,
+      sortOrder: 1,
+      active: true,
+    },
+  });
+  console.log(`  Created/updated Starter plan: ${starterPlan.id}`);
+
+  const businessPlan = await prisma.billingPlan.upsert({
+    where: { planKey: 'business' },
+    update: {
+      name: 'Business',
+      priceMonthlyUsdCents: 3900, // $39
+      interval: 'month',
+      boqLimitPerPeriod: null, // unlimited
+      features: ['Unlimited BOQs', 'PDF exports', 'Custom branding', 'Customer management', 'Cover page templates', 'Priority support'],
+      badgeText: 'Most Popular',
+      sortOrder: 2,
+      active: true,
+    },
+    create: {
+      planKey: 'business',
+      name: 'Business',
+      priceMonthlyUsdCents: 3900,
+      interval: 'month',
+      boqLimitPerPeriod: null,
+      features: ['Unlimited BOQs', 'PDF exports', 'Custom branding', 'Customer management', 'Cover page templates', 'Priority support'],
+      badgeText: 'Most Popular',
+      sortOrder: 2,
+      active: true,
+    },
+  });
+  console.log(`  Created/updated Business plan: ${businessPlan.id}`);
+
   const existingUser = await prisma.user.findUnique({
     where: { email: 'john@doe.com' },
   });
 
   if (existingUser) {
-    console.log('Test user already exists, skipping seed.');
+    console.log('Test user already exists, skipping user seed.');
+    console.log('Seed completed successfully!');
     return;
   }
 

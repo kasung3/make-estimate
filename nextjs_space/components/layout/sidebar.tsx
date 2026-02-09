@@ -143,7 +143,7 @@ export function Sidebar() {
           );
         })}
         
-        {/* Show Admin link when admin is on regular pages */}
+        {/* Show Admin link when non-admin user is on regular pages (this shouldn't happen for pure admins) */}
         {isPlatformAdmin && !isOnAdminPage && (
           <Link
             href="/app/glorand"
@@ -154,20 +154,6 @@ export function Sidebar() {
           >
             <Shield className="h-5 w-5" />
             {!collapsed && <span>Admin Panel</span>}
-          </Link>
-        )}
-        
-        {/* Show "Back to App" link when admin is on admin pages */}
-        {isPlatformAdmin && isOnAdminPage && (
-          <Link
-            href="/app/dashboard"
-            className={cn(
-              'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all mt-4 border-t pt-4 border-gray-200',
-              'text-cyan-600 hover:bg-cyan-50'
-            )}
-          >
-            <LayoutDashboard className="h-5 w-5" />
-            {!collapsed && <span>Back to App</span>}
           </Link>
         )}
       </nav>

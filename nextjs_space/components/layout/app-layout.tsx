@@ -11,8 +11,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checkedBlocked, setCheckedBlocked] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState<boolean | null>(null);
 
-  // Check blocked status on mount
+  // Regular user pages that admins should NOT access
+  const regularUserPages = ['/app/dashboard', '/app/customers', '/app/settings', '/app/boq'];
+  const isOnRegularPage = regularUserPages.some(page => pathname?.startsWith(page));
+  const isOnAdminPage = pathname?.startsWith('/app/glorand');
+
+  // Check if user is platform admin
+  const checkAdminStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/check');
+      if (res.ok) {
+        const data = await res.json();
+        setIsPlatformAdmin(data.isAdmin);
+        return data.isAdmin;
+      }
+    } catch (error) {
+      console.error('Failed to check admin status:', error);
+    }
+    setIsPlatformAdmin(false);
+    return false;
+  }, []);
+
+  // Check blocked status on mount (only for non-admin users)
   const checkBlockedStatus = useCallback(async () => {
     if (!session?.user) return;
     
@@ -37,13 +59,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [status, router]);
 
+  // Check admin status first, then blocked status for non-admins
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      checkBlockedStatus();
+    if (status === 'authenticated' && session?.user && isPlatformAdmin === null) {
+      checkAdminStatus().then((isAdmin) => {
+        if (!isAdmin) {
+          // Only check blocked status for non-admin users
+          checkBlockedStatus();
+        } else {
+          setCheckedBlocked(true); // Skip blocked check for admins
+        }
+      });
     }
-  }, [status, session?.user, checkBlockedStatus]);
+  }, [status, session?.user, isPlatformAdmin, checkAdminStatus, checkBlockedStatus]);
 
-  if (status === 'loading' || (status === 'authenticated' && !checkedBlocked)) {
+  // Redirect admins away from regular user pages to admin panel
+  useEffect(() => {
+    if (isPlatformAdmin === true && isOnRegularPage) {
+      router.replace('/app/glorand');
+    }
+  }, [isPlatformAdmin, isOnRegularPage, router]);
+
+  // Loading state
+  if (status === 'loading' || isPlatformAdmin === null || (status === 'authenticated' && !checkedBlocked)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -53,6 +91,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!session) {
     return null;
+  }
+
+  // Don't render regular pages for admin users (they'll be redirected)
+  if (isPlatformAdmin && isOnRegularPage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

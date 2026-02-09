@@ -16,17 +16,38 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession() || {};
 
-  const nextUrl = searchParams?.get('next') || '/app/dashboard';
+  const nextUrlParam = searchParams?.get('next');
+
+  // Check if user is admin and redirect accordingly
+  const checkAdminAndRedirect = async () => {
+    setCheckingAdmin(true);
+    try {
+      const res = await fetch('/api/admin/check');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.isAdmin) {
+          // Admin users go directly to admin panel
+          router.replace('/app/glorand');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check admin status:', error);
+    }
+    // Non-admin users go to dashboard or specified next URL
+    router.replace(nextUrlParam || '/app/dashboard');
+  };
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      router.replace(nextUrl);
+    if (status === 'authenticated' && !checkingAdmin) {
+      checkAdminAndRedirect();
     }
-  }, [status, router, nextUrl]);
+  }, [status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +62,13 @@ function LoginForm() {
 
       if (result?.error) {
         toast.error('Invalid email or password');
+        setLoading(false);
       } else {
-        router.replace(nextUrl);
+        // After successful login, check admin status and redirect
+        await checkAdminAndRedirect();
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

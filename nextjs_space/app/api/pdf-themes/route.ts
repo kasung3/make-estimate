@@ -88,12 +88,16 @@ export async function POST(request: Request) {
     
     // Check template limit (null = unlimited)
     if (billingStatus.boqTemplatesLimit !== null && existingThemes >= billingStatus.boqTemplatesLimit) {
+      const planName = billingStatus.planKey ? billingStatus.planKey.charAt(0).toUpperCase() + billingStatus.planKey.slice(1) : 'your plan';
       return NextResponse.json({ 
-        error: `BOQ template limit reached. Your ${billingStatus.planKey} plan allows ${billingStatus.boqTemplatesLimit} templates. Upgrade for more.`,
-        code: 'TEMPLATE_LIMIT_REACHED',
+        error: `You've reached the ${planName} limit: ${billingStatus.boqTemplatesLimit} BOQ theme${billingStatus.boqTemplatesLimit === 1 ? '' : 's'}.`,
+        code: 'LIMIT_EXCEEDED',
+        limit_type: 'boq_templates',
+        used: existingThemes,
         limit: billingStatus.boqTemplatesLimit,
-        current: existingThemes,
-        planKey: billingStatus.planKey
+        plan_key: billingStatus.planKey,
+        plan_name: planName,
+        upgrade_url: '/pricing',
       }, { status: 403 });
     }
 

@@ -47,13 +47,17 @@ export async function POST(request: Request) {
         });
 
         if (currentItemCount >= itemLimit) {
+          const planName = billingStatus.planKey === 'free' ? 'Free Forever' : (billingStatus.planKey ? billingStatus.planKey.charAt(0).toUpperCase() + billingStatus.planKey.slice(1) : 'current');
           return NextResponse.json(
             { 
-              error: 'Item limit reached',
-              message: `Your ${billingStatus.planKey === 'free' ? 'Free Forever' : 'current'} plan allows up to ${itemLimit} items per BOQ. Upgrade to add more items.`,
-              itemLimit,
-              currentCount: currentItemCount,
-              upgradeUrl: '/pricing',
+              error: `You've reached the ${planName} limit: ${itemLimit} items per BOQ.`,
+              code: 'LIMIT_EXCEEDED',
+              limit_type: 'boq_items',
+              used: currentItemCount,
+              limit: itemLimit,
+              plan_key: billingStatus.planKey,
+              plan_name: planName,
+              upgrade_url: '/pricing',
             }, 
             { status: 403 }
           );

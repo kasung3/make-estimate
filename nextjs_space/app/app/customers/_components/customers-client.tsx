@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
-import { Plus, Search, Users, Mail, Phone, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Users, Mail, Phone, Trash2, Loader2, MapPin, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CustomerType } from '@/lib/types';
 
@@ -21,21 +22,69 @@ interface CustomersClientProps {
   customers: CustomerType[];
 }
 
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+// Normalize string for search (removes spaces, special chars, lowercases)
+function normalizeForSearch(str: string | null | undefined): string {
+  if (!str) return '';
+  return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
+
+// Extract digits only from phone number
+function extractDigits(str: string | null | undefined): string {
+  if (!str) return '';
+  return str.replace(/\D/g, '');
+}
+
 export function CustomersClient({ customers: initialCustomers }: CustomersClientProps) {
   const [customers, setCustomers] = useState(initialCustomers ?? []);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<CustomerType | null>(null);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const filteredCustomers = (customers ?? []).filter(
-    (customer) =>
-      customer?.name?.toLowerCase()?.includes?.(searchQuery?.toLowerCase?.() ?? '') ||
-      customer?.email?.toLowerCase()?.includes?.(searchQuery?.toLowerCase?.() ?? '')
-  );
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Enhanced search: matches name, email, phone (partial digits), address
+  const filteredCustomers = useMemo(() => {
+    if (!debouncedSearch.trim()) return customers ?? [];
+    
+    const query = debouncedSearch.toLowerCase();
+    const queryDigits = extractDigits(debouncedSearch);
+    const normalizedQuery = normalizeForSearch(debouncedSearch);
+    
+    return (customers ?? []).filter((customer) => {
+      // Name match (case insensitive, partial)
+      const nameMatch = customer?.name?.toLowerCase()?.includes(query);
+      
+      // Email match (case insensitive, partial)
+      const emailMatch = customer?.email?.toLowerCase()?.includes(query);
+      
+      // Phone match - match by digits only for flexible partial matching
+      // e.g., searching "756" will match "+94 057 565 847 89" or "05756584789"
+      const phoneDigits = extractDigits(customer?.phone);
+      const phoneMatch = queryDigits.length > 0 && phoneDigits.includes(queryDigits);
+      
+      // Address match (case insensitive, partial)
+      const addressMatch = customer?.address?.toLowerCase()?.includes(query);
+      
+      return nameMatch || emailMatch || phoneMatch || addressMatch;
+    });
+  }, [customers, debouncedSearch]);
 
   const handleCreate = async () => {
     if (!newName?.trim?.()) {
@@ -77,11 +126,17 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
     }
   };
 
-  const handleDelete = async (customerId: string) => {
-    if (!confirm('Are you sure you want to delete this customer?')) return;
+  const handleDeleteClick = (customer: CustomerType) => {
+    setCustomerToDelete(customer);
+    setShowDeleteDialog(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!customerToDelete) return;
+
+    setDeleting(true);
     try {
-      const response = await fetch(`/api/customers/${customerId}`, {
+      const response = await fetch(`/api/customers/${customerToDelete.id}`, {
         method: 'DELETE',
       });
 
@@ -90,10 +145,14 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
         return;
       }
 
-      setCustomers((customers ?? []).filter((c) => c?.id !== customerId));
+      setCustomers((customers ?? []).filter((c) => c?.id !== customerToDelete.id));
       toast.success('Customer deleted');
+      setShowDeleteDialog(false);
+      setCustomerToDelete(null);
     } catch (error) {
       toast.error('An error occurred');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -114,7 +173,7 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input
-            placeholder="Search customers..."
+            placeholder="Search by name, phone, email, or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -173,7 +232,7 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
                       variant="ghost"
                       size="icon"
                       className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500"
-                      onClick={() => handleDelete(customer?.id)}
+                      onClick={() => handleDeleteClick(customer)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -237,6 +296,31 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Add Customer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" />
+                Delete Customer?
+              </DialogTitle>
+              <DialogDescription>
+                This will permanently remove <strong>"{customerToDelete?.name}"</strong> from your customer database. 
+                Existing BOQs linked to this customer will not be deleted.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
+                {deleting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Delete
               </Button>
             </DialogFooter>
           </DialogContent>

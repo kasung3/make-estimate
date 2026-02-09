@@ -45,15 +45,23 @@ enum CouponType {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  password      String
-  name          String?
-  isBlocked     Boolean  @default(false)
-  blockReason   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  memberships   CompanyMembership[]
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  password            String
+  name                String?
+  firstName           String?
+  lastName            String?
+  phone               String?
+  isBlocked           Boolean  @default(false)
+  blockReason         String?
+  forcePasswordReset  Boolean  @default(false)
+  lastLoginAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  memberships         CompanyMembership[]
+  
+  @@index([email])
+  @@index([phone])
 }
 
 model Company {
@@ -192,6 +200,11 @@ model BoqItem {
 
 // ============== BILLING MODELS ==============
 
+enum AccessOverride {
+  free_forever
+  admin_grant
+}
+
 model CompanyBilling {
   id                   String              @id @default(cuid())
   companyId            String              @unique
@@ -202,9 +215,14 @@ model CompanyBilling {
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean             @default(false)
+  accessOverride       AccessOverride?
+  overridePlan         PlanKey?
+  currentCouponCode    String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   company              Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices             BillingInvoice[]
+  couponRedemptions    CouponRedemption[]
 }
 
 model BoqCreationEvent {
@@ -242,4 +260,39 @@ model StripeWebhookEvent {
   processedAt DateTime @default(now())
 
   @@index([id])
+}
+
+model BillingInvoice {
+  id                String          @id @default(cuid())
+  companyBillingId  String
+  stripeInvoiceId   String          @unique
+  amountPaid        Int             // in cents
+  amountDue         Int             // in cents
+  currency          String          @default("usd")
+  status            String          // draft, open, paid, uncollectible, void
+  hostedInvoiceUrl  String?
+  pdfUrl            String?
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  createdAt         DateTime        @default(now())
+  companyBilling    CompanyBilling  @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
+
+  @@index([companyBillingId])
+  @@index([stripeInvoiceId])
+}
+
+model CouponRedemption {
+  id                    String          @id @default(cuid())
+  companyBillingId      String
+  couponCode            String
+  couponType            CouponType
+  stripePromotionCodeId String?
+  redeemedAt            DateTime        @default(now())
+  revokedAt             DateTime?
+  revokedByAdminId      String?
+  source                String          @default("checkout") // checkout, admin_grant
+  companyBilling        CompanyBilling  @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
+
+  @@index([companyBillingId])
+  @@index([couponCode])
 }

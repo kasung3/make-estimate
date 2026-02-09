@@ -92,15 +92,15 @@ export function Sidebar() {
         })}
         {isPlatformAdmin && (
           <Link
-            href="/app/admin"
+            href="/app/glorand"
             className={cn(
               'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
-              pathname === '/app/admin'
+              pathname === '/app/glorand'
                 ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium'
                 : 'text-amber-600 hover:bg-amber-50'
             )}
           >
-            <Shield className={cn('h-5 w-5', pathname === '/app/admin' ? 'text-amber-600' : '')} />
+            <Shield className={cn('h-5 w-5', pathname === '/app/glorand' ? 'text-amber-600' : '')} />
             {!collapsed && <span>Admin</span>}
           </Link>
         )}

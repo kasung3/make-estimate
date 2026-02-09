@@ -15,14 +15,28 @@ export async function GET() {
     }
 
     const companyId = session.user.companyId;
+    const userId = session.user.id;
 
-    // Check if user is admin (for showing billing management options)
-    const membership = await prisma.companyMembership.findFirst({
-      where: {
-        userId: session.user.id,
-        companyId,
-      },
-    });
+    // Check user and company blocked status
+    const [user, company, membership] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { isBlocked: true, blockReason: true },
+      }),
+      prisma.company.findUnique({
+        where: { id: companyId },
+        select: { isBlocked: true, blockReason: true },
+      }),
+      prisma.companyMembership.findFirst({
+        where: { userId, companyId },
+      }),
+    ]);
+
+    // Check if user or company is blocked
+    const userBlocked = user?.isBlocked ?? false;
+    const companyBlocked = company?.isBlocked ?? false;
+    const isBlocked = userBlocked || companyBlocked;
+    const blockReason = userBlocked ? user?.blockReason : company?.blockReason;
 
     const isAdmin = membership?.role === 'ADMIN';
 
@@ -34,6 +48,10 @@ export async function GET() {
       isAdmin,
       planInfo,
       plans: PLANS,
+      isBlocked,
+      blockReason,
+      userBlocked,
+      companyBlocked,
     });
   } catch (error) {
     console.error('Billing status error:', error);

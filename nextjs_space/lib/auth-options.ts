@@ -26,6 +26,13 @@ export const authOptions: NextAuthOptions = {
         if (!user) return null;
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
+
+        // Update lastLoginAt timestamp
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        }).catch(err => console.error('Failed to update lastLoginAt:', err));
+
         const membership = user?.memberships?.[0];
         return {
           id: user.id,

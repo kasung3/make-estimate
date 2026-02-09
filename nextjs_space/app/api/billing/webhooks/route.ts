@@ -77,6 +77,11 @@ export async function POST(request: Request) {
         await handleInvoicePaid(event.data.object as Stripe.Invoice);
         break;
 
+      case 'invoice.created':
+      case 'invoice.updated':
+        await handleInvoiceUpdate(event.data.object as Stripe.Invoice);
+        break;
+
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
@@ -106,16 +111,53 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // If there was a promo code used, increment redemption count
+  // If there was a promo code used, increment redemption count and record redemption
   if (promoCode) {
-    await prisma.platformCoupon.updateMany({
-      where: {
-        code: promoCode.toUpperCase(),
-      },
-      data: {
-        currentRedemptions: { increment: 1 },
-      },
+    const coupon = await prisma.platformCoupon.findFirst({
+      where: { code: promoCode.toUpperCase() },
     });
+
+    if (coupon) {
+      // Increment redemption count
+      await prisma.platformCoupon.update({
+        where: { id: coupon.id },
+        data: { currentRedemptions: { increment: 1 } },
+      });
+
+      // Record the redemption
+      const billing = await prisma.companyBilling.findUnique({
+        where: { companyId },
+      });
+
+      if (billing) {
+        await prisma.couponRedemption.create({
+          data: {
+            companyBillingId: billing.id,
+            couponCode: coupon.code,
+            couponType: coupon.type,
+            stripePromotionCodeId: coupon.stripePromoCodeId,
+            source: 'checkout',
+          },
+        });
+
+        // Update current coupon code on billing record
+        await prisma.companyBilling.update({
+          where: { id: billing.id },
+          data: { currentCouponCode: coupon.code },
+        });
+
+        // If it's a free_forever coupon, set the access override
+        if (coupon.type === 'free_forever') {
+          await prisma.companyBilling.update({
+            where: { id: billing.id },
+            data: {
+              accessOverride: 'free_forever',
+              overridePlan: coupon.allowedPlans.length > 0 ? coupon.allowedPlans[0] : 'business',
+            },
+          });
+        }
+      }
+    }
   }
 
   // Subscription update will be handled by subscription.created/updated event
@@ -209,7 +251,97 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   console.log('Invoice paid:', invoice.id);
-  // Subscription update event will handle the status change
+  
+  // Store invoice in our database
+  const customerId = invoice.customer as string;
+  const billing = await prisma.companyBilling.findFirst({
+    where: { stripeCustomerId: customerId },
+  });
+
+  if (billing) {
+    // Access period data safely
+    const invoiceAny = invoice as any;
+    const periodStart = invoiceAny.period_start 
+      ? new Date(invoiceAny.period_start * 1000) 
+      : null;
+    const periodEnd = invoiceAny.period_end 
+      ? new Date(invoiceAny.period_end * 1000) 
+      : null;
+
+    try {
+      await prisma.billingInvoice.upsert({
+        where: { stripeInvoiceId: invoice.id },
+        create: {
+          companyBillingId: billing.id,
+          stripeInvoiceId: invoice.id,
+          amountPaid: invoice.amount_paid,
+          amountDue: invoice.amount_due,
+          currency: invoice.currency,
+          status: invoice.status || 'unknown',
+          hostedInvoiceUrl: invoice.hosted_invoice_url || null,
+          pdfUrl: invoice.invoice_pdf || null,
+          periodStart,
+          periodEnd,
+        },
+        update: {
+          amountPaid: invoice.amount_paid,
+          status: invoice.status || 'unknown',
+          hostedInvoiceUrl: invoice.hosted_invoice_url || null,
+          pdfUrl: invoice.invoice_pdf || null,
+        },
+      });
+      console.log(`Stored invoice ${invoice.id} for company ${billing.companyId}`);
+    } catch (err) {
+      console.error('Failed to store invoice:', err);
+    }
+  }
+}
+
+async function handleInvoiceUpdate(invoice: Stripe.Invoice) {
+  console.log('Invoice updated:', invoice.id, invoice.status);
+  
+  // Store/update invoice in our database for any status change
+  const customerId = invoice.customer as string;
+  const billing = await prisma.companyBilling.findFirst({
+    where: { stripeCustomerId: customerId },
+  });
+
+  if (billing) {
+    const invoiceAny = invoice as any;
+    const periodStart = invoiceAny.period_start 
+      ? new Date(invoiceAny.period_start * 1000) 
+      : null;
+    const periodEnd = invoiceAny.period_end 
+      ? new Date(invoiceAny.period_end * 1000) 
+      : null;
+
+    try {
+      await prisma.billingInvoice.upsert({
+        where: { stripeInvoiceId: invoice.id },
+        create: {
+          companyBillingId: billing.id,
+          stripeInvoiceId: invoice.id,
+          amountPaid: invoice.amount_paid,
+          amountDue: invoice.amount_due,
+          currency: invoice.currency,
+          status: invoice.status || 'unknown',
+          hostedInvoiceUrl: invoice.hosted_invoice_url || null,
+          pdfUrl: invoice.invoice_pdf || null,
+          periodStart,
+          periodEnd,
+        },
+        update: {
+          amountPaid: invoice.amount_paid,
+          amountDue: invoice.amount_due,
+          status: invoice.status || 'unknown',
+          hostedInvoiceUrl: invoice.hosted_invoice_url || null,
+          pdfUrl: invoice.invoice_pdf || null,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to store/update invoice:', err);
+    }
+  }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {

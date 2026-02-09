@@ -12,10 +12,12 @@ export interface BillingStatus {
   boqsUsedThisPeriod: number;
   boqLimit: number | null;
   canCreateBoq: boolean;
+  hasAdminGrant: boolean;
+  accessOverride: string | null;
 }
 
 /**
- * Get billing status for a company
+ * Get billing status for a company - includes admin grant checking
  */
 export async function getCompanyBillingStatus(companyId: string): Promise<BillingStatus> {
   const [company, billing] = await Promise.all([
@@ -30,6 +32,30 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
 
   const isBlocked = company?.isBlocked ?? false;
 
+  // Check for admin grant (free_forever or admin_grant override)
+  const hasAdminGrant = billing?.accessOverride === 'free_forever' || billing?.accessOverride === 'admin_grant';
+  
+  // If admin grant is active, user has access regardless of subscription
+  if (hasAdminGrant && !isBlocked) {
+    const overridePlan = billing?.overridePlan || 'business';
+    const plan = PLANS[overridePlan as PlanKey];
+    const boqLimit = plan?.boqLimit ?? null;
+
+    return {
+      hasActiveSubscription: true, // Treat as active
+      isBlocked: false,
+      planKey: overridePlan as PlanKey,
+      status: 'active',
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      boqsUsedThisPeriod: 0,
+      boqLimit,
+      canCreateBoq: true,
+      hasAdminGrant: true,
+      accessOverride: billing?.accessOverride ?? null,
+    };
+  }
+
   // No subscription = no access (unless we add a free tier later)
   if (!billing || !billing.planKey || !billing.status) {
     return {
@@ -42,6 +68,8 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqsUsedThisPeriod: 0,
       boqLimit: null,
       canCreateBoq: false,
+      hasAdminGrant: false,
+      accessOverride: null,
     };
   }
 
@@ -86,6 +114,8 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     boqsUsedThisPeriod,
     boqLimit,
     canCreateBoq,
+    hasAdminGrant: false,
+    accessOverride: billing?.accessOverride ?? null,
   };
 }
 

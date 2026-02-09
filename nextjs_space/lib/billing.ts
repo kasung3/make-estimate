@@ -178,11 +178,26 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
   const hasActiveSubscription = ['active', 'trialing'].includes(billing.status);
   const boqLimit = await getPlanLimit(billing.planKey);
 
-  // Count BOQs created this billing period
-  let boqsUsedThisPeriod = 0;
-  if (billing.currentPeriodStart && billing.currentPeriodEnd) {
-    boqsUsedThisPeriod = await computeUsage(billing.currentPeriodStart, billing.currentPeriodEnd);
+  // Determine billing period - use stored dates or fallback to calendar month
+  // Handle edge case where start/end are identical or invalid (webhook data issue)
+  let periodStart: Date;
+  let periodEnd: Date;
+  
+  const hasValidPeriod = billing.currentPeriodStart && billing.currentPeriodEnd && 
+    billing.currentPeriodEnd.getTime() > billing.currentPeriodStart.getTime();
+  
+  if (hasValidPeriod) {
+    periodStart = billing.currentPeriodStart!;
+    periodEnd = billing.currentPeriodEnd!;
+  } else {
+    // Fallback: Use calendar month as billing period
+    periodStart = startOfMonth(now);
+    periodEnd = endOfMonth(now);
+    console.warn(`[Billing] Company ${companyId} has invalid period dates, using calendar month fallback`);
   }
+
+  // Count BOQs created this billing period
+  const boqsUsedThisPeriod = await computeUsage(periodStart, periodEnd);
 
   // Determine if company can create BOQ
   let canCreateBoq = false;
@@ -197,8 +212,8 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     isBlocked,
     planKey: billing.planKey,
     status: billing.status,
-    currentPeriodStart: billing.currentPeriodStart,
-    currentPeriodEnd: billing.currentPeriodEnd,
+    currentPeriodStart: periodStart,
+    currentPeriodEnd: periodEnd,
     cancelAtPeriodEnd: billing.cancelAtPeriodEnd,
     boqsUsedThisPeriod,
     boqLimit,
@@ -206,7 +221,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     hasAdminGrant: false,
     hasTrialGrant: billing.status === 'trialing',
     accessOverride: billing?.accessOverride ?? null,
-    trialEndsAt: billing.status === 'trialing' ? billing.currentPeriodEnd : null,
+    trialEndsAt: billing.status === 'trialing' ? periodEnd : null,
     accessSource: 'subscription',
   };
 }

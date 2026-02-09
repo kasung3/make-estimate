@@ -1,21 +1,13 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { instrumentRoute, timedOperation } from '@/lib/api-instrumentation';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const companyId = (session.user as any)?.companyId;
+export const PUT = instrumentRoute(
+  '/api/items/[id]',
+  'PUT',
+  async (request, { params }, { companyId }) => {
     const body = await request.json();
 
     const existingItem = await prisma.boqItem.findFirst({
@@ -23,6 +15,7 @@ export async function PUT(
         id: params?.id,
         category: { boq: { companyId } },
       },
+      select: { id: true },
     });
 
     if (!existingItem) {
@@ -41,48 +34,37 @@ export async function PUT(
     if (body?.noteContent !== undefined) updateData.noteContent = body.noteContent;
     if (body?.includeInPdf !== undefined) updateData.includeInPdf = body.includeInPdf;
 
-    const item = await prisma.boqItem.update({
-      where: { id: params?.id },
-      data: updateData,
-    });
+    const item = await timedOperation('item.update', () =>
+      prisma.boqItem.update({
+        where: { id: params?.id },
+        data: updateData,
+      })
+    );
 
     return NextResponse.json(item);
-  } catch (error) {
-    console.error('Error updating item:', error);
-    return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
   }
-}
+);
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const companyId = (session.user as any)?.companyId;
-
+export const DELETE = instrumentRoute(
+  '/api/items/[id]',
+  'DELETE',
+  async (request, { params }, { companyId }) => {
     const existingItem = await prisma.boqItem.findFirst({
       where: {
         id: params?.id,
         category: { boq: { companyId } },
       },
+      select: { id: true },
     });
 
     if (!existingItem) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    await prisma.boqItem.delete({
-      where: { id: params?.id },
-    });
+    await timedOperation('item.delete', () =>
+      prisma.boqItem.delete({ where: { id: params?.id } })
+    );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting item:', error);
-    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
   }
-}
+);

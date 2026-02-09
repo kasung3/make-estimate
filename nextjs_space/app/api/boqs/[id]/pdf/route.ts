@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { CoverPageConfig, CoverElement, PdfThemeConfig } from '@/lib/types';
+import { createTimer, logRequestMetrics, logError } from '@/lib/performance';
 
 // Format number with thousand separators
 const formatNumber = (num: number, decimals: number = 2): string => {
@@ -218,14 +219,25 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const requestTimer = createTimer();
+  let statusCode = 500;
+  let companyId: string | undefined;
+  let userId: string | undefined;
+  
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      statusCode = 401;
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const companyId = (session.user as any)?.companyId;
-
+    companyId = (session.user as any)?.companyId;
+    userId = (session.user as any)?.id;
+    
+    // Log start of PDF generation
+    console.log(`[PDF_EXPORT_START] BOQ: ${params?.id}, Company: ${companyId}`);
+    
+    const dbTimer = createTimer();
     const [boq, company] = await Promise.all([
       prisma.boq.findFirst({
         where: {
@@ -256,8 +268,11 @@ export async function POST(
         },
       }),
     ]);
+    
+    console.log(`[PDF_EXPORT_DB] BOQ: ${params?.id}, DB query took ${dbTimer.elapsed()}ms`);
 
     if (!boq) {
+      statusCode = 404;
       return NextResponse.json({ error: 'BOQ not found' }, { status: 404 });
     }
 
@@ -596,6 +611,8 @@ export async function POST(
       if (status === 'SUCCESS') {
         if (result && result.result) {
           const pdfBuffer = Buffer.from(result.result, 'base64');
+          statusCode = 200;
+          console.log(`[PDF_EXPORT_SUCCESS] BOQ: ${params?.id}, Total time: ${requestTimer.elapsed()}ms`);
           return new NextResponse(pdfBuffer, {
             headers: {
               'Content-Type': 'application/pdf',
@@ -603,18 +620,38 @@ export async function POST(
             },
           });
         } else {
+          statusCode = 500;
           return NextResponse.json({ success: false, error: 'PDF generation completed but no result data' }, { status: 500 });
         }
       } else if (status === 'FAILED') {
         const errorMsg = result?.error || 'PDF generation failed';
+        statusCode = 500;
         return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
       }
       attempts++;
     }
 
+    statusCode = 500;
     return NextResponse.json({ success: false, error: 'PDF generation timed out' }, { status: 500 });
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    logError(error as Error, {
+      endpoint: '/api/boqs/[id]/pdf',
+      method: 'POST',
+      companyId,
+      userId,
+      action: 'pdf_export',
+    });
+    statusCode = 500;
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+  } finally {
+    logRequestMetrics({
+      endpoint: `/api/boqs/${params?.id}/pdf`,
+      method: 'POST',
+      companyId,
+      userId,
+      durationMs: requestTimer.elapsed(),
+      statusCode,
+      timestamp: new Date(),
+    });
   }
 }

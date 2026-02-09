@@ -1,64 +1,48 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { instrumentRoute, timedOperation } from '@/lib/api-instrumentation';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const companyId = (session.user as any)?.companyId;
-    const boq = await prisma.boq.findFirst({
-      where: {
-        id: params?.id,
-        companyId,
-      },
-      include: {
-        customer: true,
-        categories: {
-          include: { items: { orderBy: { sortOrder: 'asc' } } },
-          orderBy: { sortOrder: 'asc' },
+export const GET = instrumentRoute(
+  '/api/boqs/[id]',
+  'GET',
+  async (request, { params }, { companyId }) => {
+    const boq = await timedOperation('boq.findFirst', () =>
+      prisma.boq.findFirst({
+        where: {
+          id: params?.id,
+          companyId,
         },
-      },
-    });
+        include: {
+          customer: true,
+          pdfTheme: true,
+          coverTemplate: true,
+          categories: {
+            include: { items: { orderBy: { sortOrder: 'asc' } } },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      })
+    );
 
     if (!boq) {
       return NextResponse.json({ error: 'BOQ not found' }, { status: 404 });
     }
 
     return NextResponse.json(boq);
-  } catch (error) {
-    console.error('Error fetching BOQ:', error);
-    return NextResponse.json({ error: 'Failed to fetch BOQ' }, { status: 500 });
   }
-}
+);
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const companyId = (session.user as any)?.companyId;
+export const PUT = instrumentRoute(
+  '/api/boqs/[id]',
+  'PUT',
+  async (request, { params }, { companyId }) => {
     const body = await request.json();
 
     const existingBoq = await prisma.boq.findFirst({
-      where: {
-        id: params?.id,
-        companyId,
-      },
+      where: { id: params?.id, companyId },
+      select: { id: true },
     });
 
     if (!existingBoq) {
@@ -81,55 +65,41 @@ export async function PUT(
     if (body?.vatPercent !== undefined) updateData.vatPercent = body.vatPercent;
     if (body?.status !== undefined) updateData.status = body.status;
 
-    const boq = await prisma.boq.update({
-      where: { id: params?.id },
-      data: updateData,
-      include: {
-        customer: true,
-        categories: {
-          include: { items: { orderBy: { sortOrder: 'asc' } } },
-          orderBy: { sortOrder: 'asc' },
+    const boq = await timedOperation('boq.update', () =>
+      prisma.boq.update({
+        where: { id: params?.id },
+        data: updateData,
+        include: {
+          customer: true,
+          categories: {
+            include: { items: { orderBy: { sortOrder: 'asc' } } },
+            orderBy: { sortOrder: 'asc' },
+          },
         },
-      },
-    });
+      })
+    );
 
     return NextResponse.json(boq);
-  } catch (error) {
-    console.error('Error updating BOQ:', error);
-    return NextResponse.json({ error: 'Failed to update BOQ' }, { status: 500 });
   }
-}
+);
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const companyId = (session.user as any)?.companyId;
-
+export const DELETE = instrumentRoute(
+  '/api/boqs/[id]',
+  'DELETE',
+  async (request, { params }, { companyId }) => {
     const existingBoq = await prisma.boq.findFirst({
-      where: {
-        id: params?.id,
-        companyId,
-      },
+      where: { id: params?.id, companyId },
+      select: { id: true },
     });
 
     if (!existingBoq) {
       return NextResponse.json({ error: 'BOQ not found' }, { status: 404 });
     }
 
-    await prisma.boq.delete({
-      where: { id: params?.id },
-    });
+    await timedOperation('boq.delete', () =>
+      prisma.boq.delete({ where: { id: params?.id } })
+    );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting BOQ:', error);
-    return NextResponse.json({ error: 'Failed to delete BOQ' }, { status: 500 });
   }
-}
+);

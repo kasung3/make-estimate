@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { PdfThemeConfig } from '@/lib/types';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 // Default theme configuration (matches current hardcoded colors)
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
@@ -68,10 +69,35 @@ export async function POST(request: Request) {
     }
 
     const companyId = (session.user as any)?.companyId;
-    const body = await request.json();
+    if (!companyId) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
 
-    // Check if this is the first theme (make it default)
+    // Check billing status and template limits
+    const billingStatus = await getCompanyBillingStatus(companyId);
+    
+    if (!billingStatus.hasActiveSubscription) {
+      return NextResponse.json({ 
+        error: 'Active subscription required to create BOQ templates',
+        code: 'SUBSCRIPTION_REQUIRED' 
+      }, { status: 403 });
+    }
+
+    // Count existing themes
     const existingThemes = await prisma.pdfTheme.count({ where: { companyId } });
+    
+    // Check template limit (null = unlimited)
+    if (billingStatus.boqTemplatesLimit !== null && existingThemes >= billingStatus.boqTemplatesLimit) {
+      return NextResponse.json({ 
+        error: `BOQ template limit reached. Your ${billingStatus.planKey} plan allows ${billingStatus.boqTemplatesLimit} templates. Upgrade for more.`,
+        code: 'TEMPLATE_LIMIT_REACHED',
+        limit: billingStatus.boqTemplatesLimit,
+        current: existingThemes,
+        planKey: billingStatus.planKey
+      }, { status: 403 });
+    }
+
+    const body = await request.json();
     const isDefault = existingThemes === 0 ? true : body.isDefault ?? false;
 
     // If setting as default, unset other defaults first

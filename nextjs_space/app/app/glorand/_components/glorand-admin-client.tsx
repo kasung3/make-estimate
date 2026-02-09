@@ -1790,6 +1790,20 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
+                      checked={newCoupon.allowedPlans.includes('advance' as PlanKey)}
+                      onCheckedChange={(checked) => {
+                        setNewCoupon(prev => ({
+                          ...prev,
+                          allowedPlans: checked
+                            ? [...prev.allowedPlans, 'advance' as PlanKey]
+                            : prev.allowedPlans.filter(p => p !== ('advance' as PlanKey)),
+                        }));
+                      }}
+                    />
+                    <span className="text-sm">Advance</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
                       checked={newCoupon.allowedPlans.includes('business')}
                       onCheckedChange={(checked) => {
                         setNewCoupon(prev => ({
@@ -1803,7 +1817,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                     <span className="text-sm">Business</span>
                   </label>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Leave unchecked for both plans</p>
+                <p className="text-xs text-muted-foreground mt-1">Leave unchecked for all plans</p>
               </div>
 
               <div>
@@ -1872,7 +1886,7 @@ function CouponRow({
         </div>
         <div className="text-sm text-muted-foreground mt-1">
           {coupon.allowedPlans.length > 0
-            ? `For ${coupon.allowedPlans.map(p => p === 'starter' ? 'Starter' : 'Business').join(', ')}`
+            ? `For ${coupon.allowedPlans.map(p => p === 'starter' ? 'Starter' : (p as string) === 'advance' ? 'Advance' : 'Business').join(', ')}`
             : 'All plans'}{' '}
           • Used {coupon.currentRedemptions}
           {coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ''} times

@@ -17,6 +17,11 @@ export interface BillingStatus {
   accessOverride: string | null;
   trialEndsAt: Date | null;
   accessSource: 'subscription' | 'grant' | 'admin_override' | null;
+  // Template limits
+  boqTemplatesLimit: number | null;
+  coverTemplatesLimit: number | null;
+  logoUploadAllowed: boolean;
+  sharingAllowed: boolean;
 }
 
 /**
@@ -82,11 +87,10 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     });
   }
 
-  // Helper to get plan limit from DB
-  async function getPlanLimit(planKey: string | null): Promise<number | null> {
+  // Helper to get plan details from DB
+  async function getPlanDetails(planKey: string | null) {
     if (!planKey) return null;
-    const plan = await getPlanFromDb(planKey);
-    return plan?.boqLimitPerPeriod ?? null;
+    return getPlanFromDb(planKey);
   }
 
   // 1) Check for admin override on billing record (free_forever, admin_grant)
@@ -94,7 +98,8 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
   
   if (hasAdminGrant && !isBlocked) {
     const overridePlan = billing?.overridePlan || 'business';
-    const boqLimit = await getPlanLimit(overridePlan);
+    const plan = await getPlanDetails(overridePlan);
+    const boqLimit = plan?.boqLimitPerPeriod ?? null;
     
     // For admin grants, use calendar month as the period
     const periodStart = startOfMonth(now);
@@ -119,13 +124,18 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessOverride: billing?.accessOverride ?? null,
       trialEndsAt: null,
       accessSource: 'admin_override',
+      boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      logoUploadAllowed: plan?.logoUploadAllowed ?? true,
+      sharingAllowed: plan?.sharingAllowed ?? true,
     };
   }
 
   // 2) Check for internal access grant (trial/free_forever from coupon)
   if (activeGrant && !isBlocked) {
     const grantPlan = activeGrant.planKey || 'starter';
-    const boqLimit = await getPlanLimit(grantPlan);
+    const plan = await getPlanDetails(grantPlan);
+    const boqLimit = plan?.boqLimitPerPeriod ?? null;
     
     // For grants, use grant start as period start, end as period end (or calendar month for free_forever)
     const periodStart = activeGrant.startsAt;
@@ -151,6 +161,10 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessOverride: null,
       trialEndsAt: isTrialGrant ? activeGrant.endsAt : null,
       accessSource: 'grant',
+      boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      logoUploadAllowed: plan?.logoUploadAllowed ?? true,
+      sharingAllowed: plan?.sharingAllowed ?? true,
     };
   }
 
@@ -172,11 +186,16 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessOverride: null,
       trialEndsAt: null,
       accessSource: null,
+      boqTemplatesLimit: null,
+      coverTemplatesLimit: null,
+      logoUploadAllowed: false,
+      sharingAllowed: false,
     };
   }
 
+  const plan = await getPlanDetails(billing.planKey);
   const hasActiveSubscription = ['active', 'trialing'].includes(billing.status);
-  const boqLimit = await getPlanLimit(billing.planKey);
+  const boqLimit = plan?.boqLimitPerPeriod ?? null;
 
   // Determine billing period - use stored dates or fallback to calendar month
   // Handle edge case where start/end are identical or invalid (webhook data issue)
@@ -223,6 +242,10 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     accessOverride: billing?.accessOverride ?? null,
     trialEndsAt: billing.status === 'trialing' ? periodEnd : null,
     accessSource: 'subscription',
+    boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+    coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+    logoUploadAllowed: plan?.logoUploadAllowed ?? true,
+    sharingAllowed: plan?.sharingAllowed ?? true,
   };
 }
 

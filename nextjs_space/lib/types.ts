@@ -27,6 +27,11 @@ export interface BillingStatus {
   userBlocked?: boolean;
   companyBlocked?: boolean;
   blockReason?: string | null;
+  // Template limits
+  boqTemplatesLimit?: number | null;
+  coverTemplatesLimit?: number | null;
+  logoUploadAllowed?: boolean;
+  sharingAllowed?: boolean;
 }
 
 export interface BillingPlanInfo {

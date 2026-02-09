@@ -16,6 +16,7 @@ import {
   Building2,
   Ticket,
   BarChart3,
+  UserCog,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Button } from '@/components/ui/button';
 const userNavigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
   { name: 'Customers', href: '/app/customers', icon: Users },
+  { name: 'Team', href: '/app/team', icon: UserCog },
   { name: 'Settings', href: '/app/settings', icon: Settings },
 ];
 

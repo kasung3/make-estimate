@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { CoverPageConfig } from '@/lib/types';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 // Default cover template configuration matching current PDF output
 const getDefaultCoverConfig = (): CoverPageConfig => ({
@@ -112,6 +113,30 @@ export async function POST(request: Request) {
     const companyId = (session.user as any)?.companyId;
     if (!companyId) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    // Check billing status and template limits
+    const billingStatus = await getCompanyBillingStatus(companyId);
+    
+    if (!billingStatus.hasActiveSubscription) {
+      return NextResponse.json({ 
+        error: 'Active subscription required to create cover page templates',
+        code: 'SUBSCRIPTION_REQUIRED' 
+      }, { status: 403 });
+    }
+
+    // Count existing templates
+    const existingTemplates = await prisma.pdfCoverTemplate.count({ where: { companyId } });
+    
+    // Check template limit (null = unlimited)
+    if (billingStatus.coverTemplatesLimit !== null && existingTemplates >= billingStatus.coverTemplatesLimit) {
+      return NextResponse.json({ 
+        error: `Cover template limit reached. Your ${billingStatus.planKey} plan allows ${billingStatus.coverTemplatesLimit} templates. Upgrade for more.`,
+        code: 'TEMPLATE_LIMIT_REACHED',
+        limit: billingStatus.coverTemplatesLimit,
+        current: existingTemplates,
+        planKey: billingStatus.planKey
+      }, { status: 403 });
     }
 
     const body = await request.json();

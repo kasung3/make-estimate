@@ -63,6 +63,7 @@ import {
   Settings2,
   Check,
   Pencil,
+  GripVertical,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -188,6 +189,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   });
   const [newFeature, setNewFeature] = useState('');
   const [savingPlan, setSavingPlan] = useState(false);
+  const [draggedFeatureIdx, setDraggedFeatureIdx] = useState<number | null>(null);
+  const [editingFeatureIdx, setEditingFeatureIdx] = useState<number | null>(null);
+  const [editingFeatureText, setEditingFeatureText] = useState('');
 
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -396,6 +400,52 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       ...prev,
       features: prev.features.filter((_, i) => i !== index),
     }));
+  };
+
+  // Feature drag-and-drop handlers
+  const handleFeatureDragStart = (index: number) => {
+    setDraggedFeatureIdx(index);
+  };
+
+  const handleFeatureDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedFeatureIdx === null || draggedFeatureIdx === index) return;
+    
+    const newFeatures = [...planForm.features];
+    const draggedItem = newFeatures[draggedFeatureIdx];
+    newFeatures.splice(draggedFeatureIdx, 1);
+    newFeatures.splice(index, 0, draggedItem);
+    
+    setPlanForm(prev => ({ ...prev, features: newFeatures }));
+    setDraggedFeatureIdx(index);
+  };
+
+  const handleFeatureDragEnd = () => {
+    setDraggedFeatureIdx(null);
+  };
+
+  // Feature editing handlers
+  const startEditingFeature = (index: number) => {
+    setEditingFeatureIdx(index);
+    setEditingFeatureText(planForm.features[index]);
+  };
+
+  const saveEditingFeature = () => {
+    if (editingFeatureIdx === null) return;
+    const trimmed = editingFeatureText.trim();
+    if (trimmed) {
+      setPlanForm(prev => ({
+        ...prev,
+        features: prev.features.map((f, i) => i === editingFeatureIdx ? trimmed : f),
+      }));
+    }
+    setEditingFeatureIdx(null);
+    setEditingFeatureText('');
+  };
+
+  const cancelEditingFeature = () => {
+    setEditingFeatureIdx(null);
+    setEditingFeatureText('');
   };
 
   const fetchUserDetail = async (userId: string) => {
@@ -1233,27 +1283,70 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               </div>
 
               <div>
-                <Label>Features</Label>
-                <div className="space-y-2 mt-2">
+                <Label>Features <span className="text-xs text-muted-foreground ml-2">(drag to reorder, click to edit)</span></Label>
+                <div className="space-y-1 mt-2">
                   {planForm.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="flex-1 text-sm bg-gray-50 px-3 py-2 rounded">{feature}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFeature(i)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div
+                      key={i}
+                      draggable
+                      onDragStart={() => handleFeatureDragStart(i)}
+                      onDragOver={(e) => handleFeatureDragOver(e, i)}
+                      onDragEnd={handleFeatureDragEnd}
+                      className={`flex items-center gap-2 group ${
+                        draggedFeatureIdx === i ? 'opacity-50 bg-primary/10' : ''
+                      }`}
+                    >
+                      <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                      {editingFeatureIdx === i ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <Input
+                            value={editingFeatureText}
+                            onChange={(e) => setEditingFeatureText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') { e.preventDefault(); saveEditingFeature(); }
+                              if (e.key === 'Escape') { cancelEditingFeature(); }
+                            }}
+                            autoFocus
+                            className="h-8 text-sm"
+                          />
+                          <Button type="button" variant="ghost" size="sm" onClick={saveEditingFeature}>
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={cancelEditingFeature}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span 
+                            className="flex-1 text-sm bg-gray-50 px-3 py-2 rounded cursor-pointer hover:bg-gray-100"
+                            onClick={() => startEditingFeature(i)}
+                          >
+                            {feature}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeFeature(i)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   ))}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-4" /> {/* Spacer for alignment with grip icon */}
                     <Input
                       value={newFeature}
                       onChange={(e) => setNewFeature(e.target.value)}
                       placeholder="Add a feature..."
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                      className="flex-1"
                     />
                     <Button type="button" variant="outline" size="sm" onClick={addFeature}>
                       <Plus className="h-4 w-4" />

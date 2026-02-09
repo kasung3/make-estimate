@@ -340,17 +340,6 @@ function PricingContent() {
             })}
           </div>
 
-          {/* Coupon Note for logged out users */}
-          {!isLoggedIn && (
-            <motion.p
-              className="mt-8 text-center text-gray-500"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              Have a coupon? You can apply it at checkout.
-            </motion.p>
-          )}
           </>
           )}
         </div>

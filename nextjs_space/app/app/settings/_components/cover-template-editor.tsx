@@ -124,9 +124,11 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
 function LogoUploadSection({
   element,
   onUpdate,
+  logoUploadAllowed = true,
 }: {
   element: CoverElement;
   onUpdate: (updates: Partial<CoverElement>) => void;
+  logoUploadAllowed?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -218,6 +220,13 @@ function LogoUploadSection({
 
   return (
     <div className="space-y-3">
+      {/* Logo upload restriction message */}
+      {!logoUploadAllowed && (
+        <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
+          Logo upload is not available on your current plan. 
+          <a href="/pricing" className="ml-1 underline hover:text-amber-700">Upgrade</a> to upload a custom logo.
+        </div>
+      )}
       {/* Logo preview and upload */}
       <div className="flex items-start gap-3">
         {element.logoUrl ? (
@@ -244,13 +253,15 @@ function LogoUploadSection({
             accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
             onChange={handleFileSelect}
             className="hidden"
+            disabled={!logoUploadAllowed}
           />
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || !logoUploadAllowed}
+              title={!logoUploadAllowed ? 'Upgrade to upload a custom logo' : undefined}
             >
               {uploading ? (
                 <>
@@ -317,10 +328,12 @@ function SortableElementRow({
   element,
   onUpdate,
   onDelete,
+  logoUploadAllowed = true,
 }: {
   element: CoverElement;
   onUpdate: (id: string, updates: Partial<CoverElement>) => void;
   onDelete: (id: string) => void;
+  logoUploadAllowed?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: element.id,
@@ -417,6 +430,7 @@ function SortableElementRow({
                 <LogoUploadSection
                   element={element}
                   onUpdate={(updates) => onUpdate(element.id, updates)}
+                  logoUploadAllowed={logoUploadAllowed}
                 />
               )}
 
@@ -651,6 +665,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
   const [editingConfig, setEditingConfig] = useState<CoverPageConfig | null>(null);
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
+  const [logoUploadAllowed, setLogoUploadAllowed] = useState(true);
   // Preview is always shown (no toggle needed)
 
   const sensors = useSensors(
@@ -672,9 +687,23 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
     }
   }, []);
 
+  // Fetch billing status to check logo upload allowance
+  const fetchBillingStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/billing/status');
+      if (response.ok) {
+        const data = await response.json();
+        setLogoUploadAllowed(data.logoUploadAllowed ?? true);
+      }
+    } catch (error) {
+      console.error('Error fetching billing status:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+    fetchBillingStatus();
+  }, [fetchTemplates, fetchBillingStatus]);
 
   const handleCreateTemplate = () => {
     setEditingTemplate(null);
@@ -989,6 +1018,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
                               element={element}
                               onUpdate={handleUpdateElement}
                               onDelete={handleDeleteElement}
+                              logoUploadAllowed={logoUploadAllowed}
                             />
                           ))}
                         </div>

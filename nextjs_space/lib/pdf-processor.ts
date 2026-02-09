@@ -221,7 +221,8 @@ function generateCoverPageHtml(
 export async function processPdfExport(
   jobId: string,
   boqId: string,
-  companyId: string
+  companyId: string,
+  watermarkOptions?: { enabled: boolean; text: string | null }
 ): Promise<void> {
   const timer = createTimer();
   
@@ -232,7 +233,7 @@ export async function processPdfExport(
       data: { status: 'processing', startedAt: new Date() },
     });
 
-    console.log(`[PDF_PROCESSOR_START] Job: ${jobId}, BOQ: ${boqId}`);
+    console.log(`[PDF_PROCESSOR_START] Job: ${jobId}, BOQ: ${boqId}, Watermark: ${watermarkOptions?.enabled ? 'yes' : 'no'}`);
 
     // Fetch BOQ and company data
     const [boq, company] = await Promise.all([
@@ -328,7 +329,7 @@ export async function processPdfExport(
     );
 
     // Generate full HTML (same as sync version)
-    const html = generateFullHtml(boq, company, coverPageHtml, themeConfig, currencySymbol, formatCurrency, formatNumber);
+    const html = generateFullHtml(boq, company, coverPageHtml, themeConfig, currencySymbol, formatCurrency, formatNumber, watermarkOptions);
 
     // Generate PDF using the HTML2PDF API
     const createResponse = await fetch('https://apps.abacus.ai/api/createConvertHtmlToPdfRequest', {
@@ -425,7 +426,8 @@ function generateFullHtml(
   themeConfig: PdfThemeConfig,
   currencySymbol: string,
   formatCurrency: (amount: number) => string,
-  formatNumber: (num: number, decimals?: number) => string
+  formatNumber: (num: number, decimals?: number) => string,
+  watermarkOptions?: { enabled: boolean; text: string | null }
 ): string {
   // Calculate totals
   let subtotal = 0;
@@ -512,9 +514,31 @@ function generateFullHtml(
       color: ${themeConfig.totals.finalTotalTextColor};
     }
     .final-total td { font-size: 14px; }
+    ${watermarkOptions?.enabled ? `
+    /* Watermark styling */
+    .watermark {
+      position: fixed;
+      bottom: 15px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      color: rgba(0, 0, 0, 0.15);
+      letter-spacing: 0.5px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    @media print {
+      .watermark {
+        position: fixed;
+        bottom: 15px;
+      }
+    }
+    ` : ''}
   </style>
 </head>
 <body>
+  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">${watermarkOptions.text}</div>` : ''}
   ${coverPageHtml}
 
   <div class="content-page">

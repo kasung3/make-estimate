@@ -499,6 +499,10 @@ function SortableCategory({
   cancelInlineEdit,
   sanitizeHtml,
   formatNumber,
+  itemLimit,
+  currentItemCount,
+  isAtItemLimit,
+  planKey,
 }: SortableCategoryProps) {
   // useSortable MUST be at the top level of a component (not in a loop/callback)
   const {
@@ -701,23 +705,32 @@ function SortableCategory({
                   </div>
                 </div>
               </DndContext>
-              <div className="flex space-x-2 mt-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
-                  onClick={() => handleAddItem(category?.id, false)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Item
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                  onClick={() => handleAddItem(category?.id, true)}
-                >
-                  <StickyNote className="w-4 h-4 mr-2" />
-                  Add Note
-                </Button>
+              <div className="flex flex-col space-y-2 mt-3">
+                {isAtItemLimit && (
+                  <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
+                    Item limit reached ({currentItemCount}/{itemLimit}). 
+                    <a href="/pricing" className="ml-1 underline hover:text-amber-700">Upgrade</a> to add more items.
+                  </div>
+                )}
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    className={`flex-1 ${isAtItemLimit ? 'text-gray-400 cursor-not-allowed' : 'text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50'}`}
+                    onClick={() => handleAddItem(category?.id, false)}
+                    disabled={isAtItemLimit}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item {itemLimit !== null && `(${currentItemCount}/${itemLimit})`}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                    onClick={() => handleAddItem(category?.id, true)}
+                  >
+                    <StickyNote className="w-4 h-4 mr-2" />
+                    Add Note
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -2127,6 +2140,10 @@ export function BoqEditorClient({
                       cancelInlineEdit={cancelInlineEdit}
                       sanitizeHtml={sanitizeHtml}
                       formatNumber={formatNumber}
+                      itemLimit={itemLimit}
+                      currentItemCount={currentItemCount}
+                      isAtItemLimit={isAtItemLimit}
+                      planKey={planKey}
                     />
                   ))}
                 </SortableContext>

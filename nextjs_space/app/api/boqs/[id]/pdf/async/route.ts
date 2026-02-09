@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { processPdfExport } from '@/lib/pdf-processor';
 import { checkRateLimit, RATE_LIMITS, rateLimitKey, rateLimitResponse } from '@/lib/rate-limiter';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 /**
  * Async PDF Export API
@@ -77,6 +78,13 @@ export async function POST(
       });
     }
 
+    // Fetch billing status to check watermark settings
+    const billingStatus = await getCompanyBillingStatus(companyId);
+    const watermarkOptions = {
+      enabled: billingStatus.watermarkEnabled ?? false,
+      text: billingStatus.watermarkText ?? null,
+    };
+
     // Create a new PDF export job
     const job = await prisma.pdfExportJob.create({
       data: {
@@ -87,11 +95,11 @@ export async function POST(
       },
     });
 
-    console.log(`[PDF_ASYNC_JOB_CREATED] Job: ${job.id}, BOQ: ${boqId}, Company: ${companyId}`);
+    console.log(`[PDF_ASYNC_JOB_CREATED] Job: ${job.id}, BOQ: ${boqId}, Company: ${companyId}, Watermark: ${watermarkOptions.enabled}`);
 
     // Fire and forget - process in background
     // We don't await this, so the response returns immediately
-    processPdfExport(job.id, boqId, companyId).catch((error) => {
+    processPdfExport(job.id, boqId, companyId, watermarkOptions).catch((error) => {
       console.error(`[PDF_ASYNC_JOB_ERROR] Job: ${job.id}, Error:`, error);
     });
 

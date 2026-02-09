@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { MarketingFooter } from '@/components/marketing/footer';
@@ -21,10 +22,11 @@ import {
   Calculator,
   Download,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { metaTrack } from '@/lib/meta-pixel';
 
 // ====== FEATURES DATA ======
 const features = [
@@ -196,6 +198,14 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 // ====== MAIN HOME PAGE ======
 export default function HomePage() {
+  const router = useRouter();
+
+  // Track Lead event and navigate to register
+  const handleStartFree = useCallback((source: string) => {
+    metaTrack('Lead', { content_name: 'StartFree', source });
+    router.push('/register');
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-background">
       <MarketingNavbar />
@@ -246,12 +256,14 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
             >
-              <Link href="/register">
-                <Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-                  Start Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+                onClick={() => handleStartFree('hero')}
+              >
+                Start Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link href="/pricing">
                 <Button variant="outline" size="lg" className="text-base px-8 py-6">
                   View Pricing
@@ -511,12 +523,14 @@ export default function HomePage() {
                 BOQs today—completely free.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/register">
-                  <Button size="lg" className="px-8 py-6 text-base shadow-lg">
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  className="px-8 py-6 text-base shadow-lg"
+                  onClick={() => handleStartFree('final_cta')}
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
                 <Link href="/pricing">
                   <Button variant="outline" size="lg" className="px-8 py-6 text-base">
                     Compare Plans

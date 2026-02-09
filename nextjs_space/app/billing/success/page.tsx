@@ -8,6 +8,7 @@ import { CheckCircle2, Loader2, AlertCircle, ArrowRight, RefreshCcw } from 'luci
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import toast from 'react-hot-toast';
+import { metaTrack } from '@/lib/meta-pixel';
 
 interface CheckoutSessionData {
   sessionId: string;
@@ -64,6 +65,27 @@ export default function BillingSuccessPage() {
 
       setCheckoutData(data);
       setPageState('activating');
+
+      // Track Subscribe/Purchase events (dedupe by session_id)
+      const storageKey = `me_meta_checkout_fired_${data.sessionId}`;
+      if (typeof window !== 'undefined' && !localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, 'true');
+        
+        // Fire Subscribe event
+        metaTrack('Subscribe', {
+          content_name: data.planKey || 'unknown',
+          content_category: data.interval || 'monthly',
+        });
+
+        // Fire Purchase event with value
+        if (data.amount > 0) {
+          metaTrack('Purchase', {
+            value: data.amount / 100, // Convert cents to dollars
+            currency: (data.currency || 'usd').toUpperCase(),
+            content_name: data.planKey || 'subscription',
+          });
+        }
+      }
     } catch (err) {
       console.error('Session verification error:', err);
       setError('Failed to verify your payment. Please check your billing status.');

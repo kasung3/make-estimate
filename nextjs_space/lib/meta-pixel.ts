@@ -17,9 +17,8 @@ declare global {
   }
 }
 
-// Check if pixel is enabled
+// Check if pixel is enabled (safe for both server and client)
 export function isPixelEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
   return process.env.NEXT_PUBLIC_ENABLE_META_PIXEL === 'true';
 }
 
@@ -28,16 +27,17 @@ export function getPixelId(): string | null {
   return process.env.NEXT_PUBLIC_META_PIXEL_ID || null;
 }
 
-// Safe wrapper for fbq calls
+// Check if fbq is ready (client-only check)
+function isFbqReady(): boolean {
+  return typeof window !== 'undefined' && typeof window.fbq === 'function';
+}
+
+// Safe wrapper for fbq calls - silent no-op if not ready
 function safeFbq(...args: unknown[]): void {
   if (!isPixelEnabled()) return;
-  if (typeof window === 'undefined') return;
-  if (typeof window.fbq !== 'function') {
-    console.warn('[Meta Pixel] fbq not loaded yet');
-    return;
-  }
+  if (!isFbqReady()) return; // Silent no-op, script may still be loading
   try {
-    window.fbq(...args);
+    window.fbq!(...args);
   } catch (err) {
     console.error('[Meta Pixel] Error calling fbq:', err);
   }
@@ -84,21 +84,4 @@ export function metaTrackCustom(
  */
 export function metaTrackPageView(): void {
   safeFbq('track', 'PageView');
-}
-
-/**
- * Initialize the pixel (called once on app load)
- */
-export function metaInitPixel(): void {
-  const pixelId = getPixelId();
-  if (!isPixelEnabled() || !pixelId) return;
-  if (typeof window === 'undefined') return;
-  if (typeof window.fbq !== 'function') return;
-  
-  try {
-    window.fbq('init', pixelId);
-    window.fbq('track', 'PageView');
-  } catch (err) {
-    console.error('[Meta Pixel] Error initializing:', err);
-  }
 }

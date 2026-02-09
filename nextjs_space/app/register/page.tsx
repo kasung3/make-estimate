@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2, Check, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
 
 const PLANS: Record<string, { name: string; price: string; features: string[]; isFree?: boolean }> = {
   free: {
@@ -79,6 +80,8 @@ function RegisterForm() {
 
       // Handle Free plan activation (no Stripe redirect needed)
       if (data.freePlanActivated) {
+        // Track FreePlanActivated custom event
+        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -86,6 +89,13 @@ function RegisterForm() {
 
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
+        // Track trial activation
+        if (data.grantType === 'trial') {
+          metaTrack('StartTrial', { 
+            content_name: planKey,
+            trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
+          });
+        }
         toast.success(data.grantType === 'trial' 
           ? 'Trial activated! Redirecting...'
           : 'Access granted! Redirecting...');
@@ -98,6 +108,13 @@ function RegisterForm() {
         console.error('Invalid checkout URL received:', data.url);
         throw new Error('Invalid checkout URL received from server');
       }
+
+      // Track InitiateCheckout event
+      metaTrack('InitiateCheckout', {
+        content_name: planKey,
+        currency: 'USD',
+        content_category: 'subscription',
+      });
 
       // Open Stripe checkout in new window (required for sandboxed iframes)
       window.open(data.url, '_blank');
@@ -146,6 +163,9 @@ function RegisterForm() {
         router.replace('/login');
         return;
       }
+
+      // Track successful registration (no PII)
+      metaTrack('CompleteRegistration', { method: 'email' });
 
       toast.success('Account created successfully!');
 

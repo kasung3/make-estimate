@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { isPixelEnabled, getPixelId, metaTrackPageView } from '@/lib/meta-pixel';
+
+// Constants evaluated at build time (consistent server/client)
+const PIXEL_ENABLED = isPixelEnabled();
+const PIXEL_ID = getPixelId();
 
 /**
  * MetaPixelProvider
@@ -24,23 +28,26 @@ export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const isInitialized = useRef(false);
   const lastTrackedPath = useRef<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const pixelId = getPixelId();
-  const enabled = isPixelEnabled();
+  // Set mounted state after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Track page views on route changes (SPA navigation)
   useEffect(() => {
-    if (!enabled || !pixelId) return;
+    if (!PIXEL_ENABLED || !PIXEL_ID) return;
+    if (!mounted) return;
     if (typeof window === 'undefined') return;
     if (typeof window.fbq !== 'function') return;
 
     // Build current path including search params
-    const currentPath = searchParams.toString()
-      ? `${pathname}?${searchParams.toString()}`
-      : pathname;
+    const searchString = searchParams?.toString() || '';
+    const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
 
     // Prevent duplicate tracking on initial render
-    // The initial PageView is fired by the script's onLoad
+    // The initial PageView is fired by the script's inline code
     if (!isInitialized.current) {
       isInitialized.current = true;
       lastTrackedPath.current = currentPath;
@@ -52,44 +59,44 @@ export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
       lastTrackedPath.current = currentPath;
       metaTrackPageView();
     }
-  }, [pathname, searchParams, enabled, pixelId]);
+  }, [pathname, searchParams, mounted]);
 
-  // Don't render script if disabled
-  if (!enabled || !pixelId) {
-    return <>{children}</>;
-  }
-
+  // Always render children consistently (avoids hydration mismatch)
+  // Script is added conditionally but doesn't affect children rendering
   return (
     <>
-      {/* Meta Pixel base code */}
-      <Script
-        id="meta-pixel"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${pixelId}');
-            fbq('track', 'PageView');
-          `,
-        }}
-      />
-      {/* Meta Pixel noscript fallback */}
-      <noscript>
-        <img
-          height="1"
-          width="1"
-          style={{ display: 'none' }}
-          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
-          alt=""
-        />
-      </noscript>
+      {/* Only render pixel script if enabled - this is fine since Script doesn't affect hydration */}
+      {PIXEL_ENABLED && PIXEL_ID && (
+        <>
+          <Script
+            id="meta-pixel"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window, document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '${PIXEL_ID}');
+                fbq('track', 'PageView');
+              `,
+            }}
+          />
+          <noscript>
+            <img
+              height="1"
+              width="1"
+              style={{ display: 'none' }}
+              src={`https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+        </>
+      )}
       {children}
     </>
   );

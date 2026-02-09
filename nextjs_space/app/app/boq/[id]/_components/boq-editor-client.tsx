@@ -58,6 +58,7 @@ import {
   Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { metaTrackCustom } from '@/lib/meta-pixel';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType, PdfThemeType } from '@/lib/types';
 import {
   DndContext,
@@ -1233,6 +1234,11 @@ export function BoqEditorClient({
       
       // Handle item limit exceeded error
       if (response.status === 403 && data.error === 'Item limit reached') {
+        // Track ReachedLimit event
+        metaTrackCustom('ReachedLimit', { 
+          limit_type: 'items_per_boq',
+          plan_key: data.plan_key || 'unknown',
+        });
         toast.error(data.message || `Item limit reached. Upgrade to add more items.`, {
           duration: 5000,
         });
@@ -1691,6 +1697,8 @@ export function BoqEditorClient({
             document.body.removeChild(a);
           }
           
+          // Track ExportPDF event
+          metaTrackCustom('ExportPDF', { kind: 'boq' });
           toast.success('PDF downloaded', { id: toastId });
           return;
         }

@@ -250,7 +250,8 @@ export async function POST(request: Request) {
     }
 
     // Build checkout session params
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    // SITE_URL is the canonical base URL for return URLs (supports staging/prod)
+    const siteUrl = process.env.SITE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
     // Determine seat quantity for per-seat plans
     const seatQuantity = plan.seatModel === 'per_seat' 
@@ -269,8 +270,9 @@ export async function POST(request: Request) {
           quantity: seatQuantity,
         },
       ],
-      success_url: `${baseUrl}/app/dashboard?billing=success`,
-      cancel_url: `${baseUrl}/pricing?checkout=canceled`,
+      // Use dedicated billing pages with session_id for proper verification
+      success_url: `${siteUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/billing/cancel`,
       metadata: {
         companyId,
         planKey,

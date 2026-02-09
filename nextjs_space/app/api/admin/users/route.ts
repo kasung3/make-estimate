@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const where: any = {};
     const OR: any[] = [];
 
-    // Search across multiple fields
+    // Search across multiple fields including company name
     if (query) {
       const searchLower = query.toLowerCase();
       OR.push(
@@ -38,7 +38,17 @@ export async function GET(request: Request) {
         { name: { contains: searchLower, mode: 'insensitive' } },
         { firstName: { contains: searchLower, mode: 'insensitive' } },
         { lastName: { contains: searchLower, mode: 'insensitive' } },
-        { phone: { contains: query } }
+        { phone: { contains: query } },
+        // Search by company name through memberships relation
+        {
+          memberships: {
+            some: {
+              company: {
+                name: { contains: searchLower, mode: 'insensitive' }
+              }
+            }
+          }
+        }
       );
     }
 

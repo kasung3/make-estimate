@@ -13,14 +13,26 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  Building2,
+  Ticket,
+  BarChart3,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
-const navigation = [
+// Regular user navigation
+const userNavigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
   { name: 'Customers', href: '/app/customers', icon: Users },
   { name: 'Settings', href: '/app/settings', icon: Settings },
+];
+
+// Admin-only navigation (platform management)
+const adminNavigation = [
+  { name: 'Overview', href: '/app/glorand', icon: BarChart3 },
+  { name: 'Users', href: '/app/glorand?tab=users', icon: Users },
+  { name: 'Companies', href: '/app/glorand?tab=companies', icon: Building2 },
+  { name: 'Coupons', href: '/app/glorand?tab=coupons', icon: Ticket },
 ];
 
 export function Sidebar() {
@@ -37,6 +49,12 @@ export function Sidebar() {
       .catch(() => setIsPlatformAdmin(false));
   }, [session?.user?.email]);
 
+  // Determine which navigation to show
+  // If admin is on admin pages (/app/glorand), show admin navigation
+  // Otherwise show user navigation with admin link
+  const isOnAdminPage = pathname?.startsWith('/app/glorand');
+  const navigation = isPlatformAdmin && isOnAdminPage ? adminNavigation : userNavigation;
+
   return (
     <div
       className={cn(
@@ -46,13 +64,27 @@ export function Sidebar() {
     >
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <Link href="/app/dashboard" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-md">
-              <FileText className="w-5 h-5 text-white" />
+          <Link href={isPlatformAdmin && isOnAdminPage ? '/app/glorand' : '/app/dashboard'} className="flex items-center space-x-3">
+            <div className={cn(
+              'w-10 h-10 rounded-xl flex items-center justify-center shadow-md',
+              isPlatformAdmin && isOnAdminPage 
+                ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                : 'bg-gradient-to-br from-cyan-500 to-teal-500'
+            )}>
+              {isPlatformAdmin && isOnAdminPage ? (
+                <Shield className="w-5 h-5 text-white" />
+              ) : (
+                <FileText className="w-5 h-5 text-white" />
+              )}
             </div>
             {!collapsed && (
-              <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
-                MakeEstimate
+              <span className={cn(
+                'text-lg font-bold bg-clip-text text-transparent',
+                isPlatformAdmin && isOnAdminPage
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600'
+                  : 'bg-gradient-to-r from-cyan-600 to-teal-600'
+              )}>
+                {isPlatformAdmin && isOnAdminPage ? 'Admin Panel' : 'MakeEstimate'}
               </span>
             )}
           </Link>
@@ -73,7 +105,23 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/');
+          // For admin tabs with query params, check if we're on the right tab
+          const isAdminTabLink = item.href.includes('?tab=');
+          const itemTab = isAdminTabLink ? item.href.split('?tab=')[1] : null;
+          const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+          
+          let isActive = false;
+          if (isAdminTabLink) {
+            isActive = pathname === '/app/glorand' && currentTab === itemTab;
+          } else if (item.href === '/app/glorand') {
+            // Overview link - active when on /app/glorand with no tab or tab=users (default)
+            isActive = pathname === '/app/glorand' && (!currentTab || currentTab === 'users');
+          } else {
+            isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/');
+          }
+          
+          const isAdminStyle = isPlatformAdmin && isOnAdminPage;
+          
           return (
             <Link
               key={item.name}
@@ -81,27 +129,45 @@ export function Sidebar() {
               className={cn(
                 'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-50 to-teal-50 text-cyan-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? isAdminStyle
+                    ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium'
+                    : 'bg-gradient-to-r from-cyan-50 to-teal-50 text-cyan-700 font-medium'
+                  : isAdminStyle
+                    ? 'text-gray-600 hover:bg-amber-50'
+                    : 'text-gray-600 hover:bg-gray-100'
               )}
             >
-              <item.icon className={cn('h-5 w-5', isActive ? 'text-cyan-600' : '')} />
+              <item.icon className={cn('h-5 w-5', isActive ? (isAdminStyle ? 'text-amber-600' : 'text-cyan-600') : '')} />
               {!collapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
-        {isPlatformAdmin && (
+        
+        {/* Show Admin link when admin is on regular pages */}
+        {isPlatformAdmin && !isOnAdminPage && (
           <Link
             href="/app/glorand"
             className={cn(
               'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
-              pathname === '/app/glorand'
-                ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium'
-                : 'text-amber-600 hover:bg-amber-50'
+              'text-amber-600 hover:bg-amber-50'
             )}
           >
-            <Shield className={cn('h-5 w-5', pathname === '/app/glorand' ? 'text-amber-600' : '')} />
-            {!collapsed && <span>Admin</span>}
+            <Shield className="h-5 w-5" />
+            {!collapsed && <span>Admin Panel</span>}
+          </Link>
+        )}
+        
+        {/* Show "Back to App" link when admin is on admin pages */}
+        {isPlatformAdmin && isOnAdminPage && (
+          <Link
+            href="/app/dashboard"
+            className={cn(
+              'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all mt-4 border-t pt-4 border-gray-200',
+              'text-cyan-600 hover:bg-cyan-50'
+            )}
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            {!collapsed && <span>Back to App</span>}
           </Link>
         )}
       </nav>

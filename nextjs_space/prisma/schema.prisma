@@ -301,3 +301,30 @@ model CouponRedemption {
   @@index([companyBillingId])
   @@index([couponCode])
 }
+
+// ============== PDF EXPORT JOBS ==============
+
+enum PdfJobStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model PdfExportJob {
+  id            String       @id @default(cuid())
+  boqId         String
+  companyId     String
+  userId        String
+  status        PdfJobStatus @default(pending)
+  pdfUrl        String?      // URL to download the completed PDF
+  errorMessage  String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([companyId, createdAt(sort: Desc)])
+  @@index([boqId])
+  @@index([status])
+}

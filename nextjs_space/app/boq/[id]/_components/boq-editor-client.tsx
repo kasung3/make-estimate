@@ -1551,29 +1551,101 @@ export function BoqEditorClient({
 
   const handleExportPdf = async () => {
     setExportingPdf(true);
+    let toastId: string | undefined;
+    
     try {
       await flushPendingAutosave();
 
-      const response = await fetch(`/api/boqs/${boq?.id}/pdf`, {
+      // Start async export job
+      toastId = toast.loading('Starting PDF export...');
+      
+      const initResponse = await fetch(`/api/boqs/${boq?.id}/pdf/async`, {
         method: 'POST',
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+      if (!initResponse.ok) {
+        throw new Error('Failed to start PDF export');
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${boq?.projectName ?? 'BOQ'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('PDF downloaded');
+      const { jobId, status: initialStatus, message } = await initResponse.json();
+      
+      if (!jobId) {
+        throw new Error('No job ID returned');
+      }
+
+      // Poll for job completion
+      toast.loading('Generating PDF...', { id: toastId });
+      
+      const maxPollAttempts = 300; // 5 minutes max
+      let pollAttempts = 0;
+      
+      while (pollAttempts < maxPollAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const statusResponse = await fetch(`/api/pdf-jobs/${jobId}`);
+        if (!statusResponse.ok) {
+          throw new Error('Failed to check job status');
+        }
+
+        const { status, pdfUrl, errorMessage, elapsedMs } = await statusResponse.json();
+        
+        // Update toast with elapsed time
+        if (status === 'processing' && elapsedMs > 0) {
+          toast.loading(`Generating PDF... (${Math.round(elapsedMs / 1000)}s)`, { id: toastId });
+        }
+
+        if (status === 'completed' && pdfUrl) {
+          // Download the PDF
+          toast.loading('Downloading PDF...', { id: toastId });
+          
+          // Handle base64 data URL
+          if (pdfUrl.startsWith('data:')) {
+            const base64Data = pdfUrl.split(',')[1];
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${boq?.projectName ?? 'BOQ'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          } else {
+            // Handle regular URL
+            const a = document.createElement('a');
+            a.href = pdfUrl;
+            a.download = `${boq?.projectName ?? 'BOQ'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+          
+          toast.success('PDF downloaded', { id: toastId });
+          return;
+        }
+
+        if (status === 'failed') {
+          throw new Error(errorMessage || 'PDF generation failed');
+        }
+
+        pollAttempts++;
+      }
+
+      throw new Error('PDF generation timed out');
     } catch (error) {
-      toast.error('Failed to export PDF');
+      const message = error instanceof Error ? error.message : 'Failed to export PDF';
+      if (toastId) {
+        toast.error(message, { id: toastId });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setExportingPdf(false);
     }

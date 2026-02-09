@@ -170,22 +170,22 @@ function PricingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <MarketingNavbar />
 
       {/* Header */}
-      <section className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-cyan-50 via-white to-teal-50">
+      <section className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 gradient-hero">
         <div className="max-w-4xl mx-auto text-center">
           <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-gray-900"
+            className="text-4xl sm:text-5xl font-bold text-foreground"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Simple, Transparent Pricing
+            Simple, <span className="gradient-text">Transparent Pricing</span>
           </motion.h1>
           <motion.p
-            className="mt-4 text-lg text-gray-600"
+            className="mt-4 text-lg text-muted-foreground"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -202,7 +202,7 @@ function PricingContent() {
           >
             <span className={cn(
               "text-sm font-medium transition-colors",
-              billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'
+              billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'
             )}>
               Monthly
             </span>
@@ -212,12 +212,12 @@ function PricingContent() {
             />
             <span className={cn(
               "text-sm font-medium transition-colors",
-              billingCycle === 'annual' ? 'text-gray-900' : 'text-gray-500'
+              billingCycle === 'annual' ? 'text-foreground' : 'text-muted-foreground'
             )}>
               Annual
             </span>
             {billingCycle === 'annual' && (
-              <span className="ml-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+              <span className="ml-2 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
                 Save up to 15%
               </span>
             )}
@@ -229,7 +229,7 @@ function PricingContent() {
       {(subscriptionRequired || trialEnded || (isLoggedIn && checkoutCanceled)) && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-4">
           <Alert variant="default" className={cn(
-            "border",
+            "border rounded-xl",
             trialEnded ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
           )}>
             {trialEnded ? (
@@ -253,7 +253,7 @@ function PricingContent() {
         <div className="max-w-6xl mx-auto">
           {plansLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
             </div>
           ) : (
           <>
@@ -266,10 +266,10 @@ function PricingContent() {
                 <motion.div
                   key={plan.planKey}
                   className={cn(
-                    'relative p-6 lg:p-8 rounded-2xl border-2 transition-shadow flex flex-col',
+                    'relative p-6 lg:p-8 rounded-2xl border-2 transition-all duration-200 flex flex-col',
                     plan.isMostPopular
-                      ? 'border-cyan-500 shadow-xl bg-white scale-[1.02]'
-                      : 'border-gray-200 shadow-sm bg-white hover:shadow-md'
+                      ? 'border-purple-400 shadow-xl shadow-purple-100 bg-white scale-[1.02]'
+                      : 'border-purple-100 shadow-card hover:shadow-card-hover bg-white'
                   )}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -277,7 +277,7 @@ function PricingContent() {
                 >
                   {plan.isMostPopular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="inline-flex items-center px-4 py-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm font-medium rounded-full shadow-md">
+                      <span className="inline-flex items-center px-4 py-1 bg-gradient-to-r from-purple-500 to-lavender-500 text-white text-sm font-medium rounded-full shadow-md">
                         <Sparkles className="w-4 h-4 mr-1" />
                         Most Popular
                       </span>
@@ -285,16 +285,16 @@ function PricingContent() {
                   )}
 
                   <div className="text-center">
-                    <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                    <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
                     
                     <div className="mt-4 flex items-baseline justify-center">
-                      <span className="text-4xl lg:text-5xl font-bold text-gray-900">
+                      <span className="text-4xl lg:text-5xl font-bold text-foreground">
                         {displayPrice.price}
                       </span>
-                      <span className="text-gray-500 ml-1">
+                      <span className="text-muted-foreground ml-1">
                         {displayPrice.period}
                         {displayPrice.perUser && (
-                          <span className="text-xs block text-cyan-600 font-medium">per user</span>
+                          <span className="text-xs block text-purple-600 font-medium">per user</span>
                         )}
                       </span>
                     </div>
@@ -309,12 +309,12 @@ function PricingContent() {
                     )}
 
                     {/* Plan Description */}
-                    <p className="mt-4 text-sm text-gray-600">
+                    <p className="mt-4 text-sm text-muted-foreground">
                       {plan.boqLimitPerPeriod 
                         ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per period`
                         : 'Unlimited BOQ creations'}
                       {plan.seatModel === 'per_seat' && (
-                        <span className="block mt-1 text-cyan-600 font-medium">
+                        <span className="block mt-1 text-purple-600 font-medium">
                           <Users className="w-3 h-3 inline mr-1" />
                           Team billing: per active member
                         </span>
@@ -325,8 +325,8 @@ function PricingContent() {
                   <ul className="mt-6 space-y-3 flex-1">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start">
-                        <Check className="w-5 h-5 text-teal-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">{feature}</span>
+                        <Check className="w-5 h-5 text-purple-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-muted-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -336,7 +336,7 @@ function PricingContent() {
                       className={cn(
                         'w-full py-5',
                         plan.isMostPopular
-                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
+                          ? ''
                           : ''
                       )}
                       variant={plan.isMostPopular ? 'default' : 'outline'}
@@ -368,95 +368,95 @@ function PricingContent() {
       </section>
 
       {/* Comparison Table */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-purple-50/50">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Compare Plans</h2>
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Compare Plans</h2>
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full">
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-card">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-3 lg:px-4 py-4 text-left text-sm font-semibold text-gray-900">
+                    <tr className="bg-purple-50">
+                      <th className="px-3 lg:px-4 py-4 text-left text-sm font-semibold text-foreground">
                         Feature
                       </th>
                       <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-emerald-600">
                         Free
                       </th>
-                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-gray-900">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-foreground">
                         Starter
                       </th>
-                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-cyan-600">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-purple-600">
                         Advance
                       </th>
-                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-gray-900">
+                      <th className="px-3 lg:px-4 py-4 text-center text-sm font-semibold text-foreground">
                         Business
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-purple-100">
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">BOQ Creations</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">5 / period</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Creations</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">5 / period</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Items per BOQ</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">15</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Items per BOQ</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">15</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Team Members</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Team Members</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">BOQ Templates</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">2</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">10</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Templates</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">2</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">10</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Cover Templates</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">2</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">10</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Cover Templates</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">2</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">10</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Upload Own Logo</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Upload Own Logo</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Team Collaboration</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Team Collaboration</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center font-medium">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">PDF Export</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">With watermark</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">PDF Export</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-amber-600 text-center">With watermark</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-700">Priority Support</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">—</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Priority Support</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">—</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center font-medium">✓</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">✓</td>
                     </tr>
                   </tbody>
                 </table>
@@ -467,10 +467,10 @@ function PricingContent() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Still have questions?</h2>
-          <p className="mt-2 text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Still have questions?</h2>
+          <p className="mt-2 text-muted-foreground">
             Start with a plan and upgrade anytime. Your BOQs are always accessible.
           </p>
           <div className="mt-6">
@@ -489,8 +489,8 @@ function PricingContent() {
 export default function PricingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-teal-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center gradient-hero">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     }>
       <PricingContent />

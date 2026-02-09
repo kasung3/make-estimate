@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { FileText, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -15,17 +15,31 @@ const navLinks = [
 export function MarketingNavbar() {
   const { data: session } = useSession() || {};
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <header className={cn(
+      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+      scrolled 
+        ? 'bg-white/90 backdrop-blur-lg border-b border-purple-100/50 shadow-sm' 
+        : 'bg-transparent'
+    )}>
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-xl flex items-center justify-center shadow-md">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
+            <span className="text-lg font-bold gradient-text">
               MakeEstimate
             </span>
           </Link>
@@ -36,7 +50,7 @@ export function MarketingNavbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className="text-gray-600 hover:text-cyan-600 transition-colors font-medium"
+                className="text-gray-600 hover:text-purple-600 transition-colors duration-200 font-medium"
               >
                 {link.name}
               </Link>
@@ -52,7 +66,7 @@ export function MarketingNavbar() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost">Login</Button>
+                  <Button variant="ghost" className="text-gray-700">Login</Button>
                 </Link>
                 <Link href="/register">
                   <Button>Get Started</Button>
@@ -63,7 +77,7 @@ export function MarketingNavbar() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-xl hover:bg-purple-50 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -86,7 +100,7 @@ export function MarketingNavbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className="text-gray-600 hover:text-cyan-600 transition-colors font-medium py-2"
+                className="text-gray-600 hover:text-purple-600 transition-colors font-medium py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.name}

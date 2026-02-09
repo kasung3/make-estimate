@@ -52,26 +52,24 @@ export function Sidebar() {
   }, [session?.user?.email]);
 
   // Determine which navigation to show
-  // If admin is on admin pages (/app/glorand), show admin navigation
-  // Otherwise show user navigation with admin link
   const isOnAdminPage = pathname?.startsWith('/app/glorand');
   const navigation = isPlatformAdmin && isOnAdminPage ? adminNavigation : userNavigation;
 
   return (
     <div
       className={cn(
-        'h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 shadow-sm',
+        'h-screen bg-white border-r border-purple-100/50 flex flex-col transition-all duration-300',
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-purple-100/50">
         <div className="flex items-center justify-between">
           <Link href={isPlatformAdmin && isOnAdminPage ? '/app/glorand' : '/app/dashboard'} className="flex items-center space-x-3">
             <div className={cn(
-              'w-10 h-10 rounded-xl flex items-center justify-center shadow-md',
+              'w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all duration-200',
               isPlatformAdmin && isOnAdminPage 
                 ? 'bg-gradient-to-br from-amber-500 to-orange-500'
-                : 'bg-gradient-to-br from-cyan-500 to-teal-500'
+                : 'bg-gradient-to-br from-purple-500 to-lavender-500'
             )}>
               {isPlatformAdmin && isOnAdminPage ? (
                 <Shield className="w-5 h-5 text-white" />
@@ -84,7 +82,7 @@ export function Sidebar() {
                 'text-lg font-bold bg-clip-text text-transparent',
                 isPlatformAdmin && isOnAdminPage
                   ? 'bg-gradient-to-r from-amber-600 to-orange-600'
-                  : 'bg-gradient-to-r from-cyan-600 to-teal-600'
+                  : 'bg-gradient-to-r from-purple-600 to-lavender-600'
               )}>
                 {isPlatformAdmin && isOnAdminPage ? 'Admin Panel' : 'MakeEstimate'}
               </span>
@@ -93,7 +91,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 text-purple-400 hover:text-purple-600 hover:bg-purple-50"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -105,7 +103,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
           // For admin tabs with query params, check if we're on the right tab
           const isAdminTabLink = item.href.includes('?tab=');
@@ -116,7 +114,6 @@ export function Sidebar() {
           if (isAdminTabLink) {
             isActive = pathname === '/app/glorand' && currentTab === itemTab;
           } else if (item.href === '/app/glorand') {
-            // Overview link - active when on /app/glorand with no tab or tab=users (default)
             isActive = pathname === '/app/glorand' && (!currentTab || currentTab === 'users');
           } else {
             isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/');
@@ -129,28 +126,31 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
+                'flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200',
                 isActive
                   ? isAdminStyle
-                    ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium'
-                    : 'bg-gradient-to-r from-cyan-50 to-teal-50 text-cyan-700 font-medium'
+                    ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-medium shadow-sm'
+                    : 'bg-gradient-to-r from-purple-50 to-lavender-50 text-purple-700 font-medium shadow-sm'
                   : isAdminStyle
-                    ? 'text-gray-600 hover:bg-amber-50'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'text-gray-600 hover:bg-amber-50 hover:text-amber-600'
+                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
               )}
             >
-              <item.icon className={cn('h-5 w-5', isActive ? (isAdminStyle ? 'text-amber-600' : 'text-cyan-600') : '')} />
+              <item.icon className={cn(
+                'h-5 w-5 transition-colors',
+                isActive ? (isAdminStyle ? 'text-amber-600' : 'text-purple-500') : ''
+              )} />
               {!collapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
         
-        {/* Show Admin link when non-admin user is on regular pages (this shouldn't happen for pure admins) */}
+        {/* Show Admin link when non-admin user is on regular pages */}
         {isPlatformAdmin && !isOnAdminPage && (
           <Link
             href="/app/glorand"
             className={cn(
-              'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
+              'flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200',
               'text-amber-600 hover:bg-amber-50'
             )}
           >
@@ -160,13 +160,13 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-purple-100/50">
         {!collapsed && session?.user && (
           <div className="mb-3 px-3">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-foreground truncate">
               {(session.user as any)?.companyName || 'Company'}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {session.user?.email}
             </p>
           </div>
@@ -174,7 +174,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           className={cn(
-            'w-full text-gray-600 hover:text-red-600 hover:bg-red-50',
+            'w-full text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl',
             collapsed ? 'justify-center' : 'justify-start'
           )}
           onClick={() => signOut({ callbackUrl: '/login' })}

@@ -4,8 +4,48 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { isPlatformAdmin } from '@/lib/billing';
 import { stripe } from '@/lib/stripe';
+import { SeatModel } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
+
+// Helper: Create or reuse Stripe price for a given amount/interval/product
+async function ensureStripePrice(
+  productId: string,
+  amountCents: number,
+  interval: 'month' | 'year',
+  planKey: string
+): Promise<string> {
+  // Search for existing price with same amount and interval
+  const existingPrices = await stripe.prices.list({
+    product: productId,
+    active: true,
+    limit: 100,
+  });
+
+  const matchingPrice = existingPrices.data.find(
+    (p) =>
+      p.unit_amount === amountCents &&
+      p.recurring?.interval === interval &&
+      p.currency === 'usd'
+  );
+
+  if (matchingPrice) {
+    console.log(`Reusing existing Stripe price: ${matchingPrice.id} for ${planKey} ${interval}`);
+    return matchingPrice.id;
+  }
+
+  // Create new price
+  const newPrice = await stripe.prices.create({
+    product: productId,
+    unit_amount: amountCents,
+    currency: 'usd',
+    recurring: { interval },
+    metadata: { planKey, interval },
+  });
+
+  console.log(`Created new Stripe price: ${newPrice.id} for ${planKey} ${interval} at $${amountCents / 100}`);
+  return newPrice.id;
+}
 
 // GET single plan
 export async function GET(
@@ -38,7 +78,7 @@ export async function GET(
   }
 }
 
-// PUT update plan (including price change which creates new Stripe price)
+// PUT update plan (including price change which auto-creates Stripe prices)
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -61,9 +101,16 @@ export async function PUT(
     const {
       name,
       priceMonthlyUsdCents,
+      priceAnnualUsdCents,
+      seatModel,
       boqLimitPerPeriod,
+      boqTemplatesLimit,
+      coverTemplatesLimit,
+      logoUploadAllowed,
+      sharingAllowed,
+      maxActiveMembers,
       features,
-      badgeText,
+      isMostPopular,
       sortOrder,
       active,
     } = body;
@@ -71,74 +118,127 @@ export async function PUT(
     // Build update data
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
+    if (seatModel !== undefined) updateData.seatModel = seatModel as SeatModel;
     if (boqLimitPerPeriod !== undefined) updateData.boqLimitPerPeriod = boqLimitPerPeriod;
+    if (boqTemplatesLimit !== undefined) updateData.boqTemplatesLimit = boqTemplatesLimit;
+    if (coverTemplatesLimit !== undefined) updateData.coverTemplatesLimit = coverTemplatesLimit;
+    if (logoUploadAllowed !== undefined) updateData.logoUploadAllowed = logoUploadAllowed;
+    if (sharingAllowed !== undefined) updateData.sharingAllowed = sharingAllowed;
+    if (maxActiveMembers !== undefined) updateData.maxActiveMembers = maxActiveMembers;
     if (features !== undefined) updateData.features = features;
-    if (badgeText !== undefined) updateData.badgeText = badgeText;
+    if (isMostPopular !== undefined) updateData.isMostPopular = isMostPopular;
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
     if (active !== undefined) updateData.active = active;
 
-    // Handle price change - create new Stripe price
-    if (priceMonthlyUsdCents !== undefined && priceMonthlyUsdCents !== plan.priceMonthlyUsdCents) {
-      // Create new Stripe price
-      let stripeProductId = plan.stripeProductId;
-      
-      // If no Stripe product exists, create one
-      if (!stripeProductId) {
-        const stripeProduct = await stripe.products.create({
-          name: `MakeEstimate ${name || plan.name}`,
-          metadata: { planKey: plan.planKey },
-        });
-        stripeProductId = stripeProduct.id;
-        updateData.stripeProductId = stripeProductId;
-      }
-
-      const newStripePrice = await stripe.prices.create({
-        product: stripeProductId,
-        unit_amount: priceMonthlyUsdCents,
-        currency: 'usd',
-        recurring: { interval: 'month' },
-        metadata: { planKey: plan.planKey },
+    // Ensure Stripe product exists
+    let stripeProductId = plan.stripeProductId;
+    if (!stripeProductId) {
+      const stripeProduct = await stripe.products.create({
+        name: `MakeEstimate ${name || plan.name}`,
+        metadata: { planKey: plan.planKey, seatModel: seatModel || plan.seatModel },
       });
+      stripeProductId = stripeProduct.id;
+      updateData.stripeProductId = stripeProductId;
+    }
 
-      // Archive old price if it exists
-      if (plan.stripePriceIdCurrent) {
-        try {
-          await stripe.prices.update(plan.stripePriceIdCurrent, {
-            active: false,
-          });
-        } catch (e) {
-          console.warn('Could not archive old Stripe price:', e);
-        }
+    // Handle monthly price change - auto-create new Stripe price
+    const monthlyPriceChanged = priceMonthlyUsdCents !== undefined && priceMonthlyUsdCents !== plan.priceMonthlyUsdCents;
+    if (monthlyPriceChanged) {
+      const newMonthlyPriceId = await ensureStripePrice(
+        stripeProductId,
+        priceMonthlyUsdCents,
+        'month',
+        plan.planKey
+      );
 
-        // Mark old price as not current in history
-        await prisma.billingPlanPriceHistory.updateMany({
-          where: {
-            billingPlanId: plan.id,
-            isCurrent: true,
-          },
-          data: { isCurrent: false },
-        });
-      }
+      // Mark old monthly prices as not current
+      await prisma.billingPlanPriceHistory.updateMany({
+        where: {
+          billingPlanId: plan.id,
+          interval: 'month',
+          isCurrent: true,
+        },
+        data: { isCurrent: false },
+      });
 
       // Record new price in history
       await prisma.billingPlanPriceHistory.create({
         data: {
           billingPlanId: plan.id,
-          stripePriceId: newStripePrice.id,
+          stripePriceId: newMonthlyPriceId,
           amountCents: priceMonthlyUsdCents,
+          interval: 'month',
           isCurrent: true,
         },
       });
 
       updateData.priceMonthlyUsdCents = priceMonthlyUsdCents;
-      updateData.stripePriceIdCurrent = newStripePrice.id;
+      updateData.stripePriceIdMonthly = newMonthlyPriceId;
 
-      console.log('Created new Stripe price:', {
+      console.log('Updated monthly Stripe price:', {
         planKey: plan.planKey,
         oldPrice: plan.priceMonthlyUsdCents,
         newPrice: priceMonthlyUsdCents,
-        stripePriceId: newStripePrice.id,
+        stripePriceId: newMonthlyPriceId,
       });
+    }
+
+    // Handle annual price change - auto-create new Stripe price
+    const annualPriceChanged = priceAnnualUsdCents !== undefined && priceAnnualUsdCents !== plan.priceAnnualUsdCents;
+    if (annualPriceChanged) {
+      if (priceAnnualUsdCents === null || priceAnnualUsdCents === 0) {
+        // Remove annual pricing
+        updateData.priceAnnualUsdCents = null;
+        updateData.stripePriceIdAnnual = null;
+        
+        // Mark old annual prices as not current
+        await prisma.billingPlanPriceHistory.updateMany({
+          where: {
+            billingPlanId: plan.id,
+            interval: 'year',
+            isCurrent: true,
+          },
+          data: { isCurrent: false },
+        });
+      } else {
+        const newAnnualPriceId = await ensureStripePrice(
+          stripeProductId,
+          priceAnnualUsdCents,
+          'year',
+          plan.planKey
+        );
+
+        // Mark old annual prices as not current
+        await prisma.billingPlanPriceHistory.updateMany({
+          where: {
+            billingPlanId: plan.id,
+            interval: 'year',
+            isCurrent: true,
+          },
+          data: { isCurrent: false },
+        });
+
+        // Record new price in history
+        await prisma.billingPlanPriceHistory.create({
+          data: {
+            billingPlanId: plan.id,
+            stripePriceId: newAnnualPriceId,
+            amountCents: priceAnnualUsdCents,
+            interval: 'year',
+            isCurrent: true,
+          },
+        });
+
+        updateData.priceAnnualUsdCents = priceAnnualUsdCents;
+        updateData.stripePriceIdAnnual = newAnnualPriceId;
+
+        console.log('Updated annual Stripe price:', {
+          planKey: plan.planKey,
+          oldPrice: plan.priceAnnualUsdCents,
+          newPrice: priceAnnualUsdCents,
+          stripePriceId: newAnnualPriceId,
+        });
+      }
     }
 
     // Update plan in database
@@ -148,7 +248,7 @@ export async function PUT(
       include: {
         priceHistory: {
           orderBy: { createdAt: 'desc' },
-          take: 5,
+          take: 10,
         },
       },
     });

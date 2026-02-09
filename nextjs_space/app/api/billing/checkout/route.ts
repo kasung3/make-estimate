@@ -35,7 +35,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { planKey, promoCode } = body as { planKey: string; promoCode?: string };
+    const { planKey, interval, promoCode } = body as { 
+      planKey: string; 
+      interval?: 'monthly' | 'annual';
+      promoCode?: string 
+    };
+
+    // Default to monthly if not specified
+    const billingInterval = interval === 'annual' ? 'year' : 'month';
 
     // Validate plan from DB (dynamic pricing)
     const plan = await getPlanFromDb(planKey);
@@ -43,10 +50,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    // Ensure plan has a Stripe price ID
-    if (!plan.stripePriceIdCurrent) {
+    // Determine which Stripe price ID to use based on interval
+    const stripePriceId = billingInterval === 'year' 
+      ? plan.stripePriceIdAnnual 
+      : plan.stripePriceIdMonthly;
+
+    // Ensure plan has a Stripe price ID for selected interval
+    if (!stripePriceId) {
       return NextResponse.json(
-        { error: 'Plan not configured for payment. Please contact support.' },
+        { error: `Plan not configured for ${billingInterval}ly payment. Please contact support.` },
         { status: 500 }
       );
     }
@@ -213,14 +225,21 @@ export async function POST(request: Request) {
     // Build checkout session params
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
+    // Determine seat quantity for per-seat plans
+    const seatQuantity = plan.seatModel === 'per_seat' 
+      ? await prisma.companyMembership.count({
+          where: { companyId, isActive: true }
+        })
+      : 1;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const checkoutParams: any = {
       customer: stripeCustomerId,
       mode: 'subscription',
       line_items: [
         {
-          price: plan.stripePriceIdCurrent, // Use price from DB
-          quantity: 1,
+          price: stripePriceId, // Use correct price ID for selected interval
+          quantity: seatQuantity,
         },
       ],
       success_url: `${baseUrl}/app/dashboard?billing=success`,
@@ -228,12 +247,14 @@ export async function POST(request: Request) {
       metadata: {
         companyId,
         planKey,
+        interval: billingInterval,
         promoCode: promoCode || '',
       },
       subscription_data: {
         metadata: {
           companyId,
           planKey,
+          interval: billingInterval,
         },
       },
     };

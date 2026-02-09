@@ -36,7 +36,18 @@ enum SubscriptionStatus {
 
 enum PlanKey {
   starter
+  advance
   business
+}
+
+enum SeatModel {
+  single
+  per_seat
+}
+
+enum BillingInterval {
+  month
+  year
 }
 
 enum CouponType {
@@ -118,13 +129,16 @@ model CompanyMembership {
   userId    String
   companyId String
   role      Role     @default(MEMBER)
+  isActive  Boolean  @default(true)  // For seat-based billing
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
-  @@index([companyId])  // Fast lookup of all users in a company
-  @@index([userId])     // Fast lookup of all companies for a user
+  @@index([companyId])           // Fast lookup of all users in a company
+  @@index([companyId, isActive]) // Fast count of active members
+  @@index([userId])              // Fast lookup of all companies for a user
 }
 
 model Customer {
@@ -218,33 +232,41 @@ enum GrantType {
 
 // Dynamic billing plans - admin editable
 model BillingPlan {
-  id                   String                 @id @default(cuid())
-  planKey              String                 @unique  // 'starter', 'business', etc.
-  name                 String                 // Display name
-  priceMonthlyUsdCents Int                    // Price in cents (1900 = $19)
-  interval             String                 @default("month")
-  boqLimitPerPeriod    Int?                   // null = unlimited
-  features             Json                   @default("[]") // Array of feature strings
-  badgeText            String?                // e.g. "Most Popular"
-  sortOrder            Int                    @default(0)
-  active               Boolean                @default(true)
-  stripeProductId      String?
-  stripePriceIdCurrent String?                // Current active Stripe price
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  priceHistory         BillingPlanPriceHistory[]
+  id                     String                 @id @default(cuid())
+  planKey                String                 @unique  // 'starter', 'advance', 'business'
+  name                   String                 // Display name
+  priceMonthlyUsdCents   Int                    // Monthly price in cents (1900 = $19)
+  priceAnnualUsdCents    Int?                   // Annual price in cents (null = no annual option)
+  seatModel              SeatModel              @default(single) // single or per_seat (business)
+  boqLimitPerPeriod      Int?                   // null = unlimited
+  boqTemplatesLimit      Int?                   // null = unlimited
+  coverTemplatesLimit    Int?                   // null = unlimited
+  logoUploadAllowed      Boolean                @default(false)
+  sharingAllowed         Boolean                @default(false) // Only Business
+  maxActiveMembers       Int                    @default(1)     // 1 for single, null for unlimited
+  features               Json                   @default("[]")  // Array of feature strings
+  isMostPopular          Boolean                @default(false)
+  sortOrder              Int                    @default(0)
+  active                 Boolean                @default(true)
+  stripeProductId        String?
+  stripePriceIdMonthly   String?                // Current Stripe price for monthly billing
+  stripePriceIdAnnual    String?                // Current Stripe price for annual billing
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  priceHistory           BillingPlanPriceHistory[]
 
   @@index([active, sortOrder])
 }
 
 model BillingPlanPriceHistory {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   billingPlanId  String
   stripePriceId  String
   amountCents    Int
-  isCurrent      Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  billingPlan    BillingPlan  @relation(fields: [billingPlanId], references: [id], onDelete: Cascade)
+  interval       BillingInterval @default(month) // month or year
+  isCurrent      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  billingPlan    BillingPlan     @relation(fields: [billingPlanId], references: [id], onDelete: Cascade)
 
   @@index([billingPlanId])
   @@index([stripePriceId])
@@ -274,6 +296,8 @@ model CompanyBilling {
   stripeCustomerId     String?             @unique
   stripeSubscriptionId String?             @unique
   planKey              PlanKey?
+  billingInterval      BillingInterval     @default(month) // month or year
+  seatQuantity         Int                 @default(1)     // for per_seat plans
   status               SubscriptionStatus?
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?

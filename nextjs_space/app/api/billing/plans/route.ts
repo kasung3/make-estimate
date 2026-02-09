@@ -9,19 +9,27 @@ export async function GET() {
   try {
     const plans = await getActivePlans();
 
-    // Convert to BillingPlanInfo format
+    // Convert to BillingPlanInfo format with new 3-plan model fields
     const planInfos: BillingPlanInfo[] = plans.map((plan) => ({
       id: plan.id,
       planKey: plan.planKey,
       name: plan.name,
       priceMonthlyUsdCents: plan.priceMonthlyUsdCents,
-      interval: plan.interval,
+      priceAnnualUsdCents: plan.priceAnnualUsdCents,
+      seatModel: plan.seatModel,
       boqLimitPerPeriod: plan.boqLimitPerPeriod,
+      boqTemplatesLimit: plan.boqTemplatesLimit,
+      coverTemplatesLimit: plan.coverTemplatesLimit,
+      logoUploadAllowed: plan.logoUploadAllowed,
+      sharingAllowed: plan.sharingAllowed,
+      maxActiveMembers: plan.maxActiveMembers,
       features: (plan.features as string[]) || [],
-      badgeText: plan.badgeText,
+      isMostPopular: plan.isMostPopular,
       sortOrder: plan.sortOrder,
       active: plan.active,
-      stripePriceIdCurrent: plan.stripePriceIdCurrent,
+      stripeProductId: plan.stripeProductId,
+      stripePriceIdMonthly: plan.stripePriceIdMonthly,
+      stripePriceIdAnnual: plan.stripePriceIdAnnual,
     }));
 
     return NextResponse.json(planInfos);

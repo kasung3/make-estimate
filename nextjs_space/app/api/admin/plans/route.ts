@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { isPlatformAdmin } from '@/lib/billing';
 import { stripe } from '@/lib/stripe';
+import { SeatModel } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ export async function GET() {
       include: {
         priceHistory: {
           orderBy: { createdAt: 'desc' },
-          take: 5,
+          take: 10,
         },
       },
     });
@@ -32,7 +33,51 @@ export async function GET() {
   }
 }
 
-// POST create new plan
+// Helper: Create or reuse Stripe price for a given amount/interval/product
+async function ensureStripePrice(
+  productId: string,
+  amountCents: number,
+  interval: 'month' | 'year',
+  planKey: string,
+  seatModel: SeatModel
+): Promise<string> {
+  // Search for existing price with same amount and interval
+  const existingPrices = await stripe.prices.list({
+    product: productId,
+    active: true,
+    limit: 100,
+  });
+
+  const matchingPrice = existingPrices.data.find(
+    (p) => 
+      p.unit_amount === amountCents && 
+      p.recurring?.interval === interval &&
+      p.currency === 'usd'
+  );
+
+  if (matchingPrice) {
+    console.log(`Reusing existing Stripe price: ${matchingPrice.id} for ${planKey} ${interval}`);
+    return matchingPrice.id;
+  }
+
+  // Create new price
+  const priceData: any = {
+    product: productId,
+    unit_amount: amountCents,
+    currency: 'usd',
+    recurring: { interval },
+    metadata: { planKey, interval },
+  };
+
+  // For per-seat plans, we need to use the metered/licensed approach
+  // But Stripe handles quantity at subscription level, so unit_amount stays the same
+  
+  const newPrice = await stripe.prices.create(priceData);
+  console.log(`Created new Stripe price: ${newPrice.id} for ${planKey} ${interval} at $${amountCents / 100}`);
+  return newPrice.id;
+}
+
+// POST create new plan with auto-create Stripe prices
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,9 +90,16 @@ export async function POST(request: Request) {
       planKey,
       name,
       priceMonthlyUsdCents,
+      priceAnnualUsdCents,
+      seatModel,
       boqLimitPerPeriod,
+      boqTemplatesLimit,
+      coverTemplatesLimit,
+      logoUploadAllowed,
+      sharingAllowed,
+      maxActiveMembers,
       features,
-      badgeText,
+      isMostPopular,
       sortOrder,
       active,
     } = body;
@@ -71,19 +123,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create Stripe product and price
+    const resolvedSeatModel: SeatModel = seatModel || 'single';
+
+    // Create Stripe product
     const stripeProduct = await stripe.products.create({
       name: `MakeEstimate ${name}`,
-      metadata: { planKey },
+      metadata: { planKey, seatModel: resolvedSeatModel },
     });
 
-    const stripePrice = await stripe.prices.create({
-      product: stripeProduct.id,
-      unit_amount: priceMonthlyUsdCents,
-      currency: 'usd',
-      recurring: { interval: 'month' },
-      metadata: { planKey },
-    });
+    // Create monthly Stripe price
+    const monthlyPriceId = await ensureStripePrice(
+      stripeProduct.id,
+      priceMonthlyUsdCents,
+      'month',
+      planKey,
+      resolvedSeatModel
+    );
+
+    // Create annual Stripe price if provided
+    let annualPriceId: string | null = null;
+    if (priceAnnualUsdCents) {
+      annualPriceId = await ensureStripePrice(
+        stripeProduct.id,
+        priceAnnualUsdCents,
+        'year',
+        planKey,
+        resolvedSeatModel
+      );
+    }
 
     // Create plan in database
     const plan = await prisma.billingPlan.create({
@@ -91,30 +158,53 @@ export async function POST(request: Request) {
         planKey,
         name,
         priceMonthlyUsdCents,
+        priceAnnualUsdCents: priceAnnualUsdCents ?? null,
+        seatModel: resolvedSeatModel,
         boqLimitPerPeriod: boqLimitPerPeriod ?? null,
+        boqTemplatesLimit: boqTemplatesLimit ?? null,
+        coverTemplatesLimit: coverTemplatesLimit ?? null,
+        logoUploadAllowed: logoUploadAllowed ?? false,
+        sharingAllowed: sharingAllowed ?? false,
+        maxActiveMembers: maxActiveMembers ?? 1,
         features: features || [],
-        badgeText: badgeText || null,
+        isMostPopular: isMostPopular ?? false,
         sortOrder: sortOrder ?? 0,
         active: active ?? true,
         stripeProductId: stripeProduct.id,
-        stripePriceIdCurrent: stripePrice.id,
+        stripePriceIdMonthly: monthlyPriceId,
+        stripePriceIdAnnual: annualPriceId,
       },
     });
 
-    // Record in price history
+    // Record monthly price in history
     await prisma.billingPlanPriceHistory.create({
       data: {
         billingPlanId: plan.id,
-        stripePriceId: stripePrice.id,
+        stripePriceId: monthlyPriceId,
         amountCents: priceMonthlyUsdCents,
+        interval: 'month',
         isCurrent: true,
       },
     });
 
+    // Record annual price in history if exists
+    if (annualPriceId && priceAnnualUsdCents) {
+      await prisma.billingPlanPriceHistory.create({
+        data: {
+          billingPlanId: plan.id,
+          stripePriceId: annualPriceId,
+          amountCents: priceAnnualUsdCents,
+          interval: 'year',
+          isCurrent: true,
+        },
+      });
+    }
+
     console.log('Created billing plan:', {
       planKey,
       stripeProductId: stripeProduct.id,
-      stripePriceId: stripePrice.id,
+      monthlyPriceId,
+      annualPriceId,
     });
 
     return NextResponse.json(plan);

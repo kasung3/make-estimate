@@ -1,6 +1,6 @@
-import { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType } from '@prisma/client';
+import { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType, SeatModel, BillingInterval } from '@prisma/client';
 
-export type { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType };
+export type { Role, DiscountType, DateMode, PlanKey, SubscriptionStatus, CouponType, GrantType, SeatModel, BillingInterval };
 
 // Billing Types
 export interface BillingStatus {
@@ -8,6 +8,8 @@ export interface BillingStatus {
   isBlocked: boolean;
   planKey: string | null;
   status: string | null;
+  billingInterval?: BillingInterval;
+  seatQuantity?: number;
   currentPeriodStart: Date | string | null;
   currentPeriodEnd: Date | string | null;
   cancelAtPeriodEnd: boolean;
@@ -32,13 +34,21 @@ export interface BillingPlanInfo {
   planKey: string;
   name: string;
   priceMonthlyUsdCents: number;
-  interval: string;
+  priceAnnualUsdCents: number | null;
+  seatModel: SeatModel;
   boqLimitPerPeriod: number | null;
+  boqTemplatesLimit: number | null;
+  coverTemplatesLimit: number | null;
+  logoUploadAllowed: boolean;
+  sharingAllowed: boolean;
+  maxActiveMembers: number;
   features: string[];
-  badgeText: string | null;
+  isMostPopular: boolean;
   sortOrder: number;
   active: boolean;
-  stripePriceIdCurrent: string | null;
+  stripeProductId: string | null;
+  stripePriceIdMonthly: string | null;
+  stripePriceIdAnnual: string | null;
 }
 
 // Legacy PlanInfo for backward compatibility

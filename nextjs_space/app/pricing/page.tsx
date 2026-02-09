@@ -10,107 +10,38 @@ import { MarketingFooter } from '@/components/marketing/footer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Check, Sparkles, Loader2, Tag, AlertTriangle, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Check, Sparkles, Loader2, Tag, AlertTriangle, Clock, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { BillingPlanInfo } from '@/lib/types';
 
-interface PlanDisplay {
-  key: string;
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  features: string[];
-  popular: boolean;
-  boqLimit: number | null;
-}
+type BillingCycle = 'monthly' | 'annual';
 
-// Helper to get default features for a plan
-const getDefaultFeatures = (plan: BillingPlanInfo): string[] => {
-  const baseFeatures = [
-    'Unlimited editing & viewing',
-    'PDF export with cover page',
-    'Customer management',
-    'Custom themes & templates',
-    'Notes & specifications',
-  ];
-  
-  if (plan.boqLimitPerPeriod) {
-    return [`${plan.boqLimitPerPeriod} BOQ creations per month`, ...baseFeatures];
-  }
-  return ['Unlimited BOQ creations', ...baseFeatures, 'Priority support'];
+// Calculate annual savings
+const calculateSavings = (monthlyPrice: number, annualPrice: number): { amount: number; percent: number } => {
+  const yearlyIfMonthly = monthlyPrice * 12;
+  const amount = yearlyIfMonthly - annualPrice;
+  const percent = Math.round((amount / yearlyIfMonthly) * 100);
+  return { amount, percent };
 };
 
-// Fallback plans if API fails
-const getFallbackPlans = (): PlanDisplay[] => [
-  {
-    key: 'starter',
-    name: 'Starter',
-    price: '$19',
-    period: '/month',
-    description: 'Up to 10 BOQ creations per month',
-    features: [
-      '10 BOQ creations per month',
-      'Unlimited editing & viewing',
-      'PDF export with cover page',
-      'Customer management',
-      'Custom themes & templates',
-    ],
-    popular: false,
-    boqLimit: 10,
-  },
-  {
-    key: 'business',
-    name: 'Business',
-    price: '$39',
-    period: '/month',
-    description: 'Unlimited BOQ creations',
-    features: [
-      'Unlimited BOQ creations',
-      'Unlimited editing & viewing',
-      'PDF export with cover page',
-      'Customer management',
-      'Custom themes & templates',
-      'Priority support',
-    ],
-    popular: true,
-    boqLimit: null,
-  },
-];
-
-// Fallback comparison features (dynamically built from plans if available)
-const getComparisonFeatures = (plans: PlanDisplay[]) => {
-  const starter = plans.find(p => p.key === 'starter');
-  const business = plans.find(p => p.key === 'business');
-  
-  return [
-    { 
-      name: 'BOQ Creations', 
-      starter: starter?.boqLimit ? `${starter.boqLimit} / month` : 'Limited',
-      business: business?.boqLimit ? `${business.boqLimit} / month` : 'Unlimited'
-    },
-    { name: 'Editing & Viewing', starter: 'Unlimited', business: 'Unlimited' },
-    { name: 'PDF Export', starter: '✓', business: '✓' },
-    { name: 'Custom Cover Page', starter: '✓', business: '✓' },
-    { name: 'Color Themes', starter: '✓', business: '✓' },
-    { name: 'Customer Management', starter: '✓', business: '✓' },
-    { name: 'Notes & Specifications', starter: '✓', business: '✓' },
-    { name: 'Team Members', starter: 'Unlimited', business: 'Unlimited' },
-    { name: 'Priority Support', starter: '—', business: '✓' },
-  ];
+// Format price from cents to display string
+const formatPrice = (cents: number): string => {
+  return `$${(cents / 100).toFixed(0)}`;
 };
 
 function PricingContent() {
   const { data: session, status } = useSession() || {};
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [promoValidating, setPromoValidating] = useState(false);
   const [promoResult, setPromoResult] = useState<{ valid: boolean; message: string } | null>(null);
-  const [plans, setPlans] = useState<PlanDisplay[]>([]);
+  const [plans, setPlans] = useState<BillingPlanInfo[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
 
   const subscriptionRequired = searchParams?.get('subscription') === 'required';
@@ -124,27 +55,10 @@ function PricingContent() {
         const response = await fetch('/api/billing/plans');
         if (response.ok) {
           const data: BillingPlanInfo[] = await response.json();
-          
-          // Convert to display format
-          const displayPlans: PlanDisplay[] = data.map((plan) => ({
-            key: plan.planKey,
-            name: plan.name,
-            price: `$${(plan.priceMonthlyUsdCents / 100).toFixed(0)}`,
-            period: `/${plan.interval}`,
-            description: plan.boqLimitPerPeriod 
-              ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per month`
-              : 'Unlimited BOQ creations',
-            features: plan.features.length > 0 ? plan.features : getDefaultFeatures(plan),
-            popular: plan.badgeText !== null || plan.planKey === 'business',
-            boqLimit: plan.boqLimitPerPeriod,
-          }));
-          
-          setPlans(displayPlans);
+          setPlans(data);
         }
       } catch (error) {
         console.error('Failed to fetch plans:', error);
-        // Set fallback plans
-        setPlans(getFallbackPlans());
       } finally {
         setPlansLoading(false);
       }
@@ -164,9 +78,9 @@ function PricingContent() {
   }, [checkoutCanceled, trialEnded]);
 
   const handlePlanSelect = async (planKey: string) => {
-    // If not logged in, go to register with plan
+    // If not logged in, go to register with plan and billing cycle
     if (status !== 'authenticated') {
-      router.push(`/register?plan=${planKey}`);
+      router.push(`/register?plan=${planKey}&interval=${billingCycle}`);
       return;
     }
 
@@ -178,6 +92,7 @@ function PricingContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planKey,
+          interval: billingCycle,
           promoCode: promoCode || undefined,
         }),
       });
@@ -186,6 +101,15 @@ function PricingContent() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Handle grant-based access (no Stripe redirect)
+      if (data.grantCreated) {
+        toast.success(data.grantType === 'trial' 
+          ? 'Trial activated! Redirecting...'
+          : 'Access granted! Redirecting...');
+        router.push(data.url);
+        return;
       }
 
       // Validate that we got a valid Stripe URL
@@ -231,12 +155,38 @@ function PricingContent() {
 
   const isLoggedIn = status === 'authenticated';
 
+  // Get current price based on billing cycle
+  const getDisplayPrice = (plan: BillingPlanInfo): { price: string; period: string; perUser: boolean } => {
+    const isAnnual = billingCycle === 'annual';
+    const priceInCents = isAnnual && plan.priceAnnualUsdCents 
+      ? plan.priceAnnualUsdCents 
+      : plan.priceMonthlyUsdCents;
+    
+    const perUser = plan.seatModel === 'per_seat';
+    
+    return {
+      price: formatPrice(priceInCents),
+      period: isAnnual ? '/year' : '/month',
+      perUser,
+    };
+  };
+
+  // Get savings info for annual billing
+  const getSavingsInfo = (plan: BillingPlanInfo): { amount: string; percent: number } | null => {
+    if (billingCycle !== 'annual' || !plan.priceAnnualUsdCents) return null;
+    const savings = calculateSavings(plan.priceMonthlyUsdCents, plan.priceAnnualUsdCents);
+    return {
+      amount: formatPrice(savings.amount * 100), // Convert back to cents for formatPrice
+      percent: savings.percent,
+    };
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <MarketingNavbar />
 
       {/* Header */}
-      <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-cyan-50 via-white to-teal-50">
+      <section className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-cyan-50 via-white to-teal-50">
         <div className="max-w-4xl mx-auto text-center">
           <motion.h1
             className="text-4xl sm:text-5xl font-bold text-gray-900"
@@ -254,12 +204,42 @@ function PricingContent() {
           >
             Choose the plan that fits your needs. No hidden fees.
           </motion.p>
+
+          {/* Billing Cycle Toggle */}
+          <motion.div
+            className="mt-8 flex items-center justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <span className={cn(
+              "text-sm font-medium transition-colors",
+              billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'
+            )}>
+              Monthly
+            </span>
+            <Switch
+              checked={billingCycle === 'annual'}
+              onCheckedChange={(checked) => setBillingCycle(checked ? 'annual' : 'monthly')}
+            />
+            <span className={cn(
+              "text-sm font-medium transition-colors",
+              billingCycle === 'annual' ? 'text-gray-900' : 'text-gray-500'
+            )}>
+              Annual
+            </span>
+            {billingCycle === 'annual' && (
+              <span className="ml-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                Save up to 15%
+              </span>
+            )}
+          </motion.div>
         </div>
       </section>
 
       {/* Alert for subscription required / trial ended */}
       {(subscriptionRequired || trialEnded || (isLoggedIn && checkoutCanceled)) && (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-4">
           <Alert variant="default" className={cn(
             "border",
             trialEnded ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
@@ -319,81 +299,115 @@ function PricingContent() {
       )}
 
       {/* Pricing Cards */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 -mt-8">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
           {plansLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
           <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {plans.map((plan, index) => (
-              <motion.div
-                key={plan.key}
-                className={cn(
-                  'relative p-8 rounded-2xl border-2 transition-shadow',
-                  plan.popular
-                    ? 'border-cyan-500 shadow-xl bg-white'
-                    : 'border-gray-200 shadow-sm bg-white hover:shadow-md'
-                )}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="inline-flex items-center px-4 py-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm font-medium rounded-full shadow-md">
-                      <Sparkles className="w-4 h-4 mr-1" />
-                      Most Popular
-                    </span>
-                  </div>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            {plans.map((plan, index) => {
+              const displayPrice = getDisplayPrice(plan);
+              const savings = getSavingsInfo(plan);
+              
+              return (
+                <motion.div
+                  key={plan.planKey}
+                  className={cn(
+                    'relative p-6 lg:p-8 rounded-2xl border-2 transition-shadow flex flex-col',
+                    plan.isMostPopular
+                      ? 'border-cyan-500 shadow-xl bg-white scale-[1.02]'
+                      : 'border-gray-200 shadow-sm bg-white hover:shadow-md'
+                  )}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  {plan.isMostPopular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="inline-flex items-center px-4 py-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm font-medium rounded-full shadow-md">
+                        <Sparkles className="w-4 h-4 mr-1" />
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
 
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
-                  <div className="mt-4 flex items-baseline justify-center">
-                    <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
-                    <span className="text-gray-500 ml-1">{plan.period}</span>
-                  </div>
-                  <p className="mt-4 text-gray-600">{plan.description}</p>
-                </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                    
+                    <div className="mt-4 flex items-baseline justify-center">
+                      <span className="text-4xl lg:text-5xl font-bold text-gray-900">
+                        {displayPrice.price}
+                      </span>
+                      <span className="text-gray-500 ml-1">
+                        {displayPrice.period}
+                        {displayPrice.perUser && (
+                          <span className="text-xs block text-cyan-600 font-medium">per user</span>
+                        )}
+                      </span>
+                    </div>
 
-                <ul className="mt-8 space-y-4">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start">
-                      <Check className="w-5 h-5 text-teal-500 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-8">
-                  <Button
-                    className={cn(
-                      'w-full py-6',
-                      plan.popular
-                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
-                        : ''
+                    {/* Savings Badge */}
+                    {savings && (
+                      <div className="mt-2">
+                        <span className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full">
+                          Save {savings.amount} ({savings.percent}% off)
+                        </span>
+                      </div>
                     )}
-                    variant={plan.popular ? 'default' : 'outline'}
-                    onClick={() => handlePlanSelect(plan.key)}
-                    disabled={checkoutLoading === plan.key}
-                  >
-                    {checkoutLoading === plan.key ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : isLoggedIn ? (
-                      'Continue to Checkout'
-                    ) : (
-                      'Get Started'
-                    )}
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
+
+                    {/* Plan Description */}
+                    <p className="mt-4 text-sm text-gray-600">
+                      {plan.boqLimitPerPeriod 
+                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per period`
+                        : 'Unlimited BOQ creations'}
+                      {plan.seatModel === 'per_seat' && (
+                        <span className="block mt-1 text-cyan-600 font-medium">
+                          <Users className="w-3 h-3 inline mr-1" />
+                          Team billing: per active member
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  <ul className="mt-6 space-y-3 flex-1">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start">
+                        <Check className="w-5 h-5 text-teal-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-6">
+                    <Button
+                      className={cn(
+                        'w-full py-5',
+                        plan.isMostPopular
+                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'
+                          : ''
+                      )}
+                      variant={plan.isMostPopular ? 'default' : 'outline'}
+                      onClick={() => handlePlanSelect(plan.planKey)}
+                      disabled={checkoutLoading === plan.planKey}
+                    >
+                      {checkoutLoading === plan.planKey ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : isLoggedIn ? (
+                        'Continue to Checkout'
+                      ) : (
+                        'Get Started'
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Coupon Note for logged out users */}
@@ -414,37 +428,81 @@ function PricingContent() {
 
       {/* Comparison Table */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Compare Plans</h2>
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Feature
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
-                    Starter
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-cyan-600">
-                    Business
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {getComparisonFeatures(plans).map((feature) => (
-                  <tr key={feature.name}>
-                    <td className="px-6 py-4 text-sm text-gray-700">{feature.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 text-center">
-                      {feature.starter}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 text-center font-medium">
-                      {feature.business}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full">
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 lg:px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                        Feature
+                      </th>
+                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                        Starter
+                      </th>
+                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-cyan-600">
+                        Advance
+                      </th>
+                      <th className="px-4 lg:px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                        Business
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">BOQ Creations</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">5 / period</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">Unlimited</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Team Members</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">1</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">1</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">BOQ Templates</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">2</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">10</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Cover Templates</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">2</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">10</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">Unlimited</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Upload Own Logo</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Team Collaboration</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">—</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">PDF Export</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-700">Priority Support</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">—</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 text-center font-medium">✓</td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-600 text-center">✓</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>

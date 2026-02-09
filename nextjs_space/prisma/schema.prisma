@@ -123,6 +123,8 @@ model CompanyMembership {
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
+  @@index([companyId])  // Fast lookup of all users in a company
+  @@index([userId])     // Fast lookup of all companies for a user
 }
 
 model Customer {
@@ -137,6 +139,7 @@ model Customer {
   boqs      Boq[]
 
   @@index([companyId])
+  @@index([companyId, name])  // Fast customer search within company
 }
 
 model Boq {
@@ -163,7 +166,9 @@ model Boq {
   categories      BoqCategory[]
 
   @@index([companyId])
-  @@index([companyId, updatedAt])
+  @@index([companyId, updatedAt(sort: Desc)])  // Recent BOQs list (most common query)
+  @@index([companyId, projectName])            // BOQ search by project name
+  @@index([customerId])                        // BOQs for a specific customer
 }
 
 model BoqCategory {

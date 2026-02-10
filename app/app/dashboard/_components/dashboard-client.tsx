@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
+import { metaTrackCustom } from '@/lib/meta-pixel';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -208,6 +209,11 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       if (!response.ok) {
         // Handle quota exceeded with detailed error
         if (data?.code === 'QUOTA_EXCEEDED') {
+          // Track ReachedLimit event
+          metaTrackCustom('ReachedLimit', { 
+            limit_type: 'boq_per_period',
+            plan_key: billingStatus?.planKey || 'unknown',
+          });
           toast.error(`BOQ limit reached (${data.boqsUsed}/${data.boqLimit}). Upgrade or wait until ${data.resetDate}.`, {
             duration: 5000,
           });
@@ -217,6 +223,9 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
         toast.error(data?.error || 'Failed to create BOQ');
         return;
       }
+
+      // Track CreateBOQ event
+      metaTrackCustom('CreateBOQ', { source: 'dashboard' });
 
       // Refresh billing status from server to get accurate usage count
       await fetchBillingStatus();

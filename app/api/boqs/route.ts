@@ -97,11 +97,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { 
           error: `You've reached your BOQ limit (${billingStatus.boqsUsedThisPeriod}/${billingStatus.boqLimit}) for this billing period. Upgrade your plan or wait until ${resetDate}.`,
-          code: 'QUOTA_EXCEEDED',
-          boqsUsed: billingStatus.boqsUsedThisPeriod,
-          boqLimit: billingStatus.boqLimit,
-          resetDate,
-          planName,
+          code: 'LIMIT_EXCEEDED',
+          limit_type: 'boq_creations',
+          used: billingStatus.boqsUsedThisPeriod,
+          limit: billingStatus.boqLimit,
+          plan_key: billingStatus.planKey,
+          plan_name: planName,
+          reset_date: resetDate,
+          upgrade_url: '/pricing',
         },
         { status: 403 }
       );

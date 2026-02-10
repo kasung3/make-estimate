@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { BillingPlanInfo } from '@/lib/types';
+import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
 
 type BillingCycle = 'monthly' | 'annual';
 
@@ -43,6 +44,8 @@ function PricingContent() {
   const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
   const trialEnded = searchParams?.get('trial') === 'ended';
 
+  const viewContentTracked = useRef(false);
+
   // Fetch plans from API
   useEffect(() => {
     const fetchPlans = async () => {
@@ -61,6 +64,14 @@ function PricingContent() {
     fetchPlans();
   }, []);
 
+  // Track ViewContent on pricing page (dedupe)
+  useEffect(() => {
+    if (!viewContentTracked.current) {
+      viewContentTracked.current = true;
+      metaTrack('ViewContent', { content_name: 'Pricing', content_category: 'pricing' });
+    }
+  }, []);
+
   // Show toasts for URL params
   useEffect(() => {
     if (checkoutCanceled) {
@@ -75,6 +86,8 @@ function PricingContent() {
   const handlePlanSelect = async (planKey: string) => {
     // If not logged in, go to register with plan and billing cycle
     if (status !== 'authenticated') {
+      // Track Lead event for pricing page CTA
+      metaTrack('Lead', { content_name: planKey, source: 'pricing' });
       router.push(`/register?plan=${planKey}&interval=${billingCycle}`);
       return;
     }
@@ -99,6 +112,8 @@ function PricingContent() {
 
       // Handle Free plan activation (no Stripe redirect)
       if (data.freePlanActivated) {
+        // Track FreePlanActivated custom event
+        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -106,6 +121,13 @@ function PricingContent() {
 
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
+        // Track trial activation
+        if (data.grantType === 'trial') {
+          metaTrack('StartTrial', { 
+            content_name: planKey,
+            trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
+          });
+        }
         toast.success(data.grantType === 'trial' 
           ? 'Trial activated! Redirecting...'
           : 'Access granted! Redirecting...');
@@ -118,6 +140,18 @@ function PricingContent() {
         console.error('Invalid checkout URL received:', data.url);
         throw new Error('Invalid checkout URL received from server');
       }
+
+      // Track InitiateCheckout event with plan details
+      const selectedPlanData = plans.find(p => p.planKey === planKey);
+      const priceInCents = billingCycle === 'annual' && selectedPlanData?.priceAnnualUsdCents
+        ? selectedPlanData.priceAnnualUsdCents
+        : selectedPlanData?.priceMonthlyUsdCents || 0;
+      metaTrack('InitiateCheckout', {
+        content_name: planKey,
+        value: priceInCents / 100,
+        currency: 'USD',
+        content_category: billingCycle,
+      });
 
       // Open Stripe checkout in new window (required for sandboxed iframes)
       window.open(data.url, '_blank');

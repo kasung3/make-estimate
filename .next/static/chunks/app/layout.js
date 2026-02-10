@@ -1,12 +1,14 @@
 (self["webpackChunk_N_E"] = self["webpackChunk_N_E"] || []).push([["app/layout"],{
 
-/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!":
-/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false! ***!
-  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!":
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false! ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ (function(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
 
 Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./components/auth-provider.tsx */ "(app-pages-browser)/./components/auth-provider.tsx"));
+;
+Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./components/meta-pixel-provider.tsx */ "(app-pages-browser)/./components/meta-pixel-provider.tsx"));
 ;
 Promise.resolve(/*! import() eager */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{"path":"app/layout.tsx","import":"Inter","arguments":[{"subsets":["latin"]}],"variableName":"inter"} */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{\"path\":\"app/layout.tsx\",\"import\":\"Inter\",\"arguments\":[{\"subsets\":[\"latin\"]}],\"variableName\":\"inter\"}", 23));
 ;
@@ -1129,6 +1131,48 @@ function parseUrl(url) {
 
 /***/ }),
 
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js":
+/*!****************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js ***!
+  \****************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../client/components/navigation */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/components/navigation.js");
+/* harmony import */ var _client_components_navigation__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_client_components_navigation__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (unknown) */ var __WEBPACK_REEXPORT_OBJECT__ = {};
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__) if(__WEBPACK_IMPORT_KEY__ !== "default") __WEBPACK_REEXPORT_OBJECT__[__WEBPACK_IMPORT_KEY__] = function(key) { return _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__[key]; }.bind(0, __WEBPACK_IMPORT_KEY__)
+/* harmony reexport (unknown) */ __webpack_require__.d(__webpack_exports__, __WEBPACK_REEXPORT_OBJECT__);
+
+
+//# sourceMappingURL=navigation.js.map
+
+/***/ }),
+
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/script.js":
+/*!************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/script.js ***!
+  \************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": function() { return /* reexport default from dynamic */ _client_script__WEBPACK_IMPORTED_MODULE_0___default.a; }
+/* harmony export */ });
+/* harmony import */ var _client_script__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../client/script */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/script.js");
+/* harmony import */ var _client_script__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_client_script__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (unknown) */ var __WEBPACK_REEXPORT_OBJECT__ = {};
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _client_script__WEBPACK_IMPORTED_MODULE_0__) if(__WEBPACK_IMPORT_KEY__ !== "default") __WEBPACK_REEXPORT_OBJECT__[__WEBPACK_IMPORT_KEY__] = function(key) { return _client_script__WEBPACK_IMPORTED_MODULE_0__[key]; }.bind(0, __WEBPACK_IMPORT_KEY__)
+/* harmony reexport (unknown) */ __webpack_require__.d(__webpack_exports__, __WEBPACK_REEXPORT_OBJECT__);
+
+
+
+//# sourceMappingURL=script.js.map
+
+/***/ }),
+
 /***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/polyfills/process.js":
 /*!*************************************************************************************************!*\
   !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/polyfills/process.js ***!
@@ -1174,7 +1218,7 @@ var __dirname = "/";
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("3a8f70d78254");
+/* harmony default export */ __webpack_exports__["default"] = ("9be7cae4a35a");
 if (true) { module.hot.accept() }
 
 
@@ -1287,6 +1331,1125 @@ $RefreshReg$(_c, "AuthProvider");
 
 /***/ }),
 
+/***/ "(app-pages-browser)/./components/meta-pixel-provider.tsx":
+/*!********************************************!*\
+  !*** ./components/meta-pixel-provider.tsx ***!
+  \********************************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MetaPixelProvider: function() { return /* binding */ MetaPixelProvider; }
+/* harmony export */ });
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/jsx-dev-runtime.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var next_navigation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! next/navigation */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js");
+/* harmony import */ var next_script__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! next/script */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/script.js");
+/* harmony import */ var _lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/lib/meta-pixel */ "(app-pages-browser)/./lib/meta-pixel.ts");
+/* __next_internal_client_entry_do_not_use__ MetaPixelProvider,default auto */ 
+var _s = $RefreshSig$();
+
+
+
+
+// Constants evaluated at build time (consistent server/client)
+const PIXEL_ENABLED = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.isPixelEnabled)();
+const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
+/**
+ * MetaPixelProvider
+ * 
+ * Loads the Meta (Facebook) Pixel script and handles:
+ * - Initial pixel initialization
+ * - PageView tracking on initial load
+ * - PageView tracking on SPA route changes
+ * 
+ * Place this component in the root layout.
+ * 
+ * Environment Variables:
+ * - NEXT_PUBLIC_META_PIXEL_ID: Your Meta Pixel ID
+ * - NEXT_PUBLIC_ENABLE_META_PIXEL: 'true' to enable
+ */ function MetaPixelProvider({ children }) {
+    _s();
+    const pathname = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname)();
+    const searchParams = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams)();
+    const isInitialized = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)(false);
+    const lastTrackedPath = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)(null);
+    const [mounted, setMounted] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(false);
+    // Set mounted state after hydration
+    (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(()=>{
+        setMounted(true);
+    }, []);
+    // Track page views on route changes (SPA navigation)
+    (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(()=>{
+        if (!PIXEL_ENABLED || !PIXEL_ID) return;
+        if (!mounted) return;
+        if (false) {}
+        if (typeof window.fbq !== "function") return;
+        // Build current path including search params
+        const searchString = searchParams?.toString() || "";
+        const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
+        // Prevent duplicate tracking on initial render
+        // The initial PageView is fired by the script's inline code
+        if (!isInitialized.current) {
+            isInitialized.current = true;
+            lastTrackedPath.current = currentPath;
+            return;
+        }
+        // Only track if path actually changed
+        if (currentPath !== lastTrackedPath.current) {
+            lastTrackedPath.current = currentPath;
+            (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.metaTrackPageView)();
+        }
+    }, [
+        pathname,
+        searchParams,
+        mounted
+    ]);
+    // Always render children consistently (avoids hydration mismatch)
+    // Script is added conditionally but doesn't affect children rendering
+    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.Fragment, {
+        children: [
+            PIXEL_ENABLED && PIXEL_ID && /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.Fragment, {
+                children: [
+                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_script__WEBPACK_IMPORTED_MODULE_3__["default"], {
+                        id: "meta-pixel",
+                        strategy: "afterInteractive",
+                        dangerouslySetInnerHTML: {
+                            __html: `
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window, document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '${PIXEL_ID}');
+                fbq('track', 'PageView');
+              `
+                        }
+                    }, void 0, false, {
+                        fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
+                        lineNumber: 71,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("noscript", {
+                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("img", {
+                            height: "1",
+                            width: "1",
+                            style: {
+                                display: "none"
+                            },
+                            src: `https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1`,
+                            alt: ""
+                        }, void 0, false, {
+                            fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
+                            lineNumber: 90,
+                            columnNumber: 13
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
+                        lineNumber: 89,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true),
+            children
+        ]
+    }, void 0, true);
+}
+_s(MetaPixelProvider, "AlOmnQcSmHOpcKoHPXG6gH2tjuw=", false, function() {
+    return [
+        next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname,
+        next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams
+    ];
+});
+_c = MetaPixelProvider;
+/* harmony default export */ __webpack_exports__["default"] = (MetaPixelProvider);
+var _c;
+$RefreshReg$(_c, "MetaPixelProvider");
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
+/***/ "(app-pages-browser)/./lib/meta-pixel.ts":
+/*!***************************!*\
+  !*** ./lib/meta-pixel.ts ***!
+  \***************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   getPixelId: function() { return /* binding */ getPixelId; },
+/* harmony export */   isPixelEnabled: function() { return /* binding */ isPixelEnabled; },
+/* harmony export */   metaTrack: function() { return /* binding */ metaTrack; },
+/* harmony export */   metaTrackCustom: function() { return /* binding */ metaTrackCustom; },
+/* harmony export */   metaTrackPageView: function() { return /* binding */ metaTrackPageView; }
+/* harmony export */ });
+/**
+ * Meta (Facebook) Pixel tracking utilities
+ * 
+ * Environment Variables:
+ * - NEXT_PUBLIC_META_PIXEL_ID: Your Meta Pixel ID
+ * - NEXT_PUBLIC_ENABLE_META_PIXEL: 'true' to enable, anything else to disable
+ * 
+ * Usage:
+ * - metaTrack('EventName', { param: 'value' }) for standard events
+ * - metaTrackCustom('CustomEventName', { param: 'value' }) for custom events
+ */ // Check if pixel is enabled (safe for both server and client)
+function isPixelEnabled() {
+    return "true" === "true";
+}
+// Get pixel ID
+function getPixelId() {
+    return "2738592306503525" || 0;
+}
+// Check if fbq is ready (client-only check)
+function isFbqReady() {
+    return  true && typeof window.fbq === "function";
+}
+// Safe wrapper for fbq calls - silent no-op if not ready
+function safeFbq(...args) {
+    if (!isPixelEnabled()) return;
+    if (!isFbqReady()) return; // Silent no-op, script may still be loading
+    try {
+        window.fbq(...args);
+    } catch (err) {
+        console.error("[Meta Pixel] Error calling fbq:", err);
+    }
+}
+/**
+ * Track a standard Meta Pixel event
+ * @see https://developers.facebook.com/docs/meta-pixel/reference#standard-events
+ * 
+ * Standard events:
+ * - PageView, ViewContent, Search, AddToCart, AddToWishlist
+ * - InitiateCheckout, AddPaymentInfo, Purchase, Lead
+ * - CompleteRegistration, Contact, CustomizeProduct, Donate
+ * - FindLocation, Schedule, StartTrial, SubmitApplication, Subscribe
+ */ function metaTrack(eventName, params) {
+    if (params) {
+        safeFbq("track", eventName, params);
+    } else {
+        safeFbq("track", eventName);
+    }
+}
+/**
+ * Track a custom Meta Pixel event
+ * Use for app-specific events not covered by standard events
+ */ function metaTrackCustom(eventName, params) {
+    if (params) {
+        safeFbq("trackCustom", eventName, params);
+    } else {
+        safeFbq("trackCustom", eventName);
+    }
+}
+/**
+ * Track PageView - typically called on route changes
+ */ function metaTrackPageView() {
+    safeFbq("track", "PageView");
+}
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/head-manager.js":
+/*!*********************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/head-manager.js ***!
+  \*********************************************************************************************/
+/***/ (function(module, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({
+    value: true
+}));
+0 && (0);
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    DOMAttributeNames: function() {
+        return DOMAttributeNames;
+    },
+    default: function() {
+        return initHeadManager;
+    },
+    isEqualNode: function() {
+        return isEqualNode;
+    }
+});
+const DOMAttributeNames = {
+    acceptCharset: "accept-charset",
+    className: "class",
+    htmlFor: "for",
+    httpEquiv: "http-equiv",
+    noModule: "noModule"
+};
+function reactElementToDOM(param) {
+    let { type, props } = param;
+    const el = document.createElement(type);
+    for(const p in props){
+        if (!props.hasOwnProperty(p)) continue;
+        if (p === "children" || p === "dangerouslySetInnerHTML") continue;
+        // we don't render undefined props to the DOM
+        if (props[p] === undefined) continue;
+        const attr = DOMAttributeNames[p] || p.toLowerCase();
+        if (type === "script" && (attr === "async" || attr === "defer" || attr === "noModule")) {
+            el[attr] = !!props[p];
+        } else {
+            el.setAttribute(attr, props[p]);
+        }
+    }
+    const { children, dangerouslySetInnerHTML } = props;
+    if (dangerouslySetInnerHTML) {
+        el.innerHTML = dangerouslySetInnerHTML.__html || "";
+    } else if (children) {
+        el.textContent = typeof children === "string" ? children : Array.isArray(children) ? children.join("") : "";
+    }
+    return el;
+}
+function isEqualNode(oldTag, newTag) {
+    if (oldTag instanceof HTMLElement && newTag instanceof HTMLElement) {
+        const nonce = newTag.getAttribute("nonce");
+        // Only strip the nonce if `oldTag` has had it stripped. An element's nonce attribute will not
+        // be stripped if there is no content security policy response header that includes a nonce.
+        if (nonce && !oldTag.getAttribute("nonce")) {
+            const cloneTag = newTag.cloneNode(true);
+            cloneTag.setAttribute("nonce", "");
+            cloneTag.nonce = nonce;
+            return nonce === oldTag.nonce && oldTag.isEqualNode(cloneTag);
+        }
+    }
+    return oldTag.isEqualNode(newTag);
+}
+let updateElements;
+if (false) {} else {
+    updateElements = (type, components)=>{
+        const headEl = document.getElementsByTagName("head")[0];
+        const headCountEl = headEl.querySelector("meta[name=next-head-count]");
+        if (true) {
+            if (!headCountEl) {
+                console.error("Warning: next-head-count is missing. https://nextjs.org/docs/messages/next-head-count-missing");
+                return;
+            }
+        }
+        const headCount = Number(headCountEl.content);
+        const oldTags = [];
+        for(let i = 0, j = headCountEl.previousElementSibling; i < headCount; i++, j = (j == null ? void 0 : j.previousElementSibling) || null){
+            var _j_tagName;
+            if ((j == null ? void 0 : (_j_tagName = j.tagName) == null ? void 0 : _j_tagName.toLowerCase()) === type) {
+                oldTags.push(j);
+            }
+        }
+        const newTags = components.map(reactElementToDOM).filter((newTag)=>{
+            for(let k = 0, len = oldTags.length; k < len; k++){
+                const oldTag = oldTags[k];
+                if (isEqualNode(oldTag, newTag)) {
+                    oldTags.splice(k, 1);
+                    return false;
+                }
+            }
+            return true;
+        });
+        oldTags.forEach((t)=>{
+            var _t_parentNode;
+            return (_t_parentNode = t.parentNode) == null ? void 0 : _t_parentNode.removeChild(t);
+        });
+        newTags.forEach((t)=>headEl.insertBefore(t, headCountEl));
+        headCountEl.content = (headCount - oldTags.length + newTags.length).toString();
+    };
+}
+function initHeadManager() {
+    return {
+        mountedInstances: new Set(),
+        updateHead: (head)=>{
+            const tags = {};
+            head.forEach((h)=>{
+                if (// it won't be inlined. In this case revert to the original behavior
+                h.type === "link" && h.props["data-optimized-fonts"]) {
+                    if (document.querySelector('style[data-href="' + h.props["data-href"] + '"]')) {
+                        return;
+                    } else {
+                        h.props.href = h.props["data-href"];
+                        h.props["data-href"] = undefined;
+                    }
+                }
+                const components = tags[h.type] || [];
+                components.push(h);
+                tags[h.type] = components;
+            });
+            const titleComponent = tags.title ? tags.title[0] : null;
+            let title = "";
+            if (titleComponent) {
+                const { children } = titleComponent.props;
+                title = typeof children === "string" ? children : Array.isArray(children) ? children.join("") : "";
+            }
+            if (title !== document.title) document.title = title;
+            [
+                "meta",
+                "base",
+                "link",
+                "style",
+                "script"
+            ].forEach((type)=>{
+                updateElements(type, tags[type] || []);
+            });
+        }
+    };
+}
+if ((typeof exports.default === "function" || typeof exports.default === "object" && exports.default !== null) && typeof exports.default.__esModule === "undefined") {
+    Object.defineProperty(exports.default, "__esModule", {
+        value: true
+    });
+    Object.assign(exports.default, exports);
+    module.exports = exports.default;
+} //# sourceMappingURL=head-manager.js.map
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/request-idle-callback.js":
+/*!******************************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/request-idle-callback.js ***!
+  \******************************************************************************************************/
+/***/ (function(module, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({
+    value: true
+}));
+0 && (0);
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    cancelIdleCallback: function() {
+        return cancelIdleCallback;
+    },
+    requestIdleCallback: function() {
+        return requestIdleCallback;
+    }
+});
+const requestIdleCallback = typeof self !== "undefined" && self.requestIdleCallback && self.requestIdleCallback.bind(window) || function(cb) {
+    let start = Date.now();
+    return self.setTimeout(function() {
+        cb({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+            }
+        });
+    }, 1);
+};
+const cancelIdleCallback = typeof self !== "undefined" && self.cancelIdleCallback && self.cancelIdleCallback.bind(window) || function(id) {
+    return clearTimeout(id);
+};
+if ((typeof exports.default === "function" || typeof exports.default === "object" && exports.default !== null) && typeof exports.default.__esModule === "undefined") {
+    Object.defineProperty(exports.default, "__esModule", {
+        value: true
+    });
+    Object.assign(exports.default, exports);
+    module.exports = exports.default;
+} //# sourceMappingURL=request-idle-callback.js.map
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/script.js":
+/*!***************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/script.js ***!
+  \***************************************************************************************/
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* __next_internal_client_entry_do_not_use__  cjs */ 
+Object.defineProperty(exports, "__esModule", ({
+    value: true
+}));
+0 && (0);
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    default: function() {
+        return _default;
+    },
+    handleClientScriptLoad: function() {
+        return handleClientScriptLoad;
+    },
+    initScriptLoader: function() {
+        return initScriptLoader;
+    }
+});
+const _interop_require_default = __webpack_require__(/*! @swc/helpers/_/_interop_require_default */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/@swc/helpers/esm/_interop_require_default.js");
+const _interop_require_wildcard = __webpack_require__(/*! @swc/helpers/_/_interop_require_wildcard */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/@swc/helpers/esm/_interop_require_wildcard.js");
+const _jsxruntime = __webpack_require__(/*! react/jsx-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/jsx-runtime.js");
+const _reactdom = /*#__PURE__*/ _interop_require_default._(__webpack_require__(/*! react-dom */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react-dom/index.js"));
+const _react = /*#__PURE__*/ _interop_require_wildcard._(__webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js"));
+const _headmanagercontextsharedruntime = __webpack_require__(/*! ../shared/lib/head-manager-context.shared-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/shared/lib/head-manager-context.shared-runtime.js");
+const _headmanager = __webpack_require__(/*! ./head-manager */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/head-manager.js");
+const _requestidlecallback = __webpack_require__(/*! ./request-idle-callback */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/request-idle-callback.js");
+const ScriptCache = new Map();
+const LoadCache = new Set();
+const ignoreProps = [
+    "onLoad",
+    "onReady",
+    "dangerouslySetInnerHTML",
+    "children",
+    "onError",
+    "strategy",
+    "stylesheets"
+];
+const insertStylesheets = (stylesheets)=>{
+    // Case 1: Styles for afterInteractive/lazyOnload with appDir injected via handleClientScriptLoad
+    //
+    // Using ReactDOM.preinit to feature detect appDir and inject styles
+    // Stylesheets might have already been loaded if initialized with Script component
+    // Re-inject styles here to handle scripts loaded via handleClientScriptLoad
+    // ReactDOM.preinit handles dedup and ensures the styles are loaded only once
+    if (_reactdom.default.preinit) {
+        stylesheets.forEach((stylesheet)=>{
+            _reactdom.default.preinit(stylesheet, {
+                as: "style"
+            });
+        });
+        return;
+    }
+    // Case 2: Styles for afterInteractive/lazyOnload with pages injected via handleClientScriptLoad
+    //
+    // We use this function to load styles when appdir is not detected
+    // TODO: Use React float APIs to load styles once available for pages dir
+    if (typeof window !== "undefined") {
+        let head = document.head;
+        stylesheets.forEach((stylesheet)=>{
+            let link = document.createElement("link");
+            link.type = "text/css";
+            link.rel = "stylesheet";
+            link.href = stylesheet;
+            head.appendChild(link);
+        });
+    }
+};
+const loadScript = (props)=>{
+    const { src, id, onLoad = ()=>{}, onReady = null, dangerouslySetInnerHTML, children = "", strategy = "afterInteractive", onError, stylesheets } = props;
+    const cacheKey = id || src;
+    // Script has already loaded
+    if (cacheKey && LoadCache.has(cacheKey)) {
+        return;
+    }
+    // Contents of this script are already loading/loaded
+    if (ScriptCache.has(src)) {
+        LoadCache.add(cacheKey);
+        // It is possible that multiple `next/script` components all have same "src", but has different "onLoad"
+        // This is to make sure the same remote script will only load once, but "onLoad" are executed in order
+        ScriptCache.get(src).then(onLoad, onError);
+        return;
+    }
+    /** Execute after the script first loaded */ const afterLoad = ()=>{
+        // Run onReady for the first time after load event
+        if (onReady) {
+            onReady();
+        }
+        // add cacheKey to LoadCache when load successfully
+        LoadCache.add(cacheKey);
+    };
+    const el = document.createElement("script");
+    const loadPromise = new Promise((resolve, reject)=>{
+        el.addEventListener("load", function(e) {
+            resolve();
+            if (onLoad) {
+                onLoad.call(this, e);
+            }
+            afterLoad();
+        });
+        el.addEventListener("error", function(e) {
+            reject(e);
+        });
+    }).catch(function(e) {
+        if (onError) {
+            onError(e);
+        }
+    });
+    if (dangerouslySetInnerHTML) {
+        // Casting since lib.dom.d.ts doesn't have TrustedHTML yet.
+        el.innerHTML = dangerouslySetInnerHTML.__html || "";
+        afterLoad();
+    } else if (children) {
+        el.textContent = typeof children === "string" ? children : Array.isArray(children) ? children.join("") : "";
+        afterLoad();
+    } else if (src) {
+        el.src = src;
+        // do not add cacheKey into LoadCache for remote script here
+        // cacheKey will be added to LoadCache when it is actually loaded (see loadPromise above)
+        ScriptCache.set(src, loadPromise);
+    }
+    for (const [k, value] of Object.entries(props)){
+        if (value === undefined || ignoreProps.includes(k)) {
+            continue;
+        }
+        const attr = _headmanager.DOMAttributeNames[k] || k.toLowerCase();
+        el.setAttribute(attr, value);
+    }
+    if (strategy === "worker") {
+        el.setAttribute("type", "text/partytown");
+    }
+    el.setAttribute("data-nscript", strategy);
+    // Load styles associated with this script
+    if (stylesheets) {
+        insertStylesheets(stylesheets);
+    }
+    document.body.appendChild(el);
+};
+function handleClientScriptLoad(props) {
+    const { strategy = "afterInteractive" } = props;
+    if (strategy === "lazyOnload") {
+        window.addEventListener("load", ()=>{
+            (0, _requestidlecallback.requestIdleCallback)(()=>loadScript(props));
+        });
+    } else {
+        loadScript(props);
+    }
+}
+function loadLazyScript(props) {
+    if (document.readyState === "complete") {
+        (0, _requestidlecallback.requestIdleCallback)(()=>loadScript(props));
+    } else {
+        window.addEventListener("load", ()=>{
+            (0, _requestidlecallback.requestIdleCallback)(()=>loadScript(props));
+        });
+    }
+}
+function addBeforeInteractiveToCache() {
+    const scripts = [
+        ...document.querySelectorAll('[data-nscript="beforeInteractive"]'),
+        ...document.querySelectorAll('[data-nscript="beforePageRender"]')
+    ];
+    scripts.forEach((script)=>{
+        const cacheKey = script.id || script.getAttribute("src");
+        LoadCache.add(cacheKey);
+    });
+}
+function initScriptLoader(scriptLoaderItems) {
+    scriptLoaderItems.forEach(handleClientScriptLoad);
+    addBeforeInteractiveToCache();
+}
+/**
+ * Load a third-party scripts in an optimized way.
+ *
+ * Read more: [Next.js Docs: `next/script`](https://nextjs.org/docs/app/api-reference/components/script)
+ */ function Script(props) {
+    const { id, src = "", onLoad = ()=>{}, onReady = null, strategy = "afterInteractive", onError, stylesheets, ...restProps } = props;
+    // Context is available only during SSR
+    const { updateScripts, scripts, getIsSsr, appDir, nonce } = (0, _react.useContext)(_headmanagercontextsharedruntime.HeadManagerContext);
+    /**
+   * - First mount:
+   *   1. The useEffect for onReady executes
+   *   2. hasOnReadyEffectCalled.current is false, but the script hasn't loaded yet (not in LoadCache)
+   *      onReady is skipped, set hasOnReadyEffectCalled.current to true
+   *   3. The useEffect for loadScript executes
+   *   4. hasLoadScriptEffectCalled.current is false, loadScript executes
+   *      Once the script is loaded, the onLoad and onReady will be called by then
+   *   [If strict mode is enabled / is wrapped in <OffScreen /> component]
+   *   5. The useEffect for onReady executes again
+   *   6. hasOnReadyEffectCalled.current is true, so entire effect is skipped
+   *   7. The useEffect for loadScript executes again
+   *   8. hasLoadScriptEffectCalled.current is true, so entire effect is skipped
+   *
+   * - Second mount:
+   *   1. The useEffect for onReady executes
+   *   2. hasOnReadyEffectCalled.current is false, but the script has already loaded (found in LoadCache)
+   *      onReady is called, set hasOnReadyEffectCalled.current to true
+   *   3. The useEffect for loadScript executes
+   *   4. The script is already loaded, loadScript bails out
+   *   [If strict mode is enabled / is wrapped in <OffScreen /> component]
+   *   5. The useEffect for onReady executes again
+   *   6. hasOnReadyEffectCalled.current is true, so entire effect is skipped
+   *   7. The useEffect for loadScript executes again
+   *   8. hasLoadScriptEffectCalled.current is true, so entire effect is skipped
+   */ const hasOnReadyEffectCalled = (0, _react.useRef)(false);
+    (0, _react.useEffect)(()=>{
+        const cacheKey = id || src;
+        if (!hasOnReadyEffectCalled.current) {
+            // Run onReady if script has loaded before but component is re-mounted
+            if (onReady && cacheKey && LoadCache.has(cacheKey)) {
+                onReady();
+            }
+            hasOnReadyEffectCalled.current = true;
+        }
+    }, [
+        onReady,
+        id,
+        src
+    ]);
+    const hasLoadScriptEffectCalled = (0, _react.useRef)(false);
+    (0, _react.useEffect)(()=>{
+        if (!hasLoadScriptEffectCalled.current) {
+            if (strategy === "afterInteractive") {
+                loadScript(props);
+            } else if (strategy === "lazyOnload") {
+                loadLazyScript(props);
+            }
+            hasLoadScriptEffectCalled.current = true;
+        }
+    }, [
+        props,
+        strategy
+    ]);
+    if (strategy === "beforeInteractive" || strategy === "worker") {
+        if (updateScripts) {
+            scripts[strategy] = (scripts[strategy] || []).concat([
+                {
+                    id,
+                    src,
+                    onLoad,
+                    onReady,
+                    onError,
+                    ...restProps
+                }
+            ]);
+            updateScripts(scripts);
+        } else if (getIsSsr && getIsSsr()) {
+            // Script has already loaded during SSR
+            LoadCache.add(id || src);
+        } else if (getIsSsr && !getIsSsr()) {
+            loadScript(props);
+        }
+    }
+    // For the app directory, we need React Float to preload these scripts.
+    if (appDir) {
+        // Injecting stylesheets here handles beforeInteractive and worker scripts correctly
+        // For other strategies injecting here ensures correct stylesheet order
+        // ReactDOM.preinit handles loading the styles in the correct order,
+        // also ensures the stylesheet is loaded only once and in a consistent manner
+        //
+        // Case 1: Styles for beforeInteractive/worker with appDir - handled here
+        // Case 2: Styles for beforeInteractive/worker with pages dir - Not handled yet
+        // Case 3: Styles for afterInteractive/lazyOnload with appDir - handled here
+        // Case 4: Styles for afterInteractive/lazyOnload with pages dir - handled in insertStylesheets function
+        if (stylesheets) {
+            stylesheets.forEach((styleSrc)=>{
+                _reactdom.default.preinit(styleSrc, {
+                    as: "style"
+                });
+            });
+        }
+        // Before interactive scripts need to be loaded by Next.js' runtime instead
+        // of native <script> tags, because they no longer have `defer`.
+        if (strategy === "beforeInteractive") {
+            if (!src) {
+                // For inlined scripts, we put the content in `children`.
+                if (restProps.dangerouslySetInnerHTML) {
+                    // Casting since lib.dom.d.ts doesn't have TrustedHTML yet.
+                    restProps.children = restProps.dangerouslySetInnerHTML.__html;
+                    delete restProps.dangerouslySetInnerHTML;
+                }
+                return /*#__PURE__*/ (0, _jsxruntime.jsx)("script", {
+                    nonce: nonce,
+                    dangerouslySetInnerHTML: {
+                        __html: "(self.__next_s=self.__next_s||[]).push(" + JSON.stringify([
+                            0,
+                            {
+                                ...restProps,
+                                id
+                            }
+                        ]) + ")"
+                    }
+                });
+            } else {
+                // @ts-ignore
+                _reactdom.default.preload(src, restProps.integrity ? {
+                    as: "script",
+                    integrity: restProps.integrity,
+                    nonce,
+                    crossOrigin: restProps.crossOrigin
+                } : {
+                    as: "script",
+                    nonce,
+                    crossOrigin: restProps.crossOrigin
+                });
+                return /*#__PURE__*/ (0, _jsxruntime.jsx)("script", {
+                    nonce: nonce,
+                    dangerouslySetInnerHTML: {
+                        __html: "(self.__next_s=self.__next_s||[]).push(" + JSON.stringify([
+                            src,
+                            {
+                                ...restProps,
+                                id
+                            }
+                        ]) + ")"
+                    }
+                });
+            }
+        } else if (strategy === "afterInteractive") {
+            if (src) {
+                // @ts-ignore
+                _reactdom.default.preload(src, restProps.integrity ? {
+                    as: "script",
+                    integrity: restProps.integrity,
+                    nonce,
+                    crossOrigin: restProps.crossOrigin
+                } : {
+                    as: "script",
+                    nonce,
+                    crossOrigin: restProps.crossOrigin
+                });
+            }
+        }
+    }
+    return null;
+}
+_c = Script;
+Object.defineProperty(Script, "__nextScript", {
+    value: true
+});
+const _default = Script;
+if ((typeof exports.default === "function" || typeof exports.default === "object" && exports.default !== null) && typeof exports.default.__esModule === "undefined") {
+    Object.defineProperty(exports.default, "__esModule", {
+        value: true
+    });
+    Object.assign(exports.default, exports);
+    module.exports = exports.default;
+} //# sourceMappingURL=script.js.map
+var _c;
+$RefreshReg$(_c, "Script");
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
 /***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{\"path\":\"app/layout.tsx\",\"import\":\"Inter\",\"arguments\":[{\"subsets\":[\"latin\"]}],\"variableName\":\"inter\"}":
 /*!**********************************************************************************************************************************************************************************************!*\
   !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{"path":"app/layout.tsx","import":"Inter","arguments":[{"subsets":["latin"]}],"variableName":"inter"} ***!
@@ -1296,7 +2459,7 @@ $RefreshReg$(_c, "AuthProvider");
 // extracted by mini-css-extract-plugin
 module.exports = {"style":{"fontFamily":"'__Inter_f367f3', '__Inter_Fallback_f367f3'","fontStyle":"normal"},"className":"__className_f367f3"};
     if(true) {
-      // 1770569285505
+      // 1770674220979
       var cssReload = __webpack_require__(/*! ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/mini-css-extract-plugin/hmr/hotModuleReplacement.js */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/mini-css-extract-plugin/hmr/hotModuleReplacement.js")(module.id, {"publicPath":"/_next/","esModule":false,"locals":true});
       module.hot.dispose(cssReload);
       
@@ -4018,7 +5181,7 @@ var _t = n;
 },
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ var __webpack_exec__ = function(moduleId) { return __webpack_require__(__webpack_require__.s = moduleId); }
-/******/ __webpack_require__.O(0, ["main-app"], function() { return __webpack_exec__("(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!"); });
+/******/ __webpack_require__.O(0, ["main-app"], function() { return __webpack_exec__("(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!"); });
 /******/ var __webpack_exports__ = __webpack_require__.O();
 /******/ _N_E = __webpack_exports__;
 /******/ }

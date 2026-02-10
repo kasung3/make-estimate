@@ -17,6 +17,8 @@ import {
   Ticket,
   BarChart3,
   UserCog,
+  ClipboardList,
+  Layers,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +26,8 @@ import { Button } from '@/components/ui/button';
 // Regular user navigation
 const userNavigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
+  { name: 'BOQs', href: '/app/boqs', icon: ClipboardList },
+  { name: 'Templates', href: '/app/templates', icon: Layers },
   { name: 'Customers', href: '/app/customers', icon: Users },
   { name: 'Team', href: '/app/team', icon: UserCog },
   { name: 'Settings', href: '/app/settings', icon: Settings },

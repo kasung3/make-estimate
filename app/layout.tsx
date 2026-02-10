@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
+import { MetaPixelProvider } from '@/components/meta-pixel-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -33,7 +35,11 @@ export default function RootLayout({
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <Suspense fallback={null}>
+            <MetaPixelProvider>{children}</MetaPixelProvider>
+          </Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -130,12 +130,16 @@ export async function POST(request: Request) {
     
     // Check template limit (null = unlimited)
     if (billingStatus.coverTemplatesLimit !== null && existingTemplates >= billingStatus.coverTemplatesLimit) {
+      const planName = billingStatus.planKey ? billingStatus.planKey.charAt(0).toUpperCase() + billingStatus.planKey.slice(1) : 'your plan';
       return NextResponse.json({ 
-        error: `Cover template limit reached. Your ${billingStatus.planKey} plan allows ${billingStatus.coverTemplatesLimit} templates. Upgrade for more.`,
-        code: 'TEMPLATE_LIMIT_REACHED',
+        error: `You've reached the ${planName} limit: ${billingStatus.coverTemplatesLimit} cover template${billingStatus.coverTemplatesLimit === 1 ? '' : 's'}.`,
+        code: 'LIMIT_EXCEEDED',
+        limit_type: 'cover_templates',
+        used: existingTemplates,
         limit: billingStatus.coverTemplatesLimit,
-        current: existingTemplates,
-        planKey: billingStatus.planKey
+        plan_key: billingStatus.planKey,
+        plan_name: planName,
+        upgrade_url: '/pricing',
       }, { status: 403 });
     }
 

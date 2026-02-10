@@ -2132,6 +2132,25 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js":
+/*!****************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js ***!
+  \****************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../client/components/navigation */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/client/components/navigation.js");
+/* harmony import */ var _client_components_navigation__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_client_components_navigation__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (unknown) */ var __WEBPACK_REEXPORT_OBJECT__ = {};
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__) if(__WEBPACK_IMPORT_KEY__ !== "default") __WEBPACK_REEXPORT_OBJECT__[__WEBPACK_IMPORT_KEY__] = function(key) { return _client_components_navigation__WEBPACK_IMPORTED_MODULE_0__[key]; }.bind(0, __WEBPACK_IMPORT_KEY__)
+/* harmony reexport (unknown) */ __webpack_require__.d(__webpack_exports__, __WEBPACK_REEXPORT_OBJECT__);
+
+
+//# sourceMappingURL=navigation.js.map
+
+/***/ }),
+
 /***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/polyfills/process.js":
 /*!*************************************************************************************************!*\
   !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/polyfills/process.js ***!
@@ -2467,30 +2486,34 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/jsx-dev-runtime.js");
 /* harmony import */ var next_link__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! next/link */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/link.js");
-/* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/components/ui/button */ "(app-pages-browser)/./components/ui/button.tsx");
-/* harmony import */ var _components_marketing_navbar__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/components/marketing/navbar */ "(app-pages-browser)/./components/marketing/navbar.tsx");
-/* harmony import */ var _components_marketing_footer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/components/marketing/footer */ "(app-pages-browser)/./components/marketing/footer.tsx");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/zap.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-check.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/palette.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-text.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/users.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/shield.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/circle-x.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/calculator.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/download.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/chevron-down.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/sparkles.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/arrow-right.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/circle-check.js");
-/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/building-2.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/lib/utils */ "(app-pages-browser)/./lib/utils.ts");
-/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! framer-motion */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/framer-motion/dist/es/utils/use-in-view.mjs");
-/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! framer-motion */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/framer-motion/dist/es/render/dom/motion.mjs");
+/* harmony import */ var next_navigation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! next/navigation */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js");
+/* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/components/ui/button */ "(app-pages-browser)/./components/ui/button.tsx");
+/* harmony import */ var _components_marketing_navbar__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/components/marketing/navbar */ "(app-pages-browser)/./components/marketing/navbar.tsx");
+/* harmony import */ var _components_marketing_footer__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/components/marketing/footer */ "(app-pages-browser)/./components/marketing/footer.tsx");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/zap.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-check.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/palette.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-text.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/users.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/shield.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/circle-x.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/calculator.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/download.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/chevron-down.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/sparkles.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/arrow-right.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/circle-check.js");
+/* harmony import */ var _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! __barrel_optimize__?names=ArrowRight,Building2,Calculator,CheckCircle2,ChevronDown,Download,FileCheck,FileText,Palette,Shield,Sparkles,Users,XCircle,Zap!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/building-2.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/lib/utils */ "(app-pages-browser)/./lib/utils.ts");
+/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! framer-motion */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/framer-motion/dist/es/utils/use-in-view.mjs");
+/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! framer-motion */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/framer-motion/dist/es/render/dom/motion.mjs");
+/* harmony import */ var _lib_meta_pixel__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/lib/meta-pixel */ "(app-pages-browser)/./lib/meta-pixel.ts");
 /* __next_internal_client_entry_do_not_use__ default auto */ 
-var _s = $RefreshSig$(), _s1 = $RefreshSig$();
+var _s = $RefreshSig$(), _s1 = $RefreshSig$(), _s2 = $RefreshSig$();
+
+
 
 
 
@@ -2503,32 +2526,32 @@ var _s = $RefreshSig$(), _s1 = $RefreshSig$();
 // ====== FEATURES DATA ======
 const features = [
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_7__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_9__["default"],
         title: "Lightning-Fast BOQ Builder",
         description: "Create categories and items with instant totals. No formulas, no errors—just fast estimation that wins projects."
     },
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_8__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_10__["default"],
         title: "Professional PDF Export",
         description: "Generate clean, A4-formatted PDFs ready for clients. Cover pages and item details exported in seconds."
     },
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_9__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_11__["default"],
         title: "Custom Templates & Themes",
         description: "Start projects faster with reusable templates. Customize colors for consistent, professional branding."
     },
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_10__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_12__["default"],
         title: "Notes & Specifications",
         description: "Add detailed notes and specifications to any item. Keep all project details organized in one place."
     },
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_11__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__["default"],
         title: "Customer Management",
         description: "Track all your clients effortlessly. Quickly assign customers to new BOQs with one click."
     },
     {
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_12__["default"],
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_14__["default"],
         title: "Secure & Multi-tenant",
         description: "Your data is isolated and secure. Invite team members to collaborate on estimates together."
     }
@@ -2538,17 +2561,17 @@ const painPoints = [
     {
         pain: "Hours spent in Excel fixing formula errors",
         solution: "Automatic calculations with zero errors",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__["default"]
     },
     {
         pain: "Unprofessional quotes losing you contracts",
         solution: "Polished PDFs that impress clients",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__["default"]
     },
     {
         pain: "Starting from scratch on every project",
         solution: "Reusable templates save hours",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__["default"]
     }
 ];
 // ====== HOW IT WORKS STEPS ======
@@ -2557,19 +2580,19 @@ const steps = [
         step: "1",
         title: "Create Your BOQ",
         description: "Add categories and items with quantities and rates. Totals calculate automatically.",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_14__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_16__["default"]
     },
     {
         step: "2",
         title: "Customize & Brand",
         description: "Add your logo, customize cover pages, and apply your color theme.",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_9__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_11__["default"]
     },
     {
         step: "3",
         title: "Export Professional PDF",
         description: "Generate a polished A4 document ready to send to clients in seconds.",
-        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__["default"]
+        icon: _barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_17__["default"]
     }
 ];
 // ====== FAQs ======
@@ -2598,12 +2621,12 @@ const faqs = [
 // ====== ANIMATED SECTION WRAPPER ======
 function AnimatedSection({ children, className, delay = 0 }) {
     _s();
-    const ref = (0,react__WEBPACK_IMPORTED_MODULE_5__.useRef)(null);
-    const isInView = (0,framer_motion__WEBPACK_IMPORTED_MODULE_16__.useInView)(ref, {
+    const ref = (0,react__WEBPACK_IMPORTED_MODULE_6__.useRef)(null);
+    const isInView = (0,framer_motion__WEBPACK_IMPORTED_MODULE_18__.useInView)(ref, {
         once: false,
         margin: "-100px"
     });
-    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_17__.motion.div, {
+    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_19__.motion.div, {
         ref: ref,
         initial: {
             opacity: 0,
@@ -2625,20 +2648,20 @@ function AnimatedSection({ children, className, delay = 0 }) {
         children: children
     }, void 0, false, {
         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-        lineNumber: 153,
+        lineNumber: 155,
         columnNumber: 5
     }, this);
 }
 _s(AnimatedSection, "DljcBprJKYjULUac3YKdUV9OwZQ=", false, function() {
     return [
-        framer_motion__WEBPACK_IMPORTED_MODULE_16__.useInView
+        framer_motion__WEBPACK_IMPORTED_MODULE_18__.useInView
     ];
 });
 _c = AnimatedSection;
 // ====== FAQ ACCORDION ITEM ======
 function FAQItem({ question, answer }) {
     _s1();
-    const [open, setOpen] = (0,react__WEBPACK_IMPORTED_MODULE_5__.useState)(false);
+    const [open, setOpen] = (0,react__WEBPACK_IMPORTED_MODULE_6__.useState)(false);
     return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
         className: "border-b border-purple-100",
         children: [
@@ -2651,41 +2674,41 @@ function FAQItem({ question, answer }) {
                         children: question
                     }, void 0, false, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 175,
+                        lineNumber: 177,
                         columnNumber: 9
                     }, this),
-                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_18__["default"], {
-                        className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_6__.cn)("h-5 w-5 text-purple-400 transition-transform duration-300", open && "rotate-180")
+                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__["default"], {
+                        className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_7__.cn)("h-5 w-5 text-purple-400 transition-transform duration-300", open && "rotate-180")
                     }, void 0, false, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 178,
+                        lineNumber: 180,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 171,
+                lineNumber: 173,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
-                className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_6__.cn)("overflow-hidden transition-all duration-300", open ? "max-h-40 pb-5" : "max-h-0"),
+                className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_7__.cn)("overflow-hidden transition-all duration-300", open ? "max-h-40 pb-5" : "max-h-0"),
                 children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
                     className: "text-muted-foreground",
                     children: answer
                 }, void 0, false, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 191,
+                    lineNumber: 193,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 185,
+                lineNumber: 187,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-        lineNumber: 170,
+        lineNumber: 172,
         columnNumber: 5
     }, this);
 }
@@ -2693,12 +2716,24 @@ _s1(FAQItem, "xG1TONbKtDWtdOTrXaTAsNhPg/Q=");
 _c1 = FAQItem;
 // ====== MAIN HOME PAGE ======
 function HomePage() {
+    _s2();
+    const router = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.useRouter)();
+    // Track Lead event and navigate to register
+    const handleStartFree = (0,react__WEBPACK_IMPORTED_MODULE_6__.useCallback)((source)=>{
+        (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_8__.metaTrack)("Lead", {
+            content_name: "StartFree",
+            source
+        });
+        router.push("/register");
+    }, [
+        router
+    ]);
     return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
         className: "min-h-screen bg-background",
         children: [
-            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_marketing_navbar__WEBPACK_IMPORTED_MODULE_3__.MarketingNavbar, {}, void 0, false, {
+            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_marketing_navbar__WEBPACK_IMPORTED_MODULE_4__.MarketingNavbar, {}, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 201,
+                lineNumber: 211,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -2711,7 +2746,7 @@ function HomePage() {
                                 className: "absolute -top-40 -right-40 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl animate-pulse-glow"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 207,
+                                lineNumber: 217,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -2721,20 +2756,20 @@ function HomePage() {
                                 }
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 208,
+                                lineNumber: 218,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                 className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-glow opacity-50"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 212,
+                                lineNumber: 222,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 206,
+                        lineNumber: 216,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -2743,7 +2778,7 @@ function HomePage() {
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                 className: "text-center max-w-4xl mx-auto",
                                 children: [
-                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_17__.motion.div, {
+                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_19__.motion.div, {
                                         initial: {
                                             opacity: 0,
                                             y: 30
@@ -2759,24 +2794,24 @@ function HomePage() {
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                                 className: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium mb-6",
                                                 children: [
-                                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_19__["default"], {
+                                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_21__["default"], {
                                                         className: "w-4 h-4"
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 223,
+                                                        lineNumber: 233,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("span", {
                                                         children: "Built for Construction Professionals"
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 224,
+                                                        lineNumber: 234,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 222,
+                                                lineNumber: 232,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("h1", {
@@ -2789,22 +2824,22 @@ function HomePage() {
                                                         children: "Creating BOQs Faster"
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 228,
+                                                        lineNumber: 238,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 226,
+                                                lineNumber: 236,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 217,
+                                        lineNumber: 227,
                                         columnNumber: 13
                                     }, this),
-                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_17__.motion.p, {
+                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_19__.motion.p, {
                                         className: "mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto",
                                         initial: {
                                             opacity: 0,
@@ -2821,10 +2856,10 @@ function HomePage() {
                                         children: "Create professional Bills of Quantities in minutes—not hours. No Excel, no formulas, no errors. Just fast, clean estimates that help you win contracts."
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 232,
+                                        lineNumber: 242,
                                         columnNumber: 13
                                     }, this),
-                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_17__.motion.div, {
+                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_19__.motion.div, {
                                         className: "mt-10 flex flex-col sm:flex-row items-center justify-center gap-4",
                                         initial: {
                                             opacity: 0,
@@ -2839,61 +2874,55 @@ function HomePage() {
                                             delay: 0.3
                                         },
                                         children: [
-                                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
-                                                href: "/register",
-                                                children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, {
-                                                    size: "lg",
-                                                    className: "text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all",
-                                                    children: [
-                                                        "Start Free",
-                                                        /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__["default"], {
-                                                            className: "ml-2 h-5 w-5"
-                                                        }, void 0, false, {
-                                                            fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 252,
-                                                            columnNumber: 19
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 250,
-                                                    columnNumber: 17
-                                                }, this)
-                                            }, void 0, false, {
+                                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_3__.Button, {
+                                                size: "lg",
+                                                className: "text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all",
+                                                onClick: ()=>handleStartFree("hero"),
+                                                children: [
+                                                    "Start Free",
+                                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__["default"], {
+                                                        className: "ml-2 h-5 w-5"
+                                                    }, void 0, false, {
+                                                        fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
+                                                        lineNumber: 265,
+                                                        columnNumber: 17
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 249,
+                                                lineNumber: 259,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
                                                 href: "/pricing",
-                                                children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, {
+                                                children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_3__.Button, {
                                                     variant: "outline",
                                                     size: "lg",
                                                     className: "text-base px-8 py-6",
                                                     children: "View Pricing"
                                                 }, void 0, false, {
                                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 256,
+                                                    lineNumber: 268,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 255,
+                                                lineNumber: 267,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 243,
+                                        lineNumber: 253,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 216,
+                                lineNumber: 226,
                                 columnNumber: 11
                             }, this),
-                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_17__.motion.div, {
+                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_19__.motion.div, {
                                 className: "mt-16 max-w-4xl mx-auto",
                                 initial: {
                                     opacity: 0,
@@ -2916,16 +2945,16 @@ function HomePage() {
                                             children: [
                                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                                     className: "w-20 h-20 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg",
-                                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_10__["default"], {
+                                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_12__["default"], {
                                                         className: "w-10 h-10 text-white"
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 274,
+                                                        lineNumber: 286,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 273,
+                                                    lineNumber: 285,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -2933,7 +2962,7 @@ function HomePage() {
                                                     children: "Your Professional BOQ Dashboard"
                                                 }, void 0, false, {
                                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 276,
+                                                    lineNumber: 288,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -2944,49 +2973,49 @@ function HomePage() {
                                                         "Totals",
                                                         "PDF Export"
                                                     ].map((label, i)=>/*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
-                                                            className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_6__.cn)("px-4 py-2 rounded-xl text-sm font-medium", i === 0 && "bg-purple-100 text-purple-700", i === 1 && "bg-lavender-100 text-lavender-600", i === 2 && "bg-emerald-100 text-emerald-700", i === 3 && "bg-blue-100 text-blue-700"),
+                                                            className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_7__.cn)("px-4 py-2 rounded-xl text-sm font-medium", i === 0 && "bg-purple-100 text-purple-700", i === 1 && "bg-lavender-100 text-lavender-600", i === 2 && "bg-emerald-100 text-emerald-700", i === 3 && "bg-blue-100 text-blue-700"),
                                                             children: label
                                                         }, label, false, {
                                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 279,
+                                                            lineNumber: 291,
                                                             columnNumber: 23
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 277,
+                                                    lineNumber: 289,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 272,
+                                            lineNumber: 284,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 271,
+                                        lineNumber: 283,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 270,
+                                    lineNumber: 282,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 264,
+                                lineNumber: 276,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 215,
+                        lineNumber: 225,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 204,
+                lineNumber: 214,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3004,7 +3033,7 @@ function HomePage() {
                                     children: "Quantity Surveyors"
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 305,
+                                    lineNumber: 317,
                                     columnNumber: 13
                                 }, this),
                                 ",",
@@ -3014,7 +3043,7 @@ function HomePage() {
                                     children: "Contractors"
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 306,
+                                    lineNumber: 318,
                                     columnNumber: 13
                                 }, this),
                                 ", and",
@@ -3024,13 +3053,13 @@ function HomePage() {
                                     children: "Project Managers"
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 307,
+                                    lineNumber: 319,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 303,
+                            lineNumber: 315,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3043,11 +3072,11 @@ function HomePage() {
                             ].map((item)=>/*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                     className: "flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl",
                                     children: [
-                                        /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_21__["default"], {
+                                        /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_23__["default"], {
                                             className: "w-4 h-4 text-purple-500"
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 315,
+                                            lineNumber: 327,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("span", {
@@ -3055,29 +3084,29 @@ function HomePage() {
                                             children: item
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 316,
+                                            lineNumber: 328,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, item, true, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 311,
+                                    lineNumber: 323,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 309,
+                            lineNumber: 321,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 302,
+                    lineNumber: 314,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 301,
+                lineNumber: 313,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3098,13 +3127,13 @@ function HomePage() {
                                             children: "Broken Spreadsheets"
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 329,
+                                            lineNumber: 341,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 327,
+                                    lineNumber: 339,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3112,13 +3141,13 @@ function HomePage() {
                                     children: "Traditional methods are costing you projects. MakeEstimate solves the problems that hold back construction professionals."
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 331,
+                                    lineNumber: 343,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 326,
+                            lineNumber: 338,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3133,16 +3162,16 @@ function HomePage() {
                                                 children: [
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                                         className: "w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0",
-                                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_13__["default"], {
+                                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_15__["default"], {
                                                             className: "w-4 h-4 text-red-500"
                                                         }, void 0, false, {
                                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 343,
+                                                            lineNumber: 355,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 342,
+                                                        lineNumber: 354,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3150,13 +3179,13 @@ function HomePage() {
                                                         children: item.pain
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 345,
+                                                        lineNumber: 357,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 341,
+                                                lineNumber: 353,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3164,16 +3193,16 @@ function HomePage() {
                                                 children: [
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                                         className: "w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0",
-                                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_21__["default"], {
+                                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_23__["default"], {
                                                             className: "w-4 h-4 text-emerald-500"
                                                         }, void 0, false, {
                                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 351,
+                                                            lineNumber: 363,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 350,
+                                                        lineNumber: 362,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3181,40 +3210,40 @@ function HomePage() {
                                                         children: item.solution
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 353,
+                                                        lineNumber: 365,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 349,
+                                                lineNumber: 361,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 340,
+                                        lineNumber: 352,
                                         columnNumber: 17
                                     }, this)
                                 }, index, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 339,
+                                    lineNumber: 351,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 337,
+                            lineNumber: 349,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 325,
+                    lineNumber: 337,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 324,
+                lineNumber: 336,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3236,13 +3265,13 @@ function HomePage() {
                                             children: "Professional Estimates"
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 373,
+                                            lineNumber: 385,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 371,
+                                    lineNumber: 383,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3250,13 +3279,13 @@ function HomePage() {
                                     children: "Powerful features designed specifically for construction professionals who want to create better estimates, faster."
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 375,
+                                    lineNumber: 387,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 370,
+                            lineNumber: 382,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3272,12 +3301,12 @@ function HomePage() {
                                                     className: "w-6 h-6 text-purple-600"
                                                 }, void 0, false, {
                                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                    lineNumber: 386,
+                                                    lineNumber: 398,
                                                     columnNumber: 21
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 385,
+                                                lineNumber: 397,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("h3", {
@@ -3285,7 +3314,7 @@ function HomePage() {
                                                 children: feature.title
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 388,
+                                                lineNumber: 400,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3293,34 +3322,34 @@ function HomePage() {
                                                 children: feature.description
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 391,
+                                                lineNumber: 403,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 384,
+                                        lineNumber: 396,
                                         columnNumber: 17
                                     }, this)
                                 }, feature.title, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 383,
+                                    lineNumber: 395,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 381,
+                            lineNumber: 393,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 369,
+                    lineNumber: 381,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 365,
+                lineNumber: 377,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3341,13 +3370,13 @@ function HomePage() {
                                             children: "3 Simple Steps"
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 405,
+                                            lineNumber: 417,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 403,
+                                    lineNumber: 415,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3355,13 +3384,13 @@ function HomePage() {
                                     children: "From empty document to professional PDF in minutes, not hours."
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 407,
+                                    lineNumber: 419,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 402,
+                            lineNumber: 414,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3375,7 +3404,7 @@ function HomePage() {
                                                 className: "hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-purple-200 to-lavender-200"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 418,
+                                                lineNumber: 430,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3387,12 +3416,12 @@ function HomePage() {
                                                             className: "w-10 h-10 text-white"
                                                         }, void 0, false, {
                                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 422,
+                                                            lineNumber: 434,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 421,
+                                                        lineNumber: 433,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3402,18 +3431,18 @@ function HomePage() {
                                                             children: step.step
                                                         }, void 0, false, {
                                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                            lineNumber: 425,
+                                                            lineNumber: 437,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 424,
+                                                        lineNumber: 436,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 420,
+                                                lineNumber: 432,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("h3", {
@@ -3421,7 +3450,7 @@ function HomePage() {
                                                 children: step.title
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 430,
+                                                lineNumber: 442,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3429,34 +3458,34 @@ function HomePage() {
                                                 children: step.description
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 433,
+                                                lineNumber: 445,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 415,
+                                        lineNumber: 427,
                                         columnNumber: 17
                                     }, this)
                                 }, step.title, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 414,
+                                    lineNumber: 426,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 412,
+                            lineNumber: 424,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 401,
+                    lineNumber: 413,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 400,
+                lineNumber: 412,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3470,7 +3499,7 @@ function HomePage() {
                                 children: "Simple, Transparent Pricing"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 445,
+                                lineNumber: 457,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3478,7 +3507,7 @@ function HomePage() {
                                 children: "Start free and upgrade as you grow. No hidden fees, no surprises."
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 448,
+                                lineNumber: 460,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3492,7 +3521,7 @@ function HomePage() {
                                                 children: "$0"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 453,
+                                                lineNumber: 465,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3500,13 +3529,13 @@ function HomePage() {
                                                 children: "Free Forever Plan"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 454,
+                                                lineNumber: 466,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 452,
+                                        lineNumber: 464,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3514,7 +3543,7 @@ function HomePage() {
                                         children: "→"
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 456,
+                                        lineNumber: 468,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3525,7 +3554,7 @@ function HomePage() {
                                                 children: "From $19"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 458,
+                                                lineNumber: 470,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3533,67 +3562,67 @@ function HomePage() {
                                                 children: "Pro Plans"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 459,
+                                                lineNumber: 471,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 457,
+                                        lineNumber: 469,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 451,
+                                lineNumber: 463,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                 className: "mt-8",
                                 children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
                                     href: "/pricing",
-                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, {
+                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_3__.Button, {
                                         size: "lg",
                                         className: "bg-white text-purple-600 hover:bg-purple-50 px-8 py-6 text-base shadow-lg",
                                         children: [
                                             "View All Plans",
-                                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__["default"], {
+                                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__["default"], {
                                                 className: "ml-2 h-5 w-5"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 469,
+                                                lineNumber: 481,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 464,
+                                        lineNumber: 476,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 463,
+                                    lineNumber: 475,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 462,
+                                lineNumber: 474,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 444,
+                        lineNumber: 456,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 443,
+                    lineNumber: 455,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 442,
+                lineNumber: 454,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3613,18 +3642,18 @@ function HomePage() {
                                         children: "Questions"
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 483,
+                                        lineNumber: 495,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 481,
+                                lineNumber: 493,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 480,
+                            lineNumber: 492,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(AnimatedSection, {
@@ -3635,28 +3664,28 @@ function HomePage() {
                                         answer: faq.answer
                                     }, faq.question, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 490,
+                                        lineNumber: 502,
                                         columnNumber: 17
                                     }, this))
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                lineNumber: 488,
+                                lineNumber: 500,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 487,
+                            lineNumber: 499,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 479,
+                    lineNumber: 491,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 478,
+                lineNumber: 490,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("section", {
@@ -3669,16 +3698,16 @@ function HomePage() {
                             children: [
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                     className: "w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-lavender-500 rounded-2xl flex items-center justify-center shadow-lg",
-                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__["default"], {
+                                    children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_24__["default"], {
                                         className: "w-8 h-8 text-white"
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                        lineNumber: 503,
+                                        lineNumber: 515,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 502,
+                                    lineNumber: 514,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("h2", {
@@ -3686,7 +3715,7 @@ function HomePage() {
                                     children: "Ready to Win More Projects?"
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 505,
+                                    lineNumber: 517,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3694,58 +3723,52 @@ function HomePage() {
                                     children: "Join hundreds of construction professionals who save hours every week with MakeEstimate. Start creating professional BOQs today—completely free."
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 508,
+                                    lineNumber: 520,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                     className: "mt-8 flex flex-col sm:flex-row items-center justify-center gap-4",
                                     children: [
-                                        /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
-                                            href: "/register",
-                                            children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, {
-                                                size: "lg",
-                                                className: "px-8 py-6 text-base shadow-lg",
-                                                children: [
-                                                    "Get Started Free",
-                                                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_20__["default"], {
-                                                        className: "ml-2 h-5 w-5"
-                                                    }, void 0, false, {
-                                                        fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                        lineNumber: 517,
-                                                        columnNumber: 21
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 515,
-                                                columnNumber: 19
-                                            }, this)
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_3__.Button, {
+                                            size: "lg",
+                                            className: "px-8 py-6 text-base shadow-lg",
+                                            onClick: ()=>handleStartFree("final_cta"),
+                                            children: [
+                                                "Get Started Free",
+                                                /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_ArrowRight_Building2_Calculator_CheckCircle2_ChevronDown_Download_FileCheck_FileText_Palette_Shield_Sparkles_Users_XCircle_Zap_lucide_react__WEBPACK_IMPORTED_MODULE_22__["default"], {
+                                                    className: "ml-2 h-5 w-5"
+                                                }, void 0, false, {
+                                                    fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
+                                                    lineNumber: 532,
+                                                    columnNumber: 19
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 514,
+                                            lineNumber: 526,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
                                             href: "/pricing",
-                                            children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, {
+                                            children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_ui_button__WEBPACK_IMPORTED_MODULE_3__.Button, {
                                                 variant: "outline",
                                                 size: "lg",
                                                 className: "px-8 py-6 text-base",
                                                 children: "Compare Plans"
                                             }, void 0, false, {
                                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                                lineNumber: 521,
+                                                lineNumber: 535,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                            lineNumber: 520,
+                                            lineNumber: 534,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 513,
+                                    lineNumber: 525,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3753,42 +3776,47 @@ function HomePage() {
                                     children: "No credit card required • Free forever plan available"
                                 }, void 0, false, {
                                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                                    lineNumber: 526,
+                                    lineNumber: 540,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                            lineNumber: 501,
+                            lineNumber: 513,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                        lineNumber: 500,
+                        lineNumber: 512,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                    lineNumber: 499,
+                    lineNumber: 511,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 498,
+                lineNumber: 510,
                 columnNumber: 7
             }, this),
-            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_marketing_footer__WEBPACK_IMPORTED_MODULE_4__.MarketingFooter, {}, void 0, false, {
+            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_components_marketing_footer__WEBPACK_IMPORTED_MODULE_5__.MarketingFooter, {}, void 0, false, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-                lineNumber: 534,
+                lineNumber: 548,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "/home/ubuntu/make_estimate/nextjs_space/app/page.tsx",
-        lineNumber: 200,
+        lineNumber: 210,
         columnNumber: 5
     }, this);
 }
+_s2(HomePage, "RewPOZ5LeqJ91Cn+Ggs/iimAJnI=", false, function() {
+    return [
+        next_navigation__WEBPACK_IMPORTED_MODULE_2__.useRouter
+    ];
+});
 _c2 = HomePage;
 var _c, _c1, _c2;
 $RefreshReg$(_c, "AnimatedSection");
@@ -4501,6 +4529,152 @@ Button.displayName = "Button";
 var _c, _c1;
 $RefreshReg$(_c, "Button$React.forwardRef");
 $RefreshReg$(_c1, "Button");
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
+/***/ "(app-pages-browser)/./lib/meta-pixel.ts":
+/*!***************************!*\
+  !*** ./lib/meta-pixel.ts ***!
+  \***************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   getPixelId: function() { return /* binding */ getPixelId; },
+/* harmony export */   isPixelEnabled: function() { return /* binding */ isPixelEnabled; },
+/* harmony export */   metaTrack: function() { return /* binding */ metaTrack; },
+/* harmony export */   metaTrackCustom: function() { return /* binding */ metaTrackCustom; },
+/* harmony export */   metaTrackPageView: function() { return /* binding */ metaTrackPageView; }
+/* harmony export */ });
+/**
+ * Meta (Facebook) Pixel tracking utilities
+ * 
+ * Environment Variables:
+ * - NEXT_PUBLIC_META_PIXEL_ID: Your Meta Pixel ID
+ * - NEXT_PUBLIC_ENABLE_META_PIXEL: 'true' to enable, anything else to disable
+ * 
+ * Usage:
+ * - metaTrack('EventName', { param: 'value' }) for standard events
+ * - metaTrackCustom('CustomEventName', { param: 'value' }) for custom events
+ */ // Check if pixel is enabled (safe for both server and client)
+function isPixelEnabled() {
+    return "true" === "true";
+}
+// Get pixel ID
+function getPixelId() {
+    return "2738592306503525" || 0;
+}
+// Check if fbq is ready (client-only check)
+function isFbqReady() {
+    return  true && typeof window.fbq === "function";
+}
+// Safe wrapper for fbq calls - silent no-op if not ready
+function safeFbq(...args) {
+    if (!isPixelEnabled()) return;
+    if (!isFbqReady()) return; // Silent no-op, script may still be loading
+    try {
+        window.fbq(...args);
+    } catch (err) {
+        console.error("[Meta Pixel] Error calling fbq:", err);
+    }
+}
+/**
+ * Track a standard Meta Pixel event
+ * @see https://developers.facebook.com/docs/meta-pixel/reference#standard-events
+ * 
+ * Standard events:
+ * - PageView, ViewContent, Search, AddToCart, AddToWishlist
+ * - InitiateCheckout, AddPaymentInfo, Purchase, Lead
+ * - CompleteRegistration, Contact, CustomizeProduct, Donate
+ * - FindLocation, Schedule, StartTrial, SubmitApplication, Subscribe
+ */ function metaTrack(eventName, params) {
+    if (params) {
+        safeFbq("track", eventName, params);
+    } else {
+        safeFbq("track", eventName);
+    }
+}
+/**
+ * Track a custom Meta Pixel event
+ * Use for app-specific events not covered by standard events
+ */ function metaTrackCustom(eventName, params) {
+    if (params) {
+        safeFbq("trackCustom", eventName, params);
+    } else {
+        safeFbq("trackCustom", eventName);
+    }
+}
+/**
+ * Track PageView - typically called on route changes
+ */ function metaTrackPageView() {
+    safeFbq("track", "PageView");
+}
 
 
 ;

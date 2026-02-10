@@ -4,9 +4,16 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 
+// Extract digits only from phone number for search
+function normalizePhoneDigits(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  return digits.length > 0 ? digits : null;
+}
+
 export async function POST(request: Request) {
   try {
-    const { email, password, companyName, firstName, lastName, phone } = await request.json();
+    const { email, password, companyName, firstName, lastName, phone, country } = await request.json();
 
     if (!email || !password || !companyName) {
       return NextResponse.json(
@@ -34,6 +41,9 @@ export async function POST(request: Request) {
       name = [firstName, lastName].filter(Boolean).join(' ');
     }
 
+    // Normalize phone to digits-only for search
+    const phoneDigits = normalizePhoneDigits(phone);
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -42,6 +52,8 @@ export async function POST(request: Request) {
         firstName: firstName || null,
         lastName: lastName || null,
         phone: phone || null,
+        phoneDigits,
+        country: country || null,
       },
     });
 

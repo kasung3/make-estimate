@@ -26,6 +26,15 @@ export interface BillingStatus {
   boqItemsLimit: number | null;
   watermarkEnabled: boolean;
   watermarkText: string | null;
+  // Active grant details (for display in admin panel)
+  activeGrant: {
+    id: string;
+    grantType: string;
+    planKey: string | null;
+    startsAt: Date;
+    endsAt: Date | null;
+    notes: string | null;
+  } | null;
 }
 
 /**
@@ -49,12 +58,17 @@ export async function getActivePlans() {
 
 /**
  * Get billing status for a company
- * Priority: 1) Check blocked, 2) Check active grant, 3) Check Stripe subscription
+ * Priority order:
+ * 1) Blocked user/company => deny access
+ * 2) Active Stripe subscription => use that plan
+ * 3) Active admin grant (not expired/revoked) => use grant plan
+ * 4) Active trial grant (not expired) => use trial plan
+ * 5) Free plan (always available)
  */
 export async function getCompanyBillingStatus(companyId: string): Promise<BillingStatus> {
   const now = new Date();
 
-  const [company, billing, activeGrant] = await Promise.all([
+  const [company, billing, activeGrants] = await Promise.all([
     prisma.company.findUnique({
       where: { id: companyId },
       select: { isBlocked: true },
@@ -62,14 +76,14 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     prisma.companyBilling.findUnique({
       where: { companyId },
     }),
-    // Find active grant (not revoked, not expired)
-    prisma.companyAccessGrant.findFirst({
+    // Find all active grants (not revoked, not expired) - we'll pick the best one
+    prisma.companyAccessGrant.findMany({
       where: {
         companyId,
         revokedAt: null,
         OR: [
-          { endsAt: null }, // free_forever
-          { endsAt: { gt: now } }, // trial not expired
+          { endsAt: null }, // permanent (free_forever, admin_grant without expiry)
+          { endsAt: { gt: now } }, // not expired
         ],
       },
       orderBy: { createdAt: 'desc' },
@@ -77,6 +91,11 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
   ]);
 
   const isBlocked = company?.isBlocked ?? false;
+  
+  // Separate admin grants from trial grants (admin_grant takes priority)
+  const adminGrant = activeGrants.find(g => g.grantType === 'admin_grant' || g.grantType === 'free_forever');
+  const trialGrant = activeGrants.find(g => g.grantType === 'trial');
+  const activeGrant = adminGrant || trialGrant;
 
   // Helper to compute usage for a period
   async function computeUsage(periodStart: Date, periodEnd: Date): Promise<number> {
@@ -97,17 +116,30 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     return getPlanFromDb(planKey);
   }
 
+  // Helper to format active grant for response
+  const formatActiveGrant = (grant: typeof activeGrant) => grant ? {
+    id: grant.id,
+    grantType: grant.grantType,
+    planKey: grant.planKey,
+    startsAt: grant.startsAt,
+    endsAt: grant.endsAt,
+    notes: grant.notes,
+  } : null;
+
   // 1) Check for admin override on billing record (free_forever, admin_grant)
-  const hasAdminGrant = billing?.accessOverride === 'free_forever' || billing?.accessOverride === 'admin_grant';
+  // Also check for admin grant in CompanyAccessGrant table
+  const hasAdminGrantFromBilling = billing?.accessOverride === 'free_forever' || billing?.accessOverride === 'admin_grant';
+  const hasAdminGrantFromGrant = !!adminGrant;
   
-  if (hasAdminGrant && !isBlocked) {
-    const overridePlan = billing?.overridePlan || 'business';
+  if ((hasAdminGrantFromBilling || hasAdminGrantFromGrant) && !isBlocked) {
+    // Use grant plan if available, otherwise fallback to billing override plan
+    const overridePlan = adminGrant?.planKey || billing?.overridePlan || 'business';
     const plan = await getPlanDetails(overridePlan);
     const boqLimit = plan?.boqLimitPerPeriod ?? null;
     
     // For admin grants, use calendar month as the period
-    const periodStart = startOfMonth(now);
-    const periodEnd = endOfMonth(now);
+    const periodStart = adminGrant?.startsAt || startOfMonth(now);
+    const periodEnd = adminGrant?.endsAt || endOfMonth(now);
     const boqsUsedThisPeriod = await computeUsage(periodStart, periodEnd);
 
     const canCreateBoq = boqLimit === null || boqsUsedThisPeriod < boqLimit;
@@ -125,8 +157,8 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       canCreateBoq,
       hasAdminGrant: true,
       hasTrialGrant: false,
-      accessOverride: billing?.accessOverride ?? null,
-      trialEndsAt: null,
+      accessOverride: billing?.accessOverride ?? (adminGrant ? 'admin_grant' : null),
+      trialEndsAt: adminGrant?.endsAt ?? null,
       accessSource: 'admin_override',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
@@ -135,28 +167,28 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqItemsLimit: plan?.boqItemsLimit ?? null,
       watermarkEnabled: plan?.watermarkEnabled ?? false,
       watermarkText: plan?.watermarkText ?? null,
+      activeGrant: formatActiveGrant(adminGrant),
     };
   }
 
-  // 2) Check for internal access grant (trial/free_forever from coupon)
-  if (activeGrant && !isBlocked) {
-    const grantPlan = activeGrant.planKey || 'starter';
+  // 2) Check for internal trial grant (from coupon)
+  if (trialGrant && !isBlocked) {
+    const grantPlan = trialGrant.planKey || 'starter';
     const plan = await getPlanDetails(grantPlan);
     const boqLimit = plan?.boqLimitPerPeriod ?? null;
     
     // For grants, use grant start as period start, end as period end (or calendar month for free_forever)
-    const periodStart = activeGrant.startsAt;
-    const periodEnd = activeGrant.endsAt || endOfMonth(now);
+    const periodStart = trialGrant.startsAt;
+    const periodEnd = trialGrant.endsAt || endOfMonth(now);
     const boqsUsedThisPeriod = await computeUsage(periodStart, periodEnd);
 
     const canCreateBoq = boqLimit === null || boqsUsedThisPeriod < boqLimit;
-    const isTrialGrant = activeGrant.grantType === 'trial';
 
     return {
       hasActiveSubscription: true,
       isBlocked: false,
       planKey: grantPlan,
-      status: isTrialGrant ? 'trialing' : 'active',
+      status: 'trialing',
       currentPeriodStart: periodStart,
       currentPeriodEnd: periodEnd,
       cancelAtPeriodEnd: false,
@@ -164,9 +196,9 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqLimit,
       canCreateBoq,
       hasAdminGrant: false,
-      hasTrialGrant: isTrialGrant,
+      hasTrialGrant: true,
       accessOverride: null,
-      trialEndsAt: isTrialGrant ? activeGrant.endsAt : null,
+      trialEndsAt: trialGrant.endsAt,
       accessSource: 'grant',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
@@ -175,6 +207,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqItemsLimit: plan?.boqItemsLimit ?? null,
       watermarkEnabled: plan?.watermarkEnabled ?? false,
       watermarkText: plan?.watermarkText ?? null,
+      activeGrant: formatActiveGrant(trialGrant),
     };
   }
 
@@ -210,6 +243,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqItemsLimit: plan?.boqItemsLimit ?? null,
       watermarkEnabled: plan?.watermarkEnabled ?? true,
       watermarkText: plan?.watermarkText ?? 'BOQ generated with MakeEstimate.com',
+      activeGrant: null,
     };
   }
 
@@ -238,6 +272,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       boqItemsLimit: null,
       watermarkEnabled: false,
       watermarkText: null,
+      activeGrant: null,
     };
   }
 
@@ -297,6 +332,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     boqItemsLimit: plan?.boqItemsLimit ?? null,
     watermarkEnabled: plan?.watermarkEnabled ?? false,
     watermarkText: plan?.watermarkText ?? null,
+    activeGrant: null,
   };
 }
 

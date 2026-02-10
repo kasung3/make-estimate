@@ -1,3 +1,9 @@
 {
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/api/admin/users/route": "app/api/admin/users/route.js",
+  "/api/admin/coupons/route": "app/api/admin/coupons/route.js",
+  "/api/admin/plans/route": "app/api/admin/plans/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/admin/companies/route": "app/api/admin/companies/route.js",
+  "/app/glorand/page": "app/app/glorand/page.js"
 }

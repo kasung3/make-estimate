@@ -2,103 +2,123 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   CreditCard,
-  Check,
   Loader2,
   Sparkles,
-  Building2,
   AlertCircle,
   ExternalLink,
-  Tag,
+  Calendar,
+  Users,
+  Receipt,
+  Download,
+  RefreshCw,
+  XCircle,
+  CheckCircle2,
+  Shield,
+  Clock,
+  ArrowRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BillingStatus, PlanInfo } from '@/lib/types';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface BillingSectionProps {
   isAdmin: boolean;
 }
 
-const PLANS: Record<string, PlanInfo> = {
-  starter: {
-    key: 'starter',
-    name: 'Starter',
-    priceId: '',
-    price: 19,
-    boqLimit: 10,
-    description: '10 BOQ creations per month',
-  },
-  business: {
-    key: 'business',
-    name: 'Business',
-    priceId: '',
-    price: 39,
-    boqLimit: null,
-    description: 'Unlimited BOQ creations',
-  },
-};
+interface InvoiceInfo {
+  id: string;
+  stripeInvoiceId: string;
+  number: string | null;
+  amountPaid: number;
+  currency: string;
+  status: string;
+  paidAt: string | null;
+  hostedInvoiceUrl: string | null;
+  pdfUrl: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+}
+
+interface BillingSummary {
+  isAdmin: boolean;
+  planKey: string | null;
+  planName: string;
+  planInfo: {
+    planKey: string;
+    name: string;
+    priceMonthlyUsdCents: number;
+    priceAnnualUsdCents: number | null;
+    seatModel: string;
+    boqLimitPerPeriod: number | null;
+    maxActiveMembers: number | null;
+    features: string[];
+  } | null;
+  status: string | null;
+  billingInterval: string;
+  hasActiveSubscription: boolean;
+  hasAdminGrant: boolean;
+  hasTrialGrant: boolean;
+  accessSource: string | null;
+  activeGrant: {
+    id: string;
+    grantType: string;
+    planKey: string | null;
+    startsAt: string;
+    endsAt: string | null;
+    notes: string | null;
+  } | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  boqsUsedThisPeriod: number;
+  boqLimit: number | null;
+  canCreateBoq: boolean;
+  seatModel: string;
+  seatQuantity: number;
+  activeMemberCount: number;
+  maxActiveMembers: number | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  invoices: InvoiceInfo[];
+}
 
 export function BillingSection({ isAdmin }: BillingSectionProps) {
-  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [promoCode, setPromoCode] = useState('');
-  const [promoValidating, setPromoValidating] = useState(false);
-  const [promoResult, setPromoResult] = useState<{ valid: boolean; message: string } | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
-    fetchBillingStatus();
+    fetchBillingSummary();
   }, []);
 
-  const fetchBillingStatus = async () => {
+  const fetchBillingSummary = async () => {
     try {
-      const response = await fetch('/api/billing/status');
+      const response = await fetch('/api/billing/summary');
       if (response.ok) {
         const data = await response.json();
-        setBillingStatus(data);
+        setSummary(data);
       }
     } catch (error) {
-      console.error('Failed to fetch billing status:', error);
+      console.error('Failed to fetch billing summary:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCheckout = async (planKey: string) => {
-    if (!isAdmin) {
-      toast.error('Only company admins can manage billing');
-      return;
-    }
-
-    setCheckoutLoading(planKey);
-    try {
-      const response = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planKey,
-          promoCode: promoCode || undefined,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-
-      // Open Stripe checkout in new window (required for sandboxed iframes)
-      window.open(data.url, '_blank');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to start checkout');
-    } finally {
-      setCheckoutLoading(null);
     }
   };
 
@@ -110,17 +130,13 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
 
     setPortalLoading(true);
     try {
-      const response = await fetch('/api/billing/portal', {
-        method: 'POST',
-      });
-
+      const response = await fetch('/api/billing/portal', { method: 'POST' });
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to open billing portal');
       }
 
-      // Open Stripe portal in new window (required for sandboxed iframes)
       window.open(data.url, '_blank');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to open billing portal');
@@ -129,292 +145,410 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
     }
   };
 
-  const validatePromoCode = async () => {
-    if (!promoCode.trim()) {
-      setPromoResult(null);
-      return;
-    }
-
-    setPromoValidating(true);
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
     try {
-      const response = await fetch('/api/billing/validate-promo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCode }),
-      });
-
+      const response = await fetch('/api/billing/cancel-at-period-end', { method: 'POST' });
       const data = await response.json();
-      setPromoResult({
-        valid: response.ok,
-        message: data.message || (response.ok ? 'Valid promo code!' : 'Invalid promo code'),
-      });
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel subscription');
+      }
+
+      toast.success('Subscription will cancel at the end of the billing period');
+      setShowCancelDialog(false);
+      fetchBillingSummary();
     } catch (error) {
-      setPromoResult({ valid: false, message: 'Failed to validate promo code' });
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel subscription');
     } finally {
-      setPromoValidating(false);
+      setCancelLoading(false);
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    setResumeLoading(true);
+    try {
+      const response = await fetch('/api/billing/resume', { method: 'POST' });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resume subscription');
+      }
+
+      toast.success('Subscription auto-renew has been resumed');
+      fetchBillingSummary();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to resume subscription');
+    } finally {
+      setResumeLoading(false);
+    }
+  };
+
+  const formatCurrency = (cents: number, currency: string = 'usd') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(cents / 100);
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-emerald-500 hover:bg-emerald-600">Active</Badge>;
+      case 'trialing':
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Trial</Badge>;
+      case 'past_due':
+        return <Badge className="bg-amber-500 hover:bg-amber-600">Past Due</Badge>;
+      case 'canceled':
+        return <Badge className="bg-gray-500 hover:bg-gray-600">Canceled</Badge>;
+      default:
+        return <Badge variant="secondary">{status || 'Unknown'}</Badge>;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
-  const hasActiveSubscription = billingStatus?.hasActiveSubscription;
-  const currentPlan = billingStatus?.planKey ? PLANS[billingStatus.planKey] : null;
+  if (!summary) {
+    return (
+      <Card className="shadow-md border-0">
+        <CardContent className="py-12 text-center">
+          <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-500">Unable to load billing information</p>
+          <Button onClick={fetchBillingSummary} variant="outline" className="mt-4">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Non-admin view
+  if (!isAdmin) {
+    return (
+      <Card className="shadow-md border-0">
+        <CardHeader>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Billing</CardTitle>
+              <CardDescription>Your company subscription</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <Shield className="w-8 h-8 text-purple-500" />
+            <div>
+              <p className="font-medium text-purple-900">Current Plan: {summary.planName}</p>
+              <p className="text-sm text-purple-600">
+                {summary.boqLimit
+                  ? `${summary.boqsUsedThisPeriod} of ${summary.boqLimit} BOQs used this period`
+                  : 'Unlimited BOQs'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg text-gray-600">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">Contact your company admin to manage billing settings.</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Admin view
+  const hasStripeSubscription = !!summary.stripeSubscriptionId;
+  const isOnFreePlan = summary.planKey === 'free' || !summary.planKey;
+  const hasGrant = summary.hasAdminGrant || summary.hasTrialGrant;
 
   return (
     <div className="space-y-6">
-      {/* Current Subscription Status */}
-      {hasActiveSubscription && currentPlan && (
-        <Card className="shadow-md border-0 bg-gradient-to-br from-emerald-50 to-teal-50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Current Subscription</CardTitle>
-                  <CardDescription>Your active plan details</CardDescription>
-                </div>
-              </div>
-              <Badge
-                variant={billingStatus?.status === 'active' ? 'default' : 'secondary'}
-                className="capitalize"
-              >
-                {billingStatus?.status === 'trialing' ? 'Trial' : billingStatus?.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Plan</p>
-                <p className="text-lg font-semibold">{currentPlan.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Price</p>
-                <p className="text-lg font-semibold">${currentPlan.price}/month</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">BOQs This Period</p>
-                <p className="text-lg font-semibold">
-                  {billingStatus?.boqsUsedThisPeriod ?? 0}
-                  {billingStatus?.boqLimit ? ` / ${billingStatus.boqLimit}` : ' (unlimited)'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Renews On</p>
-                <p className="text-lg font-semibold">
-                  {billingStatus?.currentPeriodEnd
-                    ? format(new Date(billingStatus.currentPeriodEnd), 'MMM d, yyyy')
-                    : '-'}
-                </p>
-              </div>
-            </div>
-
-            {billingStatus?.cancelAtPeriodEnd && (
-              <div className="flex items-center gap-2 p-3 bg-amber-100 text-amber-800 rounded-lg">
-                <AlertCircle className="w-5 h-5" />
-                <span>Your subscription will cancel at the end of this billing period</span>
-              </div>
-            )}
-
-            {isAdmin && (
-              <div className="flex gap-3 pt-2">
-                <Button
-                  onClick={handleManageBilling}
-                  disabled={portalLoading}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  {portalLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4" />
-                  )}
-                  Manage Billing
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Plan Selection - Show if no active subscription OR for upgrades */}
-      {(!hasActiveSubscription || (currentPlan?.key === 'starter')) && (
-        <Card className="shadow-md border-0">
-          <CardHeader>
+      {/* Current Plan Card */}
+      <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-400 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-lg flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-lg">
-                  {hasActiveSubscription ? 'Upgrade Your Plan' : 'Choose a Plan'}
-                </CardTitle>
-                <CardDescription>
-                  {hasActiveSubscription
-                    ? 'Get unlimited BOQ creations'
-                    : 'Subscribe to start creating BOQs'}
-                </CardDescription>
+                <CardTitle className="text-lg">Current Plan</CardTitle>
+                <CardDescription>Your subscription details</CardDescription>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Promo Code Input */}
-            <div className="space-y-2">
-              <Label htmlFor="promoCode" className="flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Promo Code (Optional)
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="promoCode"
-                  value={promoCode}
-                  onChange={(e) => {
-                    setPromoCode(e.target.value.toUpperCase());
-                    setPromoResult(null);
-                  }}
-                  placeholder="Enter promo code"
-                  className="uppercase"
-                />
-                <Button
-                  variant="outline"
-                  onClick={validatePromoCode}
-                  disabled={promoValidating || !promoCode.trim()}
-                >
-                  {promoValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-                </Button>
-              </div>
-              {promoResult && (
-                <p
-                  className={`text-sm ${promoResult.valid ? 'text-emerald-600' : 'text-red-600'}`}
-                >
-                  {promoResult.message}
-                </p>
+            {getStatusBadge(summary.status)}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Plan Info Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-3 bg-white/70 rounded-xl">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Plan</p>
+              <p className="text-lg font-semibold text-gray-900">{summary.planName}</p>
+              {summary.billingInterval && summary.planInfo && summary.planInfo.priceMonthlyUsdCents > 0 && (
+                <p className="text-sm text-gray-500 capitalize">{summary.billingInterval}ly</p>
               )}
             </div>
 
-            {/* Plan Cards */}
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Starter Plan */}
-              <div
-                className={`relative rounded-xl border-2 p-6 transition-all ${
-                  currentPlan?.key === 'starter'
-                    ? 'border-emerald-400 bg-emerald-50'
-                    : 'border-gray-200 hover:border-primary/50'
-                }`}
-              >
-                {currentPlan?.key === 'starter' && (
-                  <Badge className="absolute -top-3 left-4 bg-emerald-500">Current Plan</Badge>
-                )}
-                <h3 className="text-xl font-bold">Starter</h3>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold">$19</span>
-                  <span className="text-gray-500">/month</span>
-                </div>
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    10 BOQ creations per month
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    PDF export with themes
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    Custom cover pages
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    Customer management
-                  </li>
-                </ul>
-                {currentPlan?.key !== 'starter' && isAdmin && (
-                  <Button
-                    className="w-full mt-6"
-                    variant="outline"
-                    onClick={() => handleCheckout('starter')}
-                    disabled={checkoutLoading === 'starter'}
-                  >
-                    {checkoutLoading === 'starter' ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : null}
-                    {hasActiveSubscription ? 'Switch to Starter' : 'Get Started'}
-                  </Button>
-                )}
-              </div>
-
-              {/* Business Plan */}
-              <div
-                className={`relative rounded-xl border-2 p-6 transition-all ${
-                  currentPlan?.key === 'business'
-                    ? 'border-emerald-400 bg-emerald-50'
-                    : 'border-primary bg-gradient-to-br from-primary/5 to-primary/10'
-                }`}
-              >
-                {currentPlan?.key === 'business' && (
-                  <Badge className="absolute -top-3 left-4 bg-emerald-500">Current Plan</Badge>
-                )}
-                {currentPlan?.key !== 'business' && (
-                  <Badge className="absolute -top-3 left-4 bg-primary">Recommended</Badge>
-                )}
-                <h3 className="text-xl font-bold">Business</h3>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold">$39</span>
-                  <span className="text-gray-500">/month</span>
-                </div>
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    <strong>Unlimited</strong> BOQ creations
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    PDF export with themes
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    Custom cover pages
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    Customer management
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    Priority support
-                  </li>
-                </ul>
-                {currentPlan?.key !== 'business' && isAdmin && (
-                  <Button
-                    className="w-full mt-6"
-                    onClick={() => handleCheckout('business')}
-                    disabled={checkoutLoading === 'business'}
-                  >
-                    {checkoutLoading === 'business' ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : null}
-                    {currentPlan?.key === 'starter' ? 'Upgrade to Business' : 'Get Business'}
-                  </Button>
-                )}
-              </div>
+            <div className="p-3 bg-white/70 rounded-xl">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Price</p>
+              {summary.planInfo && summary.planInfo.priceMonthlyUsdCents > 0 ? (
+                <p className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(
+                    summary.billingInterval === 'year' && summary.planInfo.priceAnnualUsdCents
+                      ? summary.planInfo.priceAnnualUsdCents
+                      : summary.planInfo.priceMonthlyUsdCents
+                  )}
+                  <span className="text-sm font-normal text-gray-500">/{summary.billingInterval === 'year' ? 'yr' : 'mo'}</span>
+                </p>
+              ) : (
+                <p className="text-lg font-semibold text-emerald-600">Free</p>
+              )}
             </div>
 
-            {!isAdmin && (
-              <p className="text-sm text-gray-500 text-center">
-                Contact your company admin to manage billing.
+            <div className="p-3 bg-white/70 rounded-xl">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">BOQs This Period</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {summary.boqsUsedThisPeriod}
+                {summary.boqLimit ? (
+                  <span className="text-sm font-normal text-gray-500"> / {summary.boqLimit}</span>
+                ) : (
+                  <span className="text-sm font-normal text-gray-500"> (unlimited)</span>
+                )}
               </p>
+            </div>
+
+            {summary.seatModel === 'per_seat' && (
+              <div className="p-3 bg-white/70 rounded-xl">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Seats</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {summary.activeMemberCount}
+                  {summary.maxActiveMembers && (
+                    <span className="text-sm font-normal text-gray-500"> / {summary.maxActiveMembers}</span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-500">Active members</p>
+              </div>
             )}
+
+            {summary.currentPeriodEnd && (
+              <div className="p-3 bg-white/70 rounded-xl">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  {summary.cancelAtPeriodEnd ? 'Cancels On' : 'Renews On'}
+                </p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {format(new Date(summary.currentPeriodEnd), 'MMM d, yyyy')}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Access Source Info */}
+          {hasGrant && summary.activeGrant && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-xl border border-blue-200">
+              <Sparkles className="w-5 h-5" />
+              <span>
+                Access via {summary.activeGrant.grantType === 'admin_grant' ? 'Admin Grant' : 'Trial'}
+                {summary.activeGrant.endsAt && (
+                  <> (expires {format(new Date(summary.activeGrant.endsAt), 'MMM d, yyyy')})</>                )}
+                {summary.activeGrant.notes && <span className="text-blue-600"> — {summary.activeGrant.notes}</span>}
+              </span>
+            </div>
+          )}
+
+          {/* Cancel Warning */}
+          {summary.cancelAtPeriodEnd && (
+            <div className="flex items-center justify-between p-4 bg-amber-50 text-amber-800 rounded-xl border border-amber-200">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                <span>
+                  Subscription cancels on {format(new Date(summary.currentPeriodEnd!), 'MMMM d, yyyy')}.
+                  You\'ll retain access until then.
+                </span>
+              </div>
+              <Button
+                onClick={handleResumeSubscription}
+                disabled={resumeLoading}
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                {resumeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+                Resume Auto-Renew
+              </Button>
+            </div>
+          )}
+
+          {/* Auto-renew ON indicator (only show when not canceling and has Stripe subscription) */}
+          {hasStripeSubscription && !summary.cancelAtPeriodEnd && summary.status === 'active' && (
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200">
+              <CheckCircle2 className="w-5 h-5" />
+              <span>Auto-renew is <strong>ON</strong></span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 pt-2">
+            {hasStripeSubscription && (
+              <Button
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                Manage Payment Methods
+              </Button>
+            )}
+
+            {hasStripeSubscription && !summary.cancelAtPeriodEnd && (
+              <Button
+                onClick={() => setShowCancelDialog(true)}
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancel Subscription
+              </Button>
+            )}
+
+            <Link href="/pricing">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                {isOnFreePlan ? 'Upgrade Plan' : 'Change Plan'}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoices Card */}
+      {summary.invoices.length > 0 && (
+        <Card className="shadow-md border-0">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-lg flex items-center justify-center">
+                <Receipt className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Payment History</CardTitle>
+                <CardDescription>Your past invoices and payments</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-gray-100">
+              {summary.invoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Receipt className="w-5 h-5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {invoice.number || invoice.stripeInvoiceId.slice(-8).toUpperCase()}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {invoice.paidAt
+                          ? format(new Date(invoice.paidAt), 'MMM d, yyyy')
+                          : 'Pending'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">
+                        {formatCurrency(invoice.amountPaid, invoice.currency)}
+                      </p>
+                      <Badge
+                        variant={invoice.status === 'paid' ? 'default' : 'secondary'}
+                        className={invoice.status === 'paid' ? 'bg-emerald-500' : ''}
+                      >
+                        {invoice.status}
+                      </Badge>
+                    </div>
+                    {invoice.pdfUrl && (
+                      <a
+                        href={invoice.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Download Invoice PDF"
+                      >
+                        <Download className="w-5 h-5 text-gray-500" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* No subscription - prompt to upgrade */}
+      {!hasStripeSubscription && !hasGrant && (
+        <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50">
+          <CardContent className="py-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-full flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Unlock More Features</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Upgrade your plan to create more BOQs, add custom branding, and access premium features.
+            </p>
+            <Link href="/pricing">
+              <Button className="bg-gradient-to-r from-purple-500 to-lavender-500 hover:from-purple-600 hover:to-lavender-600">
+                View Plans
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Your subscription will be canceled at the end of your current billing period
+                {summary.currentPeriodEnd && (
+                  <> on <strong>{format(new Date(summary.currentPeriodEnd), 'MMMM d, yyyy')}</strong></>                )}.
+              </p>
+              <p>
+                You\'ll retain full access to all features until then. After that, your account will be
+                downgraded to the Free plan.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelLoading}>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSubscription}
+              disabled={cancelLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {cancelLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Cancel at Period End
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

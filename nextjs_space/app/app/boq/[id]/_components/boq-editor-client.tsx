@@ -231,7 +231,7 @@ function SortableItemRow({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
+                        className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
                         onClick={(e) => {
                           e.preventDefault();
                           saveInlineEdit(item.id);
@@ -245,7 +245,7 @@ function SortableItemRow({
                 </div>
               ) : (
                 <div
-                  className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-cyan-400 transition-colors"
+                  className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-purple-400 transition-colors"
                   onClick={() =>
                     handleNoteClick(
                       item,
@@ -271,7 +271,7 @@ function SortableItemRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
+                className="h-8 w-8 text-gray-400 hover:text-purple-600 flex-shrink-0"
                 onClick={() => openEditItemDialog(item, categoryId, categoryName, null)}
                 title="Edit note with formatting (B/I/U)"
               >
@@ -349,7 +349,7 @@ function SortableItemRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
+            className="h-8 w-8 text-gray-400 hover:text-purple-600 flex-shrink-0"
             onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
             title="Expand to edit"
           >
@@ -411,7 +411,7 @@ function SortableItemRow({
         />
       </div>
       {/* Amount */}
-      <div className="py-2 px-2 text-right font-semibold text-cyan-600 text-sm whitespace-nowrap" role="cell">{formatCurrency(amount)}</div>
+      <div className="py-2 px-2 text-right font-semibold text-purple-600 text-sm whitespace-nowrap" role="cell">{formatCurrency(amount)}</div>
       {/* Delete button */}
       <div className="py-2 px-2 flex items-center justify-center" role="cell">
         <Button
@@ -535,7 +535,7 @@ function SortableCategory({
     >
       <Card
         className={`shadow-md border-0 overflow-hidden transition-shadow ${
-          isDragging ? 'shadow-xl ring-2 ring-cyan-400' : ''
+          isDragging ? 'shadow-xl ring-2 ring-purple-400' : ''
         }`}
       >
         <Collapsible open={isExpanded} onOpenChange={() => toggleCategory(category?.id)}>
@@ -569,7 +569,7 @@ function SortableCategory({
                   </span>
                 </div>
                 <div className="flex items-center space-x-2 flex-shrink-0">
-                  <span className="text-lg font-semibold text-cyan-600">
+                  <span className="text-lg font-semibold text-purple-600">
                     {formatCurrency(getCategorySubtotal(category))}
                   </span>
                   <Button
@@ -606,7 +606,7 @@ function SortableCategory({
                   <div 
                     className="text-sm flex flex-col" 
                     role="table"
-                    style={{ minWidth: '900px' }}
+                    style={{ minWidth: '1000px' }}
                   >
                     {/* Header row */}
                     <div 
@@ -620,56 +620,56 @@ function SortableCategory({
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         #
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'number')}
                         />
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Description
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'description')}
                         />
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unit')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Cost
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Markup %
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'markup')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Price
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Qty
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'qty')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Amount
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'amount')}
                         />
                       </div>
@@ -716,7 +716,7 @@ function SortableCategory({
                 <div className="flex space-x-2">
                   <Button
                     variant="ghost"
-                    className={`flex-1 ${isAtItemLimit ? 'text-gray-400 cursor-not-allowed' : 'text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50'}`}
+                    className={`flex-1 ${isAtItemLimit ? 'text-gray-400 cursor-not-allowed' : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'}`}
                     onClick={() => handleAddItem(category?.id, false)}
                     disabled={isAtItemLimit}
                   >
@@ -791,16 +791,16 @@ export function BoqEditorClient({
 
   // Column resize state - widths match the previous table layout
   const DEFAULT_COLUMN_WIDTHS = {
-    grip: 32,
-    number: 52,
-    description: 280, // wider for description content, also uses minmax in grid
-    unit: 80,
-    unitCost: 100,
-    markup: 80,
-    unitPrice: 100,
-    qty: 70,
-    amount: 130,
-    actions: 44,
+    grip: 36,
+    number: 56,
+    description: 320, // wider for description content, also uses minmax in grid
+    unit: 90,
+    unitCost: 110,
+    markup: 90,
+    unitPrice: 110,
+    qty: 80,
+    amount: 140,
+    actions: 48,
   };
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
@@ -1864,7 +1864,7 @@ export function BoqEditorClient({
                         </SelectItem>
                       ))}
                       <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-cyan-600">
+                      <SelectItem value="create_new" className="text-purple-600">
                         <Plus className="w-3 h-3 mr-1 inline" />
                         Create new template...
                       </SelectItem>
@@ -1908,7 +1908,7 @@ export function BoqEditorClient({
                         </SelectItem>
                       ))}
                       <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-cyan-600">
+                      <SelectItem value="create_new" className="text-purple-600">
                         <Plus className="w-3 h-3 mr-1 inline" />
                         Create new theme...
                       </SelectItem>
@@ -1950,7 +1950,7 @@ export function BoqEditorClient({
                         type="date"
                         value={boq?.preparationDate ? new Date(boq.preparationDate).toISOString().split('T')[0] : ''}
                         onChange={(e) => updateBoq({ preparationDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     )}
                   </div>
@@ -1969,11 +1969,11 @@ export function BoqEditorClient({
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Totals & Profit Analysis */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="shadow-md border-0 bg-gradient-to-br from-cyan-50 to-teal-50">
+        <div className="flex-1 overflow-auto p-4 lg:p-6">
+          <div className="space-y-6">
+            {/* Totals & Profit Analysis - constrained width for readability */}
+            <div className="max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">Totals</CardTitle>
                 </CardHeader>
@@ -2048,9 +2048,9 @@ export function BoqEditorClient({
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center py-2 border-t-2 border-cyan-200">
+                  <div className="flex justify-between items-center py-2 border-t-2 border-purple-200">
                     <span className="text-lg font-semibold text-gray-900">Final Total</span>
-                    <span className="text-2xl font-bold text-cyan-600">
+                    <span className="text-2xl font-bold text-purple-600">
                       {formatCurrency(totals.finalTotal)}
                     </span>
                   </div>
@@ -2094,13 +2094,13 @@ export function BoqEditorClient({
               </Card>
             </div>
 
-            {/* Categories & Items */}
-            <div className="space-y-4">
+            {/* Categories & Items - full width for desktop editing */}
+            <div className="space-y-4 w-full">
               {/* Column width reset */}
               <div className="flex justify-end">
                 <button
                   onClick={resetColumnWidths}
-                  className="text-xs text-gray-500 hover:text-cyan-600 transition-colors"
+                  className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
                   title="Reset column widths to default"
                 >
                   Reset column widths
@@ -2389,7 +2389,7 @@ export function BoqEditorClient({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Amount:</span>
-                      <span className="font-semibold text-cyan-600">
+                      <span className="font-semibold text-purple-600">
                         {formatCurrency(
                           (editItemValues.unitCost ?? 0) *
                             (1 + (editItemValues.markupPct ?? 0) / 100) *

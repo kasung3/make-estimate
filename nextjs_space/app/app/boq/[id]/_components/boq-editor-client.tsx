@@ -620,58 +620,74 @@ function SortableCategory({
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         #
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'number')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Description
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'description')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'unit')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Cost
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Markup %
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'markup')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Price
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Qty
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'qty')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Amount
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-300 transition-colors"
+                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
                           onMouseDown={(e) => handleResizeStart(e, 'amount')}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        </div>
                       </div>
                       <div className="border-b border-gray-200" role="columnheader"></div>
                     </div>
@@ -802,6 +818,19 @@ export function BoqEditorClient({
     amount: 140,
     actions: 48,
   };
+
+  // Per-column min/max width constraints for better UX
+  const COLUMN_WIDTH_CONSTRAINTS: Record<string, { min: number; max: number }> = {
+    number: { min: 40, max: 80 },
+    description: { min: 150, max: 600 },
+    unit: { min: 60, max: 150 },
+    unitCost: { min: 80, max: 180 },
+    markup: { min: 60, max: 120 },
+    unitPrice: { min: 80, max: 180 },
+    qty: { min: 50, max: 120 },
+    amount: { min: 100, max: 200 },
+  };
+
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartXRef = useRef<number>(0);
@@ -1044,16 +1073,34 @@ export function BoqEditorClient({
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
 
-  // Load column widths from localStorage
+  // Load column widths from localStorage with validation
   useEffect(() => {
     try {
       const savedWidths = localStorage.getItem('boq_column_widths');
       if (savedWidths) {
         const parsed = JSON.parse(savedWidths);
-        setColumnWidths((prev) => ({ ...prev, ...parsed }));
+        // Validate and constrain each saved width
+        const validatedWidths: Record<string, number> = {};
+        for (const key of Object.keys(DEFAULT_COLUMN_WIDTHS)) {
+          if (typeof parsed[key] === 'number' && !isNaN(parsed[key])) {
+            const constraints = COLUMN_WIDTH_CONSTRAINTS[key];
+            if (constraints) {
+              // Clamp to valid range
+              validatedWidths[key] = Math.max(constraints.min, Math.min(constraints.max, parsed[key]));
+            } else {
+              validatedWidths[key] = parsed[key];
+            }
+          }
+        }
+        if (Object.keys(validatedWidths).length > 0) {
+          setColumnWidths((prev) => ({ ...prev, ...validatedWidths }));
+        }
       }
     } catch (e) {
-      // Ignore
+      // If localStorage is corrupted, clear it and use defaults
+      try {
+        localStorage.removeItem('boq_column_widths');
+      } catch (_) {}
     }
   }, []);
 
@@ -1081,7 +1128,16 @@ export function BoqEditorClient({
     (e: MouseEvent) => {
       if (!resizingColumn) return;
       const diff = e.clientX - resizeStartXRef.current;
-      const newWidth = Math.max(40, resizeStartWidthRef.current + diff);
+      const constraints = COLUMN_WIDTH_CONSTRAINTS[resizingColumn];
+      let newWidth = resizeStartWidthRef.current + diff;
+      
+      // Apply per-column min/max constraints
+      if (constraints) {
+        newWidth = Math.max(constraints.min, Math.min(constraints.max, newWidth));
+      } else {
+        newWidth = Math.max(40, newWidth);
+      }
+      
       setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
     },
     [resizingColumn]
@@ -1100,15 +1156,19 @@ export function BoqEditorClient({
       document.addEventListener('mouseup', handleResizeEnd);
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      // Add a class to the body to indicate resizing state for CSS targeting
+      document.body.classList.add('resizing-column');
     } else {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      document.body.classList.remove('resizing-column');
     }
     return () => {
       document.removeEventListener('mousemove', handleResizeMove);
       document.removeEventListener('mouseup', handleResizeEnd);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      document.body.classList.remove('resizing-column');
     };
   }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 

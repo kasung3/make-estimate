@@ -430,6 +430,125 @@ function SortableItemRow({
 // =============================================================================
 // SORTABLE CATEGORY COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
+// =============================================================================
+// MOBILE ITEM CARD COMPONENT
+// =============================================================================
+interface MobileItemCardProps {
+  item: BoqItemType;
+  itemNumber: string | null;
+  categoryId: string;
+  categoryName: string;
+  getItemValue: (itemId: string, field: keyof BoqItemType, originalValue: any) => any;
+  handleDeleteItem: (itemId: string) => void;
+  openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
+  formatNumber: (num: number, decimals?: number) => string;
+  formatCurrency: (amount: number) => string;
+  sanitizeHtml: (html: string) => string;
+}
+
+function MobileItemCard({
+  item,
+  itemNumber,
+  categoryId,
+  categoryName,
+  getItemValue,
+  handleDeleteItem,
+  openEditItemDialog,
+  formatNumber,
+  formatCurrency,
+  sanitizeHtml,
+}: MobileItemCardProps) {
+  if (item?.isNote) {
+    // Note card for mobile
+    const noteContent = getItemValue(item.id, 'noteContent', item?.noteContent) ?? '';
+    return (
+      <div 
+        className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2"
+        onClick={() => openEditItemDialog(item, categoryId, categoryName, null)}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <StickyNote className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              {noteContent ? (
+                <div 
+                  className="text-sm text-gray-700 line-clamp-2 prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(noteContent) }}
+                />
+              ) : (
+                <span className="text-sm text-gray-400 italic">Empty note - tap to edit</span>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:text-red-500 flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteItem(item.id);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular item card for mobile
+  const unitCost = getItemValue(item.id, 'unitCost', item?.unitCost) ?? 0;
+  const markupPct = getItemValue(item.id, 'markupPct', item?.markupPct) ?? 0;
+  const quantity = getItemValue(item.id, 'quantity', item?.quantity) ?? 0;
+  const unitPrice = unitCost * (1 + markupPct / 100);
+  const amount = unitPrice * quantity;
+  const description = getItemValue(item.id, 'description', item?.description) ?? '';
+  const unit = getItemValue(item.id, 'unit', item?.unit) ?? '';
+
+  return (
+    <div 
+      className="bg-white border border-gray-200 rounded-lg p-3 mb-2 shadow-sm active:bg-gray-50 transition-colors"
+      onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0">
+            {itemNumber}
+          </span>
+          <p className="text-sm font-medium text-gray-900 line-clamp-2 flex-1">
+            {description || <span className="text-gray-400 italic">No description</span>}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-gray-400 hover:text-red-500 flex-shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteItem(item.id);
+          }}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <span className="text-gray-500 block">Qty</span>
+          <span className="font-medium">{formatNumber(quantity)} {unit}</span>
+        </div>
+        <div>
+          <span className="text-gray-500 block">Unit Price</span>
+          <span className="font-medium">{formatNumber(unitPrice)}</span>
+        </div>
+        <div className="text-right">
+          <span className="text-gray-500 block">Amount</span>
+          <span className="font-semibold text-purple-600">{formatCurrency(amount)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SortableCategoryProps {
   category: CategoryWithItems;
   categoryIndex: number;
@@ -594,134 +713,164 @@ function SortableCategory({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleItemDragStart}
-                onDragEnd={(e) => handleItemDragEnd(e, category.id)}
-                modifiers={[restrictToVerticalAxis]}
-              >
-                <div className="overflow-x-auto">
-                  {/* Grid-based table using divs for proper CSS transform support */}
-                  <div 
-                    className="text-sm flex flex-col" 
-                    role="table"
-                    style={{ minWidth: '1000px' }}
-                  >
-                    {/* Header row */}
+              {/* Desktop View - Grid Table */}
+              <div className="hidden md:block">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleItemDragStart}
+                  onDragEnd={(e) => handleItemDragEnd(e, category.id)}
+                  modifiers={[restrictToVerticalAxis]}
+                >
+                  <div className="overflow-x-auto">
+                    {/* Grid-based table using divs for proper CSS transform support */}
                     <div 
-                      role="row"
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: getGridTemplateColumns(columnWidths),
-                      }}
+                      className="text-sm flex flex-col" 
+                      role="table"
+                      style={{ minWidth: '1000px' }}
                     >
-                      <div className="py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
-                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        #
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'number')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                      {/* Header row */}
+                      <div 
+                        role="row"
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: getGridTemplateColumns(columnWidths),
+                        }}
+                      >
+                        <div className="py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
+                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          #
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'number')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Description
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'description')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Description
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'description')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Unit
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'unit')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Unit
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'unit')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Unit Cost
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Unit Cost
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Markup %
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'markup')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Markup %
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'markup')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Unit Price
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Unit Price
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Qty
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'qty')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Qty
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'qty')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                        Amount
-                        <div
-                          className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'amount')}
-                        >
-                          <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                          Amount
+                          <div
+                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
+                            onMouseDown={(e) => handleResizeStart(e, 'amount')}
+                          >
+                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
+                          </div>
                         </div>
+                        <div className="border-b border-gray-200" role="columnheader"></div>
                       </div>
-                      <div className="border-b border-gray-200" role="columnheader"></div>
+                      {/* Sortable items */}
+                      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                        {(category?.items ?? []).map((item, itemIndex) => (
+                          <SortableItemRow
+                            key={item?.id}
+                            item={item}
+                            itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
+                            categoryId={category.id}
+                            categoryName={category.name ?? ''}
+                            columnWidths={columnWidths}
+                            getItemValue={getItemValue}
+                            handleUpdateItem={handleUpdateItem}
+                            handleDeleteItem={handleDeleteItem}
+                            openEditItemDialog={openEditItemDialog}
+                            handleNoteClick={handleNoteClick}
+                            inlineEditingNoteId={inlineEditingNoteId}
+                            inlineEditText={inlineEditText}
+                            setInlineEditText={setInlineEditText}
+                            inlineTextareaRef={inlineTextareaRef}
+                            handleInlineNoteKeyDown={handleInlineNoteKeyDown}
+                            saveInlineEdit={saveInlineEdit}
+                            cancelInlineEdit={cancelInlineEdit}
+                            sanitizeHtml={sanitizeHtml}
+                            formatNumber={formatNumber}
+                            formatCurrency={formatCurrency}
+                          />
+                        ))}
+                      </SortableContext>
                     </div>
-                    {/* Sortable items */}
-                    <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                      {(category?.items ?? []).map((item, itemIndex) => (
-                        <SortableItemRow
-                          key={item?.id}
-                          item={item}
-                          itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
-                          categoryId={category.id}
-                          categoryName={category.name ?? ''}
-                          columnWidths={columnWidths}
-                          getItemValue={getItemValue}
-                          handleUpdateItem={handleUpdateItem}
-                          handleDeleteItem={handleDeleteItem}
-                          openEditItemDialog={openEditItemDialog}
-                          handleNoteClick={handleNoteClick}
-                          inlineEditingNoteId={inlineEditingNoteId}
-                          inlineEditText={inlineEditText}
-                          setInlineEditText={setInlineEditText}
-                          inlineTextareaRef={inlineTextareaRef}
-                          handleInlineNoteKeyDown={handleInlineNoteKeyDown}
-                          saveInlineEdit={saveInlineEdit}
-                          cancelInlineEdit={cancelInlineEdit}
-                          sanitizeHtml={sanitizeHtml}
-                          formatNumber={formatNumber}
-                          formatCurrency={formatCurrency}
-                        />
-                      ))}
-                    </SortableContext>
                   </div>
-                </div>
-              </DndContext>
+                </DndContext>
+              </div>
+
+              {/* Mobile View - Stacked Cards */}
+              <div className="block md:hidden">
+                {(category?.items ?? []).length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    No items yet. Tap "Add Item" to get started.
+                  </div>
+                ) : (
+                  <div className="space-y-0">
+                    {(category?.items ?? []).map((item, itemIndex) => (
+                      <MobileItemCard
+                        key={item?.id}
+                        item={item}
+                        itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
+                        categoryId={category.id}
+                        categoryName={category.name ?? ''}
+                        getItemValue={getItemValue}
+                        handleDeleteItem={handleDeleteItem}
+                        openEditItemDialog={openEditItemDialog}
+                        formatNumber={formatNumber}
+                        formatCurrency={formatCurrency}
+                        sanitizeHtml={sanitizeHtml}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex flex-col space-y-2 mt-3">
                 {isAtItemLimit && (
                   <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
@@ -786,6 +935,9 @@ export function BoqEditorClient({
   // Item limit tracking (for Free plan)
   const [itemLimit, setItemLimit] = useState<number | null>(null);
   const [planKey, setPlanKey] = useState<string | null>(null);
+  
+  // Mobile UI state
+  const [mobileTotalsExpanded, setMobileTotalsExpanded] = useState(false);
 
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
@@ -1834,45 +1986,99 @@ export function BoqEditorClient({
     <AppLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
+        <div className="bg-white border-b border-gray-200 p-3 md:p-4">
+          {/* Mobile Header */}
+          <div className="flex md:hidden items-center justify-between gap-2 mb-2">
             <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="flex-shrink-0">
+              <Button variant="ghost" size="icon" className="flex-shrink-0 h-9 w-9">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <div className="flex-1 min-w-0 max-w-2xl">
+            <div className="flex-1 min-w-0">
               <Input
                 value={localProjectName}
                 onChange={(e) => handleProjectNameChange(e.target.value)}
-                className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
+                className="text-base font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
                 placeholder="Project Name"
               />
-              <div className="flex items-center space-x-2 mt-1">
-                <Select
-                  value={boq?.customerId ?? 'none'}
-                  onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
-                >
-                  <SelectTrigger className="h-8 text-sm w-[200px]">
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No customer</SelectItem>
-                    {(customers ?? []).map((customer) => (
-                      <SelectItem key={customer?.id} value={customer?.id ?? ''}>
-                        {customer?.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
+            </div>
+            <div className="flex items-center text-xs text-gray-500 flex-shrink-0">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : lastSaved ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : null}
             </div>
           </div>
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            <div className="flex items-center text-sm text-gray-500">
+          <div className="flex md:hidden items-center gap-2 mb-2">
+            <Select
+              value={boq?.customerId ?? 'none'}
+              onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
+            >
+              <SelectTrigger className="h-8 text-sm flex-1">
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No customer</SelectItem>
+                {(customers ?? []).map((customer) => (
+                  <SelectItem key={customer?.id} value={customer?.id ?? ''}>
+                    {customer?.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)} className="flex-shrink-0">
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={exportingPdf} className="flex-shrink-0">
+              {exportingPdf ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <FileDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="flex items-center space-x-4 flex-1 min-w-0">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              </Link>
+              <div className="flex-1 min-w-0 max-w-2xl">
+                <Input
+                  value={localProjectName}
+                  onChange={(e) => handleProjectNameChange(e.target.value)}
+                  className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
+                  placeholder="Project Name"
+                />
+                <div className="flex items-center space-x-2 mt-1">
+                  <Select
+                    value={boq?.customerId ?? 'none'}
+                    onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
+                  >
+                    <SelectTrigger className="h-8 text-sm w-[200px]">
+                      <SelectValue placeholder="Select customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No customer</SelectItem>
+                      {(customers ?? []).map((customer) => (
+                        <SelectItem key={customer?.id} value={customer?.id ?? ''}>
+                          {customer?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 flex-shrink-0">
+              <div className="flex items-center text-sm text-gray-500">
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-1" />
@@ -2017,22 +2223,78 @@ export function BoqEditorClient({
                 </div>
               </div>
             </TooltipProvider>
-            <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
-              {exportingPdf ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <FileDown className="w-4 h-4 mr-2" />
-              )}
-              Export PDF
-            </Button>
+              <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
+                {exportingPdf ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <FileDown className="w-4 h-4 mr-2" />
+                )}
+                Export PDF
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-6">
-          <div className="space-y-6">
-            {/* Totals & Profit Analysis - constrained width for readability */}
-            <div className="max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex-1 overflow-auto p-3 md:p-4 lg:p-6">
+          <div className="space-y-4 md:space-y-6">
+            {/* Mobile Totals Summary - Collapsible */}
+            <div className="block md:hidden">
+              <Card 
+                className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50 cursor-pointer"
+                onClick={() => setMobileTotalsExpanded(!mobileTotalsExpanded)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-600">Final Total</span>
+                      <span className="text-xl font-bold text-purple-600">
+                        {formatCurrency(totals.finalTotal)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <span className="text-xs">{mobileTotalsExpanded ? 'Hide details' : 'Show details'}</span>
+                      {mobileTotalsExpanded ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </div>
+                  </div>
+                  {mobileTotalsExpanded && (
+                    <div className="mt-4 pt-3 border-t border-purple-200 space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
+                      </div>
+                      {boq?.discountEnabled && totals.discount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Discount</span>
+                          <span className="font-medium text-red-500">-{formatCurrency(totals.discount)}</span>
+                        </div>
+                      )}
+                      {boq?.vatEnabled && totals.vatAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">VAT ({boq?.vatPercent}%)</span>
+                          <span className="font-medium">+{formatCurrency(totals.vatAmount)}</span>
+                        </div>
+                      )}
+                      <div className="pt-2 border-t border-purple-100">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Profit</span>
+                          <span className={`font-medium ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {formatCurrency(totals.profit)} ({formatNumber(totals.grossProfitPct)}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Desktop Totals & Profit Analysis - Full Cards */}
+            <div className="hidden md:grid max-w-5xl grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">Totals</CardTitle>
@@ -2156,8 +2418,8 @@ export function BoqEditorClient({
 
             {/* Categories & Items - full width for desktop editing */}
             <div className="space-y-4 w-full">
-              {/* Column width reset */}
-              <div className="flex justify-end">
+              {/* Column width reset - Desktop only */}
+              <div className="hidden md:flex justify-end">
                 <button
                   onClick={resetColumnWidths}
                   className="text-xs text-gray-500 hover:text-purple-600 transition-colors"

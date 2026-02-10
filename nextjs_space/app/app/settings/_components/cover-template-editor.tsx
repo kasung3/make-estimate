@@ -61,6 +61,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface CoverTemplateEditorProps {
   companyName: string;
+  selectedTemplateId?: string;
 }
 
 const ELEMENT_TYPE_LABELS: Record<CoverElement['type'], string> = {
@@ -657,7 +658,7 @@ function CoverPreview({
   );
 }
 
-export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
+export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTemplateEditorProps) {
   const [templates, setTemplates] = useState<PdfCoverTemplateType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -666,6 +667,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
   const [logoUploadAllowed, setLogoUploadAllowed] = useState(true);
+  const [autoOpened, setAutoOpened] = useState(false);
   // Preview is always shown (no toggle needed)
 
   const sensors = useSensors(
@@ -704,6 +706,20 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
     fetchTemplates();
     fetchBillingStatus();
   }, [fetchTemplates, fetchBillingStatus]);
+
+  // Auto-open editor for specific template when used from Templates page
+  useEffect(() => {
+    if (selectedTemplateId && templates.length > 0 && !autoOpened) {
+      const targetTemplate = templates.find(t => t.id === selectedTemplateId);
+      if (targetTemplate) {
+        setEditingTemplate(targetTemplate);
+        setEditingName(targetTemplate.name);
+        setEditingConfig(targetTemplate.configJson as CoverPageConfig);
+        setShowEditor(true);
+        setAutoOpened(true);
+      }
+    }
+  }, [selectedTemplateId, templates, autoOpened]);
 
   const handleCreateTemplate = () => {
     setEditingTemplate(null);

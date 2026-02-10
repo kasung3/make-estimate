@@ -25,6 +25,7 @@ import { PdfThemeConfig, PdfThemeType } from '@/lib/types';
 
 interface PdfThemeEditorProps {
   companyName: string;
+  selectedThemeId?: string;
 }
 
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
@@ -262,7 +263,7 @@ function ThemePreview({ config }: { config: PdfThemeConfig }) {
   );
 }
 
-export function PdfThemeEditor({ companyName }: PdfThemeEditorProps) {
+export function PdfThemeEditor({ companyName, selectedThemeId }: PdfThemeEditorProps) {
   const [themes, setThemes] = useState<PdfThemeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -270,6 +271,7 @@ export function PdfThemeEditor({ companyName }: PdfThemeEditorProps) {
   const [editingConfig, setEditingConfig] = useState<PdfThemeConfig | null>(null);
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
+  const [autoOpened, setAutoOpened] = useState(false);
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -288,6 +290,20 @@ export function PdfThemeEditor({ companyName }: PdfThemeEditorProps) {
   useEffect(() => {
     fetchThemes();
   }, [fetchThemes]);
+
+  // Auto-open editor for specific theme when used from Templates page
+  useEffect(() => {
+    if (selectedThemeId && themes.length > 0 && !autoOpened) {
+      const targetTheme = themes.find(t => t.id === selectedThemeId);
+      if (targetTheme) {
+        setEditingTheme(targetTheme);
+        setEditingName(targetTheme.name);
+        setEditingConfig(targetTheme.configJson as PdfThemeConfig);
+        setShowEditor(true);
+        setAutoOpened(true);
+      }
+    }
+  }, [selectedThemeId, themes, autoOpened]);
 
   const handleCreateTheme = () => {
     setEditingTheme(null);

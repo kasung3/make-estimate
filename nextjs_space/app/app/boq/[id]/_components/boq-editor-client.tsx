@@ -938,6 +938,7 @@ export function BoqEditorClient({
   
   // Mobile UI state
   const [mobileTotalsExpanded, setMobileTotalsExpanded] = useState(false);
+  const [showMobileQuickAdd, setShowMobileQuickAdd] = useState(false);
 
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
@@ -2111,7 +2112,7 @@ export function BoqEditorClient({
                     value={boq?.coverTemplateId || 'default'}
                     onValueChange={(value) => {
                       if (value === 'create_new') {
-                        router.push('/app/settings?tab=pdf');
+                        router.push('/app/templates?tab=cover');
                         return;
                       }
                       const newValue = value === 'default' ? null : value;
@@ -2155,7 +2156,7 @@ export function BoqEditorClient({
                     value={boq?.pdfThemeId || 'default'}
                     onValueChange={(value) => {
                       if (value === 'create_new') {
-                        router.push('/app/settings?tab=pdf');
+                        router.push('/app/templates?tab=boq');
                         return;
                       }
                       const newValue = value === 'default' ? null : value;
@@ -2536,10 +2537,10 @@ export function BoqEditorClient({
           </DialogContent>
         </Dialog>
 
-        {/* Edit Item Dialog */}
+        {/* Edit Item Dialog - Mobile optimized */}
         <Dialog open={!!editItemDialog} onOpenChange={(open) => !open && setEditItemDialog(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)] max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>
                 {editItemDialog?.item.isNote
                   ? 'Edit Note'
@@ -2547,7 +2548,7 @@ export function BoqEditorClient({
               </DialogTitle>
               <p className="text-sm text-gray-500">Category: {editItemDialog?.categoryName}</p>
             </DialogHeader>
-            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-4 py-4 overflow-y-auto flex-1">
               {editItemDialog?.item.isNote ? (
                 // Note editing with rich text
                 <div className="space-y-4">
@@ -2723,7 +2724,7 @@ export function BoqEditorClient({
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0 pt-4 border-t mt-auto">
               <Button variant="outline" onClick={() => setEditItemDialog(null)}>
                 Cancel
               </Button>
@@ -2731,6 +2732,54 @@ export function BoqEditorClient({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Mobile Floating Quick Add Button */}
+        <div className="md:hidden fixed bottom-4 right-4 z-50">
+          <div className="flex flex-col items-end gap-2">
+            {showMobileQuickAdd && (
+              <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-200">
+                <Button
+                  className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg rounded-full h-12 px-4"
+                  onClick={() => {
+                    const firstCategory = boq?.categories?.[0];
+                    if (firstCategory) {
+                      handleAddItem(firstCategory.id, true);
+                    }
+                    setShowMobileQuickAdd(false);
+                  }}
+                  disabled={!boq?.categories?.[0]}
+                >
+                  <StickyNote className="w-5 h-5 mr-2" />
+                  Add Note
+                </Button>
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg rounded-full h-12 px-4"
+                  onClick={() => {
+                    const firstCategory = boq?.categories?.[0];
+                    if (firstCategory && !isAtItemLimit) {
+                      handleAddItem(firstCategory.id, false);
+                    }
+                    setShowMobileQuickAdd(false);
+                  }}
+                  disabled={!boq?.categories?.[0] || isAtItemLimit}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Item {itemLimit !== null && `(${currentItemCount}/${itemLimit})`}
+                </Button>
+              </div>
+            )}
+            <Button
+              className="bg-gradient-to-r from-purple-500 to-lavender-500 text-white shadow-xl rounded-full h-14 w-14 p-0"
+              onClick={() => setShowMobileQuickAdd(!showMobileQuickAdd)}
+            >
+              {showMobileQuickAdd ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Plus className="w-6 h-6" />
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

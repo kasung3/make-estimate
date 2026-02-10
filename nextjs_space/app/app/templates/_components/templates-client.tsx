@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,10 +26,15 @@ import {
   AlertTriangle,
   Loader2,
   Crown,
+  ChevronDown,
+  ChevronUp,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BillingStatus } from '@/lib/types';
 import Link from 'next/link';
+import { CoverTemplateEditor } from '../../settings/_components/cover-template-editor';
+import { PdfThemeEditor } from '../../settings/_components/pdf-theme-editor';
 
 interface BoqTemplate {
   id: string;
@@ -59,15 +65,28 @@ export function TemplatesClient({
   billingStatus,
   companyName,
 }: TemplatesClientProps) {
+  const searchParams = useSearchParams();
   const [boqTemplates, setBoqTemplates] = useState(initialBoqTemplates);
   const [coverTemplates, setCoverTemplates] = useState(initialCoverTemplates);
   const [activeTab, setActiveTab] = useState('boq');
+
+  // Handle tab from URL query parameter
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && ['boq', 'cover'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [limitType, setLimitType] = useState<'boq_templates' | 'cover_templates'>('boq_templates');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<{ id: string; type: 'boq' | 'cover'; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [creating, setCreating] = useState(false);
+  
+  // Track which template is being edited inline
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplateType, setEditingTemplateType] = useState<'boq' | 'cover' | null>(null);
 
   const boqTemplatesLimit = billingStatus.boqTemplatesLimit ?? null;
   const coverTemplatesLimit = billingStatus.coverTemplatesLimit ?? null;
@@ -232,6 +251,22 @@ export function TemplatesClient({
     };
   };
 
+  const handleEditClick = (id: string, type: 'boq' | 'cover') => {
+    if (editingTemplateId === id && editingTemplateType === type) {
+      // Close if clicking the same template
+      setEditingTemplateId(null);
+      setEditingTemplateType(null);
+    } else {
+      setEditingTemplateId(id);
+      setEditingTemplateType(type);
+    }
+  };
+
+  const closeEditor = () => {
+    setEditingTemplateId(null);
+    setEditingTemplateType(null);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
@@ -315,53 +350,82 @@ export function TemplatesClient({
                 ) : (
                   <div className="space-y-3">
                     {boqTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
-                            <Palette className="w-5 h-5 text-white" />
+                      <div key={template.id} className="space-y-0">
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
+                            editingTemplateId === template.id && editingTemplateType === 'boq'
+                              ? 'bg-purple-50 border border-purple-200'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
+                              <Palette className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                                {template.name}
+                                {template.isDefault && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Star className="w-3 h-3 mr-1" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </h3>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                              {template.name}
-                              {template.isDefault && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Star className="w-3 h-3 mr-1" />
-                                  Default
-                                </Badge>
+                          <div className="flex items-center gap-2">
+                            {!template.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetDefault(template.id, 'boq')}
+                                className="text-gray-500 hover:text-purple-600"
+                              >
+                                Set Default
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className={`${
+                                editingTemplateId === template.id && editingTemplateType === 'boq'
+                                  ? 'text-purple-600 bg-purple-100'
+                                  : 'text-gray-400 hover:text-gray-600'
+                              }`}
+                              onClick={() => handleEditClick(template.id, 'boq')}
+                            >
+                              {editingTemplateId === template.id && editingTemplateType === 'boq' ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <Pencil className="w-4 h-4" />
                               )}
-                            </h3>
+                            </Button>
+                            {!template.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-red-500"
+                                onClick={() => handleDeleteClick(template.id, 'boq', template.name)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {!template.isDefault && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSetDefault(template.id, 'boq')}
-                              className="text-gray-500 hover:text-purple-600"
-                            >
-                              Set Default
-                            </Button>
-                          )}
-                          <Link href={`/app/settings?tab=pdf`}>
-                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                          {!template.isDefault && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-gray-400 hover:text-red-500"
-                              onClick={() => handleDeleteClick(template.id, 'boq', template.name)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
+                        {/* Inline Editor */}
+                        {editingTemplateId === template.id && editingTemplateType === 'boq' && (
+                          <div className="border border-t-0 border-purple-200 rounded-b-xl p-4 bg-white animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-gray-700">Editing: {template.name}</h4>
+                              <Button variant="ghost" size="sm" onClick={closeEditor}>
+                                <X className="w-4 h-4 mr-1" />
+                                Close
+                              </Button>
+                            </div>
+                            <PdfThemeEditor companyName={companyName} selectedThemeId={template.id} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -432,53 +496,82 @@ export function TemplatesClient({
                 ) : (
                   <div className="space-y-3">
                     {coverTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-white" />
+                      <div key={template.id} className="space-y-0">
+                        <div
+                          className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
+                            editingTemplateId === template.id && editingTemplateType === 'cover'
+                              ? 'bg-purple-50 border border-purple-200'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                                {template.name}
+                                {template.isDefault && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Star className="w-3 h-3 mr-1" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </h3>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                              {template.name}
-                              {template.isDefault && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Star className="w-3 h-3 mr-1" />
-                                  Default
-                                </Badge>
+                          <div className="flex items-center gap-2">
+                            {!template.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetDefault(template.id, 'cover')}
+                                className="text-gray-500 hover:text-purple-600"
+                              >
+                                Set Default
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className={`${
+                                editingTemplateId === template.id && editingTemplateType === 'cover'
+                                  ? 'text-purple-600 bg-purple-100'
+                                  : 'text-gray-400 hover:text-gray-600'
+                              }`}
+                              onClick={() => handleEditClick(template.id, 'cover')}
+                            >
+                              {editingTemplateId === template.id && editingTemplateType === 'cover' ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <Pencil className="w-4 h-4" />
                               )}
-                            </h3>
+                            </Button>
+                            {!template.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-red-500"
+                                onClick={() => handleDeleteClick(template.id, 'cover', template.name)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {!template.isDefault && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSetDefault(template.id, 'cover')}
-                              className="text-gray-500 hover:text-purple-600"
-                            >
-                              Set Default
-                            </Button>
-                          )}
-                          <Link href={`/app/settings?tab=pdf`}>
-                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                          {!template.isDefault && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-gray-400 hover:text-red-500"
-                              onClick={() => handleDeleteClick(template.id, 'cover', template.name)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
+                        {/* Inline Editor */}
+                        {editingTemplateId === template.id && editingTemplateType === 'cover' && (
+                          <div className="border border-t-0 border-purple-200 rounded-b-xl p-4 bg-white animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-gray-700">Editing: {template.name}</h4>
+                              <Button variant="ghost" size="sm" onClick={closeEditor}>
+                                <X className="w-4 h-4 mr-1" />
+                                Close
+                              </Button>
+                            </div>
+                            <CoverTemplateEditor companyName={companyName} selectedTemplateId={template.id} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

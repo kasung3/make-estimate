@@ -137,9 +137,59 @@ interface Company {
   name: string;
   isBlocked: boolean;
   blockReason: string | null;
+  deletedAt: string | null;
   createdAt: string;
-  _count: { memberships: number; boqs: number };
-  billing: { planKey: string | null; status: string | null; accessOverride: string | null } | null;
+  adminEmail: string | null;
+  adminName: string | null;
+  billing: {
+    planKey: string | null;
+    status: string | null;
+    billingInterval: string | null;
+    seatQuantity: number | null;
+    accessOverride: string | null;
+    overridePlan: string | null;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    currentPeriodEnd: string | null;
+  } | null;
+  _count: { memberships: number; boqs: number; pdfThemes: number; pdfCoverTemplates: number };
+}
+
+interface CompanyMember {
+  id: string;
+  email: string;
+  name: string | null;
+  fullName: string | null;
+  phone: string | null;
+  country: string | null;
+  role: string;
+  isActive: boolean;
+  isBlocked: boolean;
+  lastLoginAt: string | null;
+  memberSince: string;
+}
+
+interface CompanyDetailData {
+  company: {
+    id: string;
+    name: string;
+    currencySymbol: string;
+    isBlocked: boolean;
+    blockReason: string | null;
+    deletedAt: string | null;
+    createdAt: string;
+  };
+  billing: any;
+  members: CompanyMember[];
+  grants: any[];
+  usage: {
+    boqsThisPeriod: number;
+    totalBoqs: number;
+    totalCustomers: number;
+    boqTemplates: number;
+    coverTemplates: number;
+    activeMembersCount: number;
+  };
 }
 
 interface BillingPlan {
@@ -209,6 +259,21 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showUserDrawer, setShowUserDrawer] = useState(false);
 
+  // Company management state
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [debouncedCompanyQuery, setDebouncedCompanyQuery] = useState('');
+  const [companyPagination, setCompanyPagination] = useState<Pagination>({ page: 1, limit: 20, totalCount: 0, totalPages: 0 });
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyDetail, setCompanyDetail] = useState<CompanyDetailData | null>(null);
+  const [companyDetailLoading, setCompanyDetailLoading] = useState(false);
+  const [showCompanyDrawer, setShowCompanyDrawer] = useState(false);
+  const [showDeleteCompanyDialog, setShowDeleteCompanyDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingCompany, setDeletingCompany] = useState(false);
+  const [editingCompanyName, setEditingCompanyName] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState('');
+
   // Dialogs
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [blockTarget, setBlockTarget] = useState<{ type: 'user' | 'company'; id: string; name: string; isBlocked: boolean } | null>(null);
@@ -234,13 +299,21 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   });
   const [creating, setCreating] = useState(false);
 
-  // Debounce search
+  // Debounce user search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Debounce company search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCompanyQuery(companySearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [companySearchQuery]);
 
   // Fetch users when filters change
   useEffect(() => {
@@ -253,12 +326,17 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   useEffect(() => {
     if (activeTab === 'coupons') {
       fetchCoupons();
-    } else if (activeTab === 'companies') {
-      fetchCompanies();
     } else if (activeTab === 'plans') {
       fetchPlans();
     }
   }, [activeTab]);
+
+  // Fetch companies when tab/search/pagination changes
+  useEffect(() => {
+    if (activeTab === 'companies') {
+      fetchCompanies();
+    }
+  }, [activeTab, debouncedCompanyQuery, companyPagination.page]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -300,16 +378,94 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   };
 
   const fetchCompanies = async () => {
-    setLoading(true);
+    setCompaniesLoading(true);
     try {
-      const res = await fetch('/api/admin/accounts?type=companies');
+      const params = new URLSearchParams({
+        page: companyPagination.page.toString(),
+        limit: companyPagination.limit.toString(),
+      });
+      if (debouncedCompanyQuery) params.set('query', debouncedCompanyQuery);
+
+      const res = await fetch(`/api/admin/companies?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setCompanies(data.companies || []);
+      setCompanyPagination(data.pagination);
     } catch (err) {
       toast.error('Failed to load companies');
     } finally {
-      setLoading(false);
+      setCompaniesLoading(false);
+    }
+  };
+
+  const fetchCompanyDetail = async (companyId: string) => {
+    setCompanyDetailLoading(true);
+    try {
+      const res = await fetch(`/api/admin/companies/${companyId}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setCompanyDetail(data);
+    } catch (err) {
+      toast.error('Failed to load company details');
+    } finally {
+      setCompanyDetailLoading(false);
+    }
+  };
+
+  const openCompanyDrawer = (company: Company) => {
+    setSelectedCompany(company);
+    setShowCompanyDrawer(true);
+    fetchCompanyDetail(company.id);
+  };
+
+  const closeCompanyDrawer = () => {
+    setShowCompanyDrawer(false);
+    setSelectedCompany(null);
+    setCompanyDetail(null);
+    setEditingCompanyName(false);
+    setNewCompanyName('');
+  };
+
+  const handleUpdateCompanyName = async () => {
+    if (!selectedCompany || !newCompanyName.trim()) return;
+    try {
+      const res = await fetch(`/api/admin/companies/${selectedCompany.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCompanyName.trim() }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      toast.success('Company name updated');
+      setEditingCompanyName(false);
+      fetchCompanies();
+      fetchCompanyDetail(selectedCompany.id);
+    } catch (err) {
+      toast.error('Failed to update company name');
+    }
+  };
+
+  const openDeleteCompanyDialog = (company: Company) => {
+    setSelectedCompany(company);
+    setDeleteConfirmText('');
+    setShowDeleteCompanyDialog(true);
+  };
+
+  const handleDeleteCompany = async () => {
+    if (!selectedCompany || deleteConfirmText !== 'DELETE') return;
+    setDeletingCompany(true);
+    try {
+      const res = await fetch(`/api/admin/companies/${selectedCompany.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      toast.success('Company deleted successfully');
+      setShowDeleteCompanyDialog(false);
+      closeCompanyDrawer();
+      fetchCompanies();
+    } catch (err) {
+      toast.error('Failed to delete company');
+    } finally {
+      setDeletingCompany(false);
     }
   };
 
@@ -506,6 +662,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       if (blockTarget.type === 'user') fetchUsers();
       else fetchCompanies();
       if (selectedUser) fetchUserDetail(selectedUser.id);
+      if (selectedCompany && blockTarget.type === 'company') fetchCompanyDetail(selectedCompany.id);
     } catch (err) {
       toast.error('Failed to update block status');
     }
@@ -575,6 +732,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       fetchUsers();
       fetchCompanies();
       if (selectedUser) fetchUserDetail(selectedUser.id);
+      if (selectedCompany && selectedCompany.id === freeForeverTarget.companyId) {
+        fetchCompanyDetail(selectedCompany.id);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update free access');
     }
@@ -901,70 +1061,118 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
           <TabsContent value="companies">
             <Card>
               <CardHeader>
-                <CardTitle>Companies</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Companies</span>
+                  <div className="text-sm font-normal text-muted-foreground">
+                    {companyPagination.totalCount} total
+                  </div>
+                </CardTitle>
+                <CardDescription>Manage company accounts, billing, and access</CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
+                {/* Search */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by company name or admin email..."
+                      value={companySearchQuery}
+                      onChange={(e) => {
+                        setCompanySearchQuery(e.target.value);
+                        setCompanyPagination(p => ({ ...p, page: 1 }));
+                      }}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                {companiesLoading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : companies.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No companies found</p>
+                  <p className="text-muted-foreground text-center py-8">
+                    {companySearchQuery ? 'No companies match your search' : 'No companies found'}
+                  </p>
                 ) : (
-                  <div className="space-y-3">
-                    {companies.map(company => (
-                      <div
-                        key={company.id}
-                        className={`p-4 rounded-lg border ${company.isBlocked ? 'bg-red-50 border-red-200' : 'bg-white'}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{company.name}</span>
-                              {company.isBlocked && <Badge variant="destructive" className="text-xs">Blocked</Badge>}
-                              {company.billing?.accessOverride && (
-                                <Badge className="text-xs bg-purple-100 text-purple-800">
-                                  <Crown className="w-3 h-3 mr-1" />Admin Grant
-                                </Badge>
-                              )}
-                              {company.billing?.planKey && (
-                                <Badge variant="secondary" className="text-xs capitalize">{company.billing.planKey}</Badge>
+                  <>
+                    <div className="space-y-3">
+                      {companies.map(company => (
+                        <div
+                          key={company.id}
+                          className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${company.isBlocked ? 'bg-red-50 border-red-200 hover:bg-red-100/50' : 'bg-white'} ${company.deletedAt ? 'opacity-60' : ''}`}
+                          onClick={() => openCompanyDrawer(company)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">{company.name}</span>
+                                {company.deletedAt && <Badge variant="destructive" className="text-xs">Deleted</Badge>}
+                                {company.isBlocked && !company.deletedAt && <Badge variant="destructive" className="text-xs">Blocked</Badge>}
+                                {company.billing?.accessOverride && (
+                                  <Badge className="text-xs bg-purple-100 text-purple-800">
+                                    <Crown className="w-3 h-3 mr-1" />Admin Grant
+                                  </Badge>
+                                )}
+                                {company.billing?.planKey && (
+                                  <Badge variant="secondary" className="text-xs capitalize">{company.billing.planKey}</Badge>
+                                )}
+                                {company.billing?.status && company.billing.status !== 'active' && (
+                                  <Badge variant="outline" className="text-xs capitalize">{company.billing.status}</Badge>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                {company.adminEmail && (
+                                  <span><Mail className="inline h-3 w-3 mr-1" />{company.adminEmail}</span>
+                                )}
+                                <span>{company._count.memberships} member{company._count.memberships !== 1 ? 's' : ''}</span>
+                                <span>{company._count.boqs} BOQ{company._count.boqs !== 1 ? 's' : ''}</span>
+                                <span><Calendar className="inline h-3 w-3 mr-1" />{format(new Date(company.createdAt), 'MMM d, yyyy')}</span>
+                              </div>
+                              {company.isBlocked && company.blockReason && (
+                                <div className="text-sm text-red-600 mt-1">Reason: {company.blockReason}</div>
                               )}
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {company._count.memberships} member{company._count.memberships !== 1 ? 's' : ''} •{' '}
-                              {company._count.boqs} BOQ{company._count.boqs !== 1 ? 's' : ''} •{' '}
-                              Created {format(new Date(company.createdAt), 'MMM d, yyyy')}
+                            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openCompanyDrawer(company); }}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
-                            {company.isBlocked && company.blockReason && (
-                              <div className="text-sm text-red-600 mt-1">Reason: {company.blockReason}</div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openFreeForeverDialog(company.id, company.name, !!company.billing?.accessOverride)}
-                            >
-                              <Crown className="h-4 w-4 mr-2" />
-                              {company.billing?.accessOverride ? 'Revoke' : 'Grant Free'}
-                            </Button>
-                            <Button
-                              variant={company.isBlocked ? 'outline' : 'destructive'}
-                              size="sm"
-                              onClick={() => openBlockDialog('company', company.id, company.name, company.isBlocked)}
-                            >
-                              {company.isBlocked ? (
-                                <><ShieldOff className="h-4 w-4 mr-2" /> Unblock</>
-                              ) : (
-                                <><Shield className="h-4 w-4 mr-2" /> Block</>
-                              )}
-                            </Button>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {companyPagination.totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-6">
+                        <div className="text-sm text-muted-foreground">
+                          Showing {(companyPagination.page - 1) * companyPagination.limit + 1} to{' '}
+                          {Math.min(companyPagination.page * companyPagination.limit, companyPagination.totalCount)} of{' '}
+                          {companyPagination.totalCount} companies
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCompanyPagination(p => ({ ...p, page: p.page - 1 }))}
+                            disabled={companyPagination.page <= 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-sm">Page {companyPagination.page} of {companyPagination.totalPages}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCompanyPagination(p => ({ ...p, page: p.page + 1 }))}
+                            disabled={companyPagination.page >= companyPagination.totalPages}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1568,6 +1776,300 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
             ) : null}
           </SheetContent>
         </Sheet>
+
+        {/* Company Detail Drawer */}
+        <Sheet open={showCompanyDrawer} onOpenChange={setShowCompanyDrawer}>
+          <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Company Details</SheetTitle>
+              <SheetDescription>{selectedCompany?.name}</SheetDescription>
+            </SheetHeader>
+
+            {companyDetailLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : companyDetail ? (
+              <div className="mt-6 space-y-6">
+                {/* Company Info Section */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4" /> Company Info</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="col-span-2 flex items-center gap-2">
+                      <span className="text-muted-foreground">Name:</span>
+                      {editingCompanyName ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={newCompanyName}
+                            onChange={(e) => setNewCompanyName(e.target.value)}
+                            className="h-8"
+                          />
+                          <Button size="sm" onClick={handleUpdateCompanyName}><Check className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingCompanyName(false)}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium">{companyDetail.company.name}</span>
+                          <Button size="sm" variant="ghost" onClick={() => { setNewCompanyName(companyDetail.company.name); setEditingCompanyName(true); }}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <div><span className="text-muted-foreground">Created:</span> {format(new Date(companyDetail.company.createdAt), 'MMM d, yyyy HH:mm')}</div>
+                    <div><span className="text-muted-foreground">Currency:</span> {companyDetail.company.currencySymbol}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Status:</span>
+                      {companyDetail.company.deletedAt ? (
+                        <Badge variant="destructive">Deleted</Badge>
+                      ) : companyDetail.company.isBlocked ? (
+                        <Badge variant="destructive">Blocked</Badge>
+                      ) : (
+                        <Badge variant="outline">Active</Badge>
+                      )}
+                    </div>
+                  </div>
+                  {companyDetail.company.blockReason && (
+                    <p className="text-sm text-red-600">Block Reason: {companyDetail.company.blockReason}</p>
+                  )}
+                </div>
+
+                {/* Billing Section */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2"><CreditCard className="h-4 w-4" /> Billing</h3>
+                  {companyDetail.billing ? (
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Plan:</span>
+                        {companyDetail.billing.accessOverride ? (
+                          <Badge className="bg-purple-100 text-purple-800"><Crown className="w-3 h-3 mr-1" />Admin Grant ({companyDetail.billing.overridePlan || 'business'})</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="capitalize">{companyDetail.billing.planKey || 'free'}</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Status:</span>
+                        {getStatusBadge(companyDetail.billing.status)}
+                      </div>
+                      <div><span className="text-muted-foreground">Interval:</span> {companyDetail.billing.billingInterval || '-'}</div>
+                      <div><span className="text-muted-foreground">Seats:</span> {companyDetail.billing.seatQuantity || 1}</div>
+                      {companyDetail.billing.stripeCustomerId && (
+                        <div className="col-span-2"><span className="text-muted-foreground">Stripe Customer:</span> <code className="text-xs bg-muted px-1 rounded">{companyDetail.billing.stripeCustomerId}</code></div>
+                      )}
+                      {companyDetail.billing.currentPeriodEnd && (
+                        <div><span className="text-muted-foreground">Period Ends:</span> {format(new Date(companyDetail.billing.currentPeriodEnd), 'MMM d, yyyy')}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No billing record</p>
+                  )}
+                </div>
+
+                {/* Usage Stats Section */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2"><Receipt className="h-4 w-4" /> Usage</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.boqsThisPeriod}</div>
+                      <div className="text-xs text-muted-foreground">BOQs this period</div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.totalBoqs}</div>
+                      <div className="text-xs text-muted-foreground">Total BOQs</div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.totalCustomers}</div>
+                      <div className="text-xs text-muted-foreground">Customers</div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.boqTemplates}</div>
+                      <div className="text-xs text-muted-foreground">BOQ Templates</div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.coverTemplates}</div>
+                      <div className="text-xs text-muted-foreground">Cover Templates</div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold">{companyDetail.usage.activeMembersCount}</div>
+                      <div className="text-xs text-muted-foreground">Active Members</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Members Section */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2"><Users className="h-4 w-4" /> Members ({companyDetail.members.length})</h3>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {companyDetail.members.map((member) => (
+                      <div
+                        key={member.id}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${member.isBlocked ? 'bg-red-50 border-red-200' : 'bg-white'}`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{member.fullName || member.email}</span>
+                            <Badge variant={member.role === 'ADMIN' ? 'default' : 'secondary'} className="text-xs">{member.role}</Badge>
+                            {!member.isActive && <Badge variant="outline" className="text-xs">Inactive</Badge>}
+                            {member.isBlocked && <Badge variant="destructive" className="text-xs">Blocked</Badge>}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                            <span>{member.email}</span>
+                            {member.country && <span><Globe className="inline h-3 w-3 mr-1" />{member.country}</span>}
+                            {member.phone && <span><Phone className="inline h-3 w-3 mr-1" />{member.phone}</span>}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const user = users.find(u => u.id === member.id);
+                            if (user) {
+                              closeCompanyDrawer();
+                              openUserDrawer(user);
+                            } else {
+                              // Fetch user and open drawer
+                              toast.error('User not in current view. Search for them in Users tab.');
+                            }
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Grants Section */}
+                {companyDetail.grants.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2"><Crown className="h-4 w-4" /> Access Grants</h3>
+                    <div className="space-y-2">
+                      {companyDetail.grants.map((grant: any) => (
+                        <div key={grant.id} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
+                          <div>
+                            <Badge variant="outline" className="mr-2">{grant.grantType}</Badge>
+                            {grant.planKey && <span className="capitalize">{grant.planKey}</span>}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {grant.endsAt && <span>Expires: {format(new Date(grant.endsAt), 'MMM d, yyyy')}</span>}
+                            {grant.revokedAt && <Badge variant="destructive" className="text-xs">Revoked</Badge>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Invoices Section */}
+                {companyDetail.billing?.invoices && companyDetail.billing.invoices.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4" /> Recent Invoices</h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {companyDetail.billing.invoices.map((invoice: any) => (
+                        <div key={invoice.id} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
+                          <div>
+                            <span className="font-medium">${(invoice.amountPaid / 100).toFixed(2)}</span>
+                            <span className="mx-2">•</span>
+                            <span className="text-muted-foreground">{format(new Date(invoice.createdAt), 'MMM d, yyyy')}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="border-t pt-4 space-y-3">
+                  <h3 className="font-semibold">Actions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openFreeForeverDialog(
+                        companyDetail.company.id,
+                        companyDetail.company.name,
+                        !!companyDetail.billing?.accessOverride
+                      )}
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      {companyDetail.billing?.accessOverride ? 'Revoke Free Access' : 'Grant Free Access'}
+                    </Button>
+                    <Button
+                      variant={companyDetail.company.isBlocked ? 'outline' : 'destructive'}
+                      size="sm"
+                      onClick={() => openBlockDialog('company', companyDetail.company.id, companyDetail.company.name, companyDetail.company.isBlocked)}
+                    >
+                      {companyDetail.company.isBlocked ? (
+                        <><ShieldOff className="h-4 w-4 mr-2" /> Unblock</>
+                      ) : (
+                        <><Shield className="h-4 w-4 mr-2" /> Block</>
+                      )}
+                    </Button>
+                    {!companyDetail.company.deletedAt && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openDeleteCompanyDialog(selectedCompany!)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Company
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+
+        {/* Delete Company Dialog */}
+        <Dialog open={showDeleteCompanyDialog} onOpenChange={setShowDeleteCompanyDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Delete Company
+              </DialogTitle>
+              <DialogDescription>
+                This action will permanently disable access for all members of "{selectedCompany?.name}".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm">
+                <p className="font-medium text-red-800 mb-2">Warning: This action is destructive</p>
+                <ul className="list-disc list-inside text-red-700 space-y-1">
+                  <li>All members will lose access immediately</li>
+                  <li>Active Stripe subscription will be canceled</li>
+                  <li>Company data will be archived (soft delete)</li>
+                  <li>BOQs and templates will be preserved but inaccessible</li>
+                </ul>
+              </div>
+              <div>
+                <Label htmlFor="deleteConfirm" className="text-sm font-medium">
+                  Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm
+                </Label>
+                <Input
+                  id="deleteConfirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteCompanyDialog(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteCompany}
+                disabled={deleteConfirmText !== 'DELETE' || deletingCompany}
+              >
+                {deletingCompany && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Delete Company
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Block Dialog */}
         <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>

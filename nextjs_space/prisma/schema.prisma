@@ -80,15 +80,16 @@ model User {
 }
 
 model Company {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  currencySymbol    String   @default("Rs.")
-  currencyPosition  String   @default("left")
-  defaultVatPercent Float    @default(18)
-  isBlocked         Boolean  @default(false)
+  currencySymbol    String    @default("Rs.")
+  currencyPosition  String    @default("left")
+  defaultVatPercent Float     @default(18)
+  isBlocked         Boolean   @default(false)
   blockReason       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime? // Soft delete timestamp
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   memberships       CompanyMembership[]
   customers         Customer[]
   boqs              Boq[]
@@ -96,6 +97,8 @@ model Company {
   pdfThemes         PdfTheme[]
   billing           CompanyBilling?
   boqCreationEvents BoqCreationEvent[]
+
+  @@index([deletedAt])
 }
 
 model PdfCoverTemplate {

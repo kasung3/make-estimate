@@ -64,6 +64,7 @@ import {
   Check,
   Pencil,
   GripVertical,
+  Globe,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -77,6 +78,7 @@ interface UserData {
   lastName: string | null;
   fullName: string | null;
   phone: string | null;
+  country: string | null;
   isBlocked: boolean;
   blockReason: string | null;
   forcePasswordReset: boolean;
@@ -849,6 +851,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                               <div className="text-sm text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1">
                                 <span>{user.fullName || user.name || 'No name'}</span>
                                 <span>{user.company?.name || 'No company'}</span>
+                                {user.country && <span><Globe className="inline h-3 w-3 mr-1" />{user.country}</span>}
                                 {user.phone && <span><Phone className="inline h-3 w-3 mr-1" />{user.phone}</span>}
                                 <span><Calendar className="inline h-3 w-3 mr-1" />Joined {format(new Date(user.createdAt), 'MMM d, yyyy')}</span>
                               </div>
@@ -1389,6 +1392,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                     <div><span className="text-muted-foreground">Name:</span> {userDetail.user.fullName || userDetail.user.name || '-'}</div>
                     <div><span className="text-muted-foreground">Email:</span> {userDetail.user.email}</div>
                     <div><span className="text-muted-foreground">Phone:</span> {userDetail.user.phone || '-'}</div>
+                    <div><span className="text-muted-foreground">Country:</span> {userDetail.user.country || '-'}</div>
                     <div><span className="text-muted-foreground">Joined:</span> {format(new Date(userDetail.user.createdAt), 'MMM d, yyyy')}</div>
                     <div><span className="text-muted-foreground">Last Login:</span> {userDetail.user.lastLoginAt ? format(new Date(userDetail.user.lastLoginAt), 'MMM d, yyyy HH:mm') : 'Never'}</div>
                     <div className="flex items-center gap-2">

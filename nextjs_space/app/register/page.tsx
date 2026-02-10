@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -8,10 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { MarketingNavbar } from '@/components/marketing/navbar';
-import { FileText, Loader2, Check, CreditCard } from 'lucide-react';
+import { FileText, Loader2, Check, CreditCard, Globe, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
+import { COUNTRIES, getCountryByCode } from '@/lib/countries';
 
 const PLANS: Record<string, { name: string; price: string; features: string[]; isFree?: boolean }> = {
   free: {
@@ -43,6 +51,9 @@ function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [country, setCountry] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const router = useRouter();
@@ -51,6 +62,24 @@ function RegisterForm() {
 
   const selectedPlan = searchParams?.get('plan') || null;
   const planInfo = selectedPlan ? PLANS[selectedPlan] : null;
+
+  // Update phone code when country changes
+  useEffect(() => {
+    if (country) {
+      const countryData = getCountryByCode(country);
+      if (countryData) {
+        setPhoneCode(countryData.phoneCode);
+      }
+    }
+  }, [country]);
+
+  // Combined full phone number for submission
+  const fullPhoneNumber = useMemo(() => {
+    if (phoneCode && phoneNumber) {
+      return `${phoneCode}${phoneNumber}`;
+    }
+    return phoneNumber || '';
+  }, [phoneCode, phoneNumber]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -140,6 +169,8 @@ function RegisterForm() {
           companyName,
           firstName,
           lastName,
+          country: country || null,
+          phone: fullPhoneNumber || null,
         }),
       });
 
@@ -299,6 +330,55 @@ function RegisterForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
+                </div>
+                {/* Country Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                    Country
+                  </Label>
+                  <Select value={country} onValueChange={setCountry}>
+                    <SelectTrigger id="country" className="w-full">
+                      <SelectValue placeholder="Select your country" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[280px]">
+                      {COUNTRIES.map((c, idx) => (
+                        <SelectItem 
+                          key={c.code} 
+                          value={c.code}
+                          className={idx === 9 ? "border-b border-border" : ""}
+                        >
+                          {c.name} ({c.phoneCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Phone Number with Country Code */}
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                    Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="phoneCode"
+                      type="text"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value)}
+                      placeholder="+1"
+                      className="w-20 text-center"
+                      readOnly={!!country}
+                    />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Phone number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>

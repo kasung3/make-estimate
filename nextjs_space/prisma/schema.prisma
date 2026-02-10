@@ -64,6 +64,8 @@ model User {
   firstName           String?
   lastName            String?
   phone               String?
+  phoneDigits         String?  // digits-only for search
+  country             String?
   isBlocked           Boolean  @default(false)
   blockReason         String?
   forcePasswordReset  Boolean  @default(false)
@@ -74,6 +76,7 @@ model User {
   
   @@index([email])
   @@index([phone])
+  @@index([country])
 }
 
 model Company {

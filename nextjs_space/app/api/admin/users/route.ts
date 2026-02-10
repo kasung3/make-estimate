@@ -154,6 +154,7 @@ export async function GET(request: Request) {
         lastName: user.lastName,
         fullName: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || null,
         phone: user.phone,
+        country: user.country,
         isBlocked: user.isBlocked,
         blockReason: user.blockReason,
         forcePasswordReset: user.forcePasswordReset,

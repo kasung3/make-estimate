@@ -157,6 +157,7 @@ export async function GET(request: Request) {
         country: user.country,
         isBlocked: user.isBlocked,
         blockReason: user.blockReason,
+        deletedAt: user.deletedAt,
         forcePasswordReset: user.forcePasswordReset,
         lastLoginAt: user.lastLoginAt,
         createdAt: user.createdAt,

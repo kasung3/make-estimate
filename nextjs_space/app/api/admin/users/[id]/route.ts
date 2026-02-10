@@ -6,6 +6,61 @@ import { isPlatformAdmin } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
+// DELETE - Soft delete user (set deletedAt, block access, deactivate memberships)
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email || !isPlatformAdmin(session.user.email)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { id } = await params;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        memberships: {
+          select: { id: true, companyId: true },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Soft delete: set deletedAt, block user, deactivate all memberships
+    await prisma.$transaction([
+      // Update user: set deletedAt, block access
+      prisma.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          isBlocked: true,
+          blockReason: 'Account deleted by platform admin',
+        },
+      }),
+      // Deactivate all company memberships
+      prisma.companyMembership.updateMany({
+        where: { userId: id },
+        data: { isActive: false },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: 'User deleted successfully. The user can no longer access the platform.',
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+  }
+}
+
 // GET - Get user details including billing history
 export async function GET(
   request: Request,
@@ -66,6 +121,7 @@ export async function GET(
         country: user.country,
         isBlocked: user.isBlocked,
         blockReason: user.blockReason,
+        deletedAt: user.deletedAt,
         forcePasswordReset: user.forcePasswordReset,
         lastLoginAt: user.lastLoginAt,
         createdAt: user.createdAt,

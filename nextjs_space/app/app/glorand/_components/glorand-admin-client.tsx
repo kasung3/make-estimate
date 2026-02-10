@@ -81,6 +81,7 @@ interface UserData {
   country: string | null;
   isBlocked: boolean;
   blockReason: string | null;
+  deletedAt: string | null;
   forcePasswordReset: boolean;
   lastLoginAt: string | null;
   createdAt: string;
@@ -274,6 +275,11 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const [editingCompanyName, setEditingCompanyName] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
 
+  // Delete User state
+  const [showDeleteUserDialog, setShowDeleteUserDialog] = useState(false);
+  const [deleteUserConfirmText, setDeleteUserConfirmText] = useState('');
+  const [deletingUser, setDeletingUser] = useState(false);
+
   // Dialogs
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [blockTarget, setBlockTarget] = useState<{ type: 'user' | 'company'; id: string; name: string; isBlocked: boolean } | null>(null);
@@ -286,7 +292,10 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
 
   const [showFreeForeverDialog, setShowFreeForeverDialog] = useState(false);
   const [freeForeverTarget, setFreeForeverTarget] = useState<{ companyId: string; companyName: string; hasGrant: boolean } | null>(null);
-  const [freeForeverPlan, setFreeForeverPlan] = useState<'starter' | 'business'>('business');
+  const [freeForeverPlan, setFreeForeverPlan] = useState<'starter' | 'advance' | 'business'>('business');
+  const [grantExpiresAt, setGrantExpiresAt] = useState<string>(''); // ISO date string or empty
+  const [grantNotes, setGrantNotes] = useState<string>('');
+  const [grantingAccess, setGrantingAccess] = useState(false);
 
   const [showCreateCouponDialog, setShowCreateCouponDialog] = useState(false);
   const [newCoupon, setNewCoupon] = useState({
@@ -466,6 +475,33 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       toast.error('Failed to delete company');
     } finally {
       setDeletingCompany(false);
+    }
+  };
+
+  // Open delete user dialog
+  const openDeleteUserDialog = () => {
+    setDeleteUserConfirmText('');
+    setShowDeleteUserDialog(true);
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async () => {
+    if (!selectedUser || deleteUserConfirmText !== 'DELETE') return;
+    setDeletingUser(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+      toast.success(data.message || 'User deleted successfully');
+      setShowDeleteUserDialog(false);
+      closeUserDrawer();
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user');
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -704,24 +740,39 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     toast.success('Copied to clipboard');
   };
 
-  // Free Forever handlers
+  // Admin Grant Access handlers
   const openFreeForeverDialog = (companyId: string, companyName: string, hasGrant: boolean) => {
     setFreeForeverTarget({ companyId, companyName, hasGrant });
     setFreeForeverPlan('business');
+    setGrantExpiresAt('');
+    setGrantNotes('');
     setShowFreeForeverDialog(true);
   };
 
   const handleFreeForeverToggle = async () => {
     if (!freeForeverTarget) return;
+    setGrantingAccess(true);
     try {
       const endpoint = freeForeverTarget.hasGrant
         ? `/api/admin/companies/${freeForeverTarget.companyId}/revoke-free-forever`
         : `/api/admin/companies/${freeForeverTarget.companyId}/grant-free-forever`;
 
+      const bodyData: any = { plan: freeForeverPlan };
+      
+      // Add optional expiry date for grants
+      if (!freeForeverTarget.hasGrant && grantExpiresAt) {
+        bodyData.expiresAt = new Date(grantExpiresAt).toISOString();
+      }
+      
+      // Add optional notes for grants
+      if (!freeForeverTarget.hasGrant && grantNotes) {
+        bodyData.notes = grantNotes;
+      }
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: freeForeverPlan }),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await res.json();
@@ -736,7 +787,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
         fetchCompanyDetail(selectedCompany.id);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update free access');
+      toast.error(err.message || 'Failed to update access');
+    } finally {
+      setGrantingAccess(false);
     }
   };
 
@@ -986,6 +1039,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                         <div
                           key={user.id}
                           className={`p-4 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors ${
+                            user.deletedAt ? 'bg-gray-100 border-gray-300 opacity-70' :
                             user.isBlocked || user.company?.isBlocked ? 'bg-red-50 border-red-200' : 'bg-white'
                           }`}
                           onClick={() => openUserDrawer(user)}
@@ -993,8 +1047,11 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium truncate">{user.email}</span>
-                                {user.isBlocked && (
+                                <span className={`font-medium truncate ${user.deletedAt ? 'line-through text-muted-foreground' : ''}`}>{user.email}</span>
+                                {user.deletedAt && (
+                                  <Badge variant="secondary" className="text-xs bg-gray-200">Deleted</Badge>
+                                )}
+                                {!user.deletedAt && user.isBlocked && (
                                   <Badge variant="destructive" className="text-xs">Blocked</Badge>
                                 )}
                                 {user.company?.isBlocked && (
@@ -1771,6 +1828,24 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                       </>
                     )}
                   </div>
+                  {/* Delete User - Danger Zone */}
+                  <div className="pt-4 mt-4 border-t border-red-200">
+                    <p className="text-xs text-muted-foreground mb-2">Danger Zone</p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={openDeleteUserDialog}
+                      disabled={!!userDetail.user.deletedAt}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {userDetail.user.deletedAt ? 'User Deleted' : 'Delete User'}
+                    </Button>
+                    {userDetail.user.deletedAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Deleted on {format(new Date(userDetail.user.deletedAt), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -2071,6 +2146,55 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
           </DialogContent>
         </Dialog>
 
+        {/* Delete User Dialog */}
+        <Dialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Delete User
+              </DialogTitle>
+              <DialogDescription>
+                This will disable login and access for "{selectedUser?.email}".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm">
+                <p className="font-medium text-red-800 mb-2">Impact of deleting this user</p>
+                <ul className="list-disc list-inside text-red-700 space-y-1">
+                  <li>User will not be able to log in</li>
+                  <li>All company memberships will be deactivated</li>
+                  <li>Their created BOQs and templates will remain intact</li>
+                  <li>This is a soft delete - data is preserved for recovery</li>
+                </ul>
+              </div>
+              <div>
+                <Label htmlFor="deleteUserConfirm" className="text-sm font-medium">
+                  Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm
+                </Label>
+                <Input
+                  id="deleteUserConfirm"
+                  value={deleteUserConfirmText}
+                  onChange={(e) => setDeleteUserConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteUserDialog(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteUser}
+                disabled={deleteUserConfirmText !== 'DELETE' || deletingUser}
+              >
+                {deletingUser && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Delete User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Block Dialog */}
         <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
           <DialogContent>
@@ -2180,49 +2304,100 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
           </DialogContent>
         </Dialog>
 
-        {/* Free Forever Dialog */}
+        {/* Admin Grant Access Dialog */}
         <Dialog open={showFreeForeverDialog} onOpenChange={setShowFreeForeverDialog}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-purple-500" />
-                {freeForeverTarget?.hasGrant ? 'Revoke' : 'Grant'} Free Access
+                {freeForeverTarget?.hasGrant ? 'Revoke' : 'Grant'} Admin Access
               </DialogTitle>
+              <DialogDescription>
+                {freeForeverTarget?.hasGrant 
+                  ? 'Remove admin-granted access for this company.'
+                  : 'Grant admin access to bypass subscription requirements.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               {freeForeverTarget?.hasGrant ? (
-                <p className="text-muted-foreground">
-                  Are you sure you want to revoke free access for <strong>{freeForeverTarget?.companyName}</strong>?
-                  They will need to subscribe to regain access.
-                </p>
+                <div className="space-y-4">
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                    <p className="text-amber-800">
+                      Revoking access for <strong>{freeForeverTarget?.companyName}</strong> will:
+                    </p>
+                    <ul className="list-disc list-inside text-amber-700 mt-2 space-y-1">
+                      <li>Remove admin-granted plan access</li>
+                      <li>Company will fall back to Free plan or existing subscription</li>
+                      <li>No data will be deleted</li>
+                    </ul>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Grant free access to <strong>{freeForeverTarget?.companyName}</strong>.
-                    This will override any existing subscription.
-                  </p>
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg text-sm">
+                    <p className="text-purple-800">
+                      Granting access to <strong>{freeForeverTarget?.companyName}</strong> will override any existing subscription.
+                    </p>
+                  </div>
+                  
+                  {/* Plan Selection */}
                   <div>
-                    <Label htmlFor="freeForeverPlan">Access Level</Label>
+                    <Label htmlFor="freeForeverPlan">Plan Level</Label>
                     <Select
                       value={freeForeverPlan}
-                      onValueChange={(v) => setFreeForeverPlan(v as 'starter' | 'business')}
+                      onValueChange={(v) => setFreeForeverPlan(v as 'starter' | 'advance' | 'business')}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="business">Business (Unlimited BOQs)</SelectItem>
+                        <SelectItem value="business">Business (Unlimited BOQs, Team Features)</SelectItem>
+                        <SelectItem value="advance">Advance (50 BOQs/month)</SelectItem>
                         <SelectItem value="starter">Starter (10 BOQs/month)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  
+                  {/* Expiry Date (Optional) */}
+                  <div>
+                    <Label htmlFor="grantExpiresAt">
+                      Expiry Date <span className="text-muted-foreground text-xs">(optional)</span>
+                    </Label>
+                    <Input
+                      id="grantExpiresAt"
+                      type="datetime-local"
+                      value={grantExpiresAt}
+                      onChange={(e) => setGrantExpiresAt(e.target.value)}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave empty for permanent access. If set, access expires automatically.
+                    </p>
+                  </div>
+                  
+                  {/* Notes (Optional) */}
+                  <div>
+                    <Label htmlFor="grantNotes">
+                      Notes <span className="text-muted-foreground text-xs">(optional)</span>
+                    </Label>
+                    <Input
+                      id="grantNotes"
+                      value={grantNotes}
+                      onChange={(e) => setGrantNotes(e.target.value)}
+                      placeholder="e.g., Early adopter, Partnership deal"
+                      className="mt-1"
+                    />
                   </div>
                 </div>
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowFreeForeverDialog(false)}>Cancel</Button>
-              <Button onClick={handleFreeForeverToggle}>
-                {freeForeverTarget?.hasGrant ? 'Revoke Access' : 'Grant Free Access'}
+              <Button variant="outline" onClick={() => setShowFreeForeverDialog(false)} disabled={grantingAccess}>
+                Cancel
+              </Button>
+              <Button onClick={handleFreeForeverToggle} disabled={grantingAccess}>
+                {grantingAccess && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {freeForeverTarget?.hasGrant ? 'Revoke Access' : 'Grant Access'}
               </Button>
             </DialogFooter>
           </DialogContent>

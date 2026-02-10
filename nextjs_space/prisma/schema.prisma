@@ -68,15 +68,18 @@ model User {
   country             String?
   isBlocked           Boolean  @default(false)
   blockReason         String?
+  deletedAt           DateTime? // Soft delete timestamp
   forcePasswordReset  Boolean  @default(false)
   lastLoginAt         DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   memberships         CompanyMembership[]
+  adminGrants         CompanyAccessGrant[] @relation("AdminGrants") // Grants created by this admin
   
   @@index([email])
   @@index([phone])
   @@index([country])
+  @@index([deletedAt])
 }
 
 model Company {
@@ -235,6 +238,7 @@ enum AccessOverride {
 enum GrantType {
   trial
   free_forever
+  admin_grant
 }
 
 // Dynamic billing plans - admin editable
@@ -284,20 +288,24 @@ model BillingPlanPriceHistory {
 
 // Internal access grants (trials/free without Stripe)
 model CompanyAccessGrant {
-  id           String     @id @default(cuid())
-  companyId    String
-  grantType    GrantType
-  planKey      String?    // Which plan level they get access to
-  couponId     String?    // Optional link to coupon that created this
-  startsAt     DateTime   @default(now())
-  endsAt       DateTime?  // null = never expires (free_forever)
-  revokedAt    DateTime?
-  revokedById  String?    // Admin who revoked
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                   String     @id @default(cuid())
+  companyId            String
+  grantType            GrantType
+  planKey              String?    // Which plan level they get access to
+  couponId             String?    // Optional link to coupon that created this
+  startsAt             DateTime   @default(now())
+  endsAt               DateTime?  // null = never expires (free_forever)
+  revokedAt            DateTime?
+  revokedById          String?    // Admin who revoked
+  createdByAdminUserId String?    // Platform admin who created this grant
+  notes                String?    // Optional notes
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  createdByAdmin       User?      @relation("AdminGrants", fields: [createdByAdminUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId, revokedAt])
   @@index([companyId, endsAt])
+  @@index([createdByAdminUserId])
 }
 
 model CompanyBilling {

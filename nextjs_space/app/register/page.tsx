@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -60,6 +60,9 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession() || {};
+  // Ref to prevent handleCheckout from being called twice
+  // (once from handleSubmit and once from useEffect when status changes)
+  const checkoutInitiatedRef = useRef(false);
 
   const selectedPlan = searchParams?.get('plan') || null;
   const planInfo = selectedPlan ? PLANS[selectedPlan] : null;
@@ -79,9 +82,11 @@ function RegisterForm() {
   useEffect(() => {
     if (status === 'authenticated') {
       // If authenticated and has a plan selected, go to checkout
-      if (selectedPlan) {
+      // Skip if checkout was already initiated from handleSubmit
+      if (selectedPlan && !checkoutInitiatedRef.current) {
+        checkoutInitiatedRef.current = true;
         handleCheckout(selectedPlan);
-      } else {
+      } else if (!selectedPlan) {
         router.replace('/app/dashboard');
       }
     }
@@ -104,8 +109,12 @@ function RegisterForm() {
 
       // Handle Free plan activation (no Stripe redirect needed)
       if (data.freePlanActivated) {
-        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
-        trackFreePlanRegister('register');
+        if (acquireEventLock('FreePlanActivated')) {
+          metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
+        }
+        if (acquireEventLock('FreePlanRegister')) {
+          trackFreePlanRegister('register');
+        }
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -114,7 +123,7 @@ function RegisterForm() {
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
         // Track trial activation
-        if (data.grantType === 'trial') {
+        if (data.grantType === 'trial' && acquireEventLock('StartTrial')) {
           metaTrack('StartTrial', { 
             content_name: planKey,
             trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
@@ -198,6 +207,8 @@ function RegisterForm() {
 
       // If plan was selected, redirect to checkout
       if (selectedPlan) {
+        // Mark checkout as initiated so useEffect doesn't double-fire it
+        checkoutInitiatedRef.current = true;
         // Small delay to ensure session is fully established
         setTimeout(() => {
           handleCheckout(selectedPlan);

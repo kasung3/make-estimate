@@ -115,8 +115,12 @@ function PricingContent() {
 
       // Handle Free plan activation (no Stripe redirect)
       if (data.freePlanActivated) {
-        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
-        trackFreePlanRegister('pricing');
+        if (acquireEventLock('FreePlanActivated')) {
+          metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
+        }
+        if (acquireEventLock('FreePlanRegister')) {
+          trackFreePlanRegister('pricing');
+        }
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -125,7 +129,7 @@ function PricingContent() {
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
         // Track trial activation
-        if (data.grantType === 'trial') {
+        if (data.grantType === 'trial' && acquireEventLock('StartTrial')) {
           metaTrack('StartTrial', { 
             content_name: planKey,
             trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,

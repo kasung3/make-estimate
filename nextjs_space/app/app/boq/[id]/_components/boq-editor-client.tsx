@@ -98,9 +98,13 @@ interface EditItemDialogData {
 // =============================================================================
 // SORTABLE ITEM COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
-// Helper function to generate the grid template string
+// Helper function to generate the grid template string - all fixed pixel widths for reliable resizing
 function getGridTemplateColumns(columnWidths: Record<string, number>): string {
-  return `${columnWidths.grip}px ${columnWidths.number}px minmax(200px, 1fr) ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
+  return `${columnWidths.grip}px ${columnWidths.number}px ${columnWidths.description}px ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
+}
+// Calculate total table width from column widths
+function getTotalTableWidth(columnWidths: Record<string, number>): number {
+  return Object.values(columnWidths).reduce((sum, w) => sum + w, 0);
 }
 
 interface SortableItemRowProps {
@@ -659,17 +663,17 @@ function SortableCategory({
       >
         <Collapsible open={isExpanded} onOpenChange={() => toggleCategory(category?.id)}>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors px-3 md:px-6 py-3 md:py-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                   <div
                     ref={setActivatorNodeRef}
                     {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded select-none"
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded select-none flex-shrink-0"
                     style={{ touchAction: 'none', userSelect: 'none' }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0 pointer-events-none" />
+                    <GripVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-400 pointer-events-none" />
                   </div>
                   <span className="text-sm font-medium text-gray-500 flex-shrink-0">
                     {categoryIndex + 1}.
@@ -681,20 +685,25 @@ function SortableCategory({
                       handleUpdateCategory(category?.id, e.target.value);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
+                    onFocus={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => {
+                      // Prevent collapsible toggle on mobile when tapping the input
+                      e.stopPropagation();
+                    }}
+                    className="text-base md:text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
                   />
-                  <span className="text-sm text-gray-500 flex-shrink-0">
+                  <span className="text-xs md:text-sm text-gray-500 flex-shrink-0 hidden md:inline">
                     ({(category?.items ?? []).filter((i) => !i?.isNote).length} items)
                   </span>
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <span className="text-lg font-semibold text-purple-600">
+                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                  <span className="text-sm md:text-lg font-semibold text-purple-600 whitespace-nowrap">
                     {formatCurrency(getCategorySubtotal(category))}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-gray-400 hover:text-red-500 h-7 w-7 md:h-9 md:w-9"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteCategory(category?.id);
@@ -703,9 +712,9 @@ function SortableCategory({
                     <Trash2 className="w-4 h-4" />
                   </Button>
                   {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                    <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
                   )}
                 </div>
               </div>
@@ -722,12 +731,12 @@ function SortableCategory({
                   onDragEnd={(e) => handleItemDragEnd(e, category.id)}
                   modifiers={[restrictToVerticalAxis]}
                 >
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto scrollbar-thin">
                     {/* Grid-based table using divs for proper CSS transform support */}
                     <div 
                       className="text-sm flex flex-col" 
                       role="table"
-                      style={{ minWidth: '1000px' }}
+                      style={{ minWidth: `${getTotalTableWidth(columnWidths)}px` }}
                     >
                       {/* Header row */}
                       <div 
@@ -974,20 +983,21 @@ export function BoqEditorClient({
 
   // Per-column min/max width constraints for better UX
   const COLUMN_WIDTH_CONSTRAINTS: Record<string, { min: number; max: number }> = {
-    number: { min: 40, max: 80 },
-    description: { min: 150, max: 600 },
-    unit: { min: 60, max: 150 },
-    unitCost: { min: 80, max: 180 },
-    markup: { min: 60, max: 120 },
-    unitPrice: { min: 80, max: 180 },
-    qty: { min: 50, max: 120 },
-    amount: { min: 100, max: 200 },
+    number: { min: 40, max: 120 },
+    description: { min: 150, max: 800 },
+    unit: { min: 60, max: 200 },
+    unitCost: { min: 80, max: 250 },
+    markup: { min: 60, max: 180 },
+    unitPrice: { min: 80, max: 250 },
+    qty: { min: 50, max: 180 },
+    amount: { min: 100, max: 300 },
   };
 
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartXRef = useRef<number>(0);
   const resizeStartWidthRef = useRef<number>(0);
+  const resizingColumnRef = useRef<string | null>(null);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
@@ -1270,6 +1280,7 @@ export function BoqEditorClient({
     (e: React.MouseEvent, columnKey: string) => {
       e.preventDefault();
       e.stopPropagation();
+      resizingColumnRef.current = columnKey;
       setResizingColumn(columnKey);
       resizeStartXRef.current = e.clientX;
       resizeStartWidthRef.current = columnWidths[columnKey];
@@ -1277,53 +1288,48 @@ export function BoqEditorClient({
     [columnWidths]
   );
 
-  const handleResizeMove = useCallback(
-    (e: MouseEvent) => {
-      if (!resizingColumn) return;
+  // Use refs in move/end handlers to avoid stale closure issues
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const onMove = (e: MouseEvent) => {
+      const col = resizingColumnRef.current;
+      if (!col) return;
       const diff = e.clientX - resizeStartXRef.current;
-      const constraints = COLUMN_WIDTH_CONSTRAINTS[resizingColumn];
+      const constraints = COLUMN_WIDTH_CONSTRAINTS[col];
       let newWidth = resizeStartWidthRef.current + diff;
-      
-      // Apply per-column min/max constraints
       if (constraints) {
         newWidth = Math.max(constraints.min, Math.min(constraints.max, newWidth));
       } else {
         newWidth = Math.max(40, newWidth);
       }
-      
-      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
-    },
-    [resizingColumn]
-  );
+      setColumnWidths((prev) => ({ ...prev, [col]: newWidth }));
+    };
 
-  const handleResizeEnd = useCallback(() => {
-    if (resizingColumn) {
-      saveColumnWidths(columnWidths);
-    }
-    setResizingColumn(null);
-  }, [resizingColumn, columnWidths, saveColumnWidths]);
+    const onUp = () => {
+      resizingColumnRef.current = null;
+      setResizingColumn(null);
+      // Save after state update
+      setColumnWidths((current) => {
+        saveColumnWidths(current);
+        return current;
+      });
+    };
 
-  useEffect(() => {
-    if (resizingColumn) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      // Add a class to the body to indicate resizing state for CSS targeting
-      document.body.classList.add('resizing-column');
-    } else {
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      document.body.classList.remove('resizing-column');
-    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.body.classList.add('resizing-column');
+
     return () => {
-      document.removeEventListener('mousemove', handleResizeMove);
-      document.removeEventListener('mouseup', handleResizeEnd);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       document.body.classList.remove('resizing-column');
     };
-  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
+  }, [resizingColumn, saveColumnWidths]);
 
   const resetColumnWidths = useCallback(() => {
     setColumnWidths(DEFAULT_COLUMN_WIDTHS);
@@ -2734,8 +2740,8 @@ export function BoqEditorClient({
           </DialogContent>
         </Dialog>
 
-        {/* Mobile Floating Quick Add Button */}
-        <div className="md:hidden fixed bottom-4 right-4 z-50">
+        {/* Mobile Floating Quick Add Button - offset for bottom nav */}
+        <div className="md:hidden fixed bottom-[76px] right-4 z-50">
           <div className="flex flex-col items-end gap-2">
             {showMobileQuickAdd && (
               <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-200">

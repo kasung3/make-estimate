@@ -48,12 +48,12 @@ function safeFbq(...args: unknown[]): void {
 
 // ── PageView with hard dedupe ───────────────────────────────────────────────
 
-const PV_DEDUPE_WINDOW_MS = 800;
+const PV_DEDUPE_WINDOW_MS = 2000;
 
 /**
  * Track PageView with deduplication.
- * Skips if the same href was tracked within the last 800 ms.
- * Stores last-tracked info on `window` so it survives re-renders.
+ * Skips if the same href was tracked within the last 2 seconds.
+ * Stores last-tracked info on `window` so it survives component re-renders.
  */
 export function trackPageView(): void {
   if (!isPixelEnabled()) return;

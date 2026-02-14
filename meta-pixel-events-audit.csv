@@ -1,0 +1,18 @@
+Event Name,Event Type,Page/URL,Trigger,Deduplication Method,Parameters (no PII),File Path,Line Number
+PageView,Standard,All pages (SPA-wide),Route change + initial load,"800ms window dedupe on window.__me_meta_last_pv (href+timestamp)",None,components/meta-pixel-provider.tsx,51 (useEffect) + 32 (onLoad)
+ViewContent,Standard,/pricing,useEffect on mount,"acquireEventLock('ViewContent:pricing') — session-level window lock","content_name: 'Pricing', content_category: 'pricing'",app/pricing/page.tsx,70
+Lead,Standard,/ (home page),Click handler (Start Free CTA),None (click-based — no dedupe needed),"content_name: 'StartFree', source: varies",app/page.tsx,205
+Lead,Standard,/pricing,Click handler (plan CTA — unauthenticated),None (click-based — no dedupe needed),"content_name: planKey, source: 'pricing'",app/pricing/page.tsx,89
+CompleteRegistration,Standard,/register,Click handler (form submit success),None (click-based — fires once per submit),method: 'email',app/register/page.tsx,185
+StartTrial,Standard,/register,Click handler (plan activation — trial grant),"None (click-based, conditional on data.grantType==='trial')","content_name: planKey, trial_days: number",app/register/page.tsx,109
+StartTrial,Standard,/pricing,Click handler (plan activation — trial grant),"None (click-based, conditional on data.grantType==='trial')","content_name: planKey, trial_days: number",app/pricing/page.tsx,125
+InitiateCheckout,Standard,/register,Click handler (Stripe redirect),None (click-based — fires before redirect),"content_name: planKey, currency: 'USD', content_category: 'subscription'",app/register/page.tsx,128
+InitiateCheckout,Standard,/pricing,Click handler (Stripe redirect),None (click-based — fires before redirect),"content_name: planKey, value: priceInCents/100, currency: 'USD', content_category: 'subscription'",app/pricing/page.tsx,148
+Subscribe,Standard,/billing/success,useEffect on session verification,"localStorage key me_meta_checkout_fired_{sessionId}","content_name: planKey, content_category: interval",app/billing/success/page.tsx,75
+Purchase,Standard,/billing/success,useEffect on session verification (amount>0),"localStorage key me_meta_checkout_fired_{sessionId}","value: amount/100, currency: uppercase, content_name: planKey",app/billing/success/page.tsx,82
+FreePlanActivated,Custom,/register,Click handler (free plan activation),None (click-based — fires once per submit),plan_key: 'free',app/register/page.tsx,99
+FreePlanActivated,Custom,/pricing,Click handler (free plan activation),None (click-based — fires once per submit),plan_key: 'free',app/pricing/page.tsx,115
+CreateBOQ,Custom,/app/dashboard,Click handler (new BOQ button),None (click-based — fires per creation),source: 'dashboard',app/app/dashboard/_components/dashboard-client.tsx,228
+ReachedLimit,Custom,/app/dashboard,API 403 response (quota exceeded),None (fires per attempt),"limit_type: 'boq_per_period', plan_key: string",app/app/dashboard/_components/dashboard-client.tsx,213
+ReachedLimit,Custom,/app/boq/[id],API 403 response (item limit),None (fires per attempt),"limit_type: 'items_per_boq', plan_key: string",app/app/boq/[id]/_components/boq-editor-client.tsx,1451
+ExportPDF,Custom,/app/boq/[id],Click handler (PDF download success),None (click-based — fires per download),kind: 'boq',app/app/boq/[id]/_components/boq-editor-client.tsx,1914

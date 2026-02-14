@@ -19,8 +19,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
+Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -56,6 +57,7 @@ import {
   Palette,
   Calendar,
   Info,
+  Copy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrackCustom, trackButtonClick } from '@/lib/meta-pixel';

@@ -98,6 +98,8 @@ export interface BoqWithRelations {
   discountValue: number;
   vatEnabled: boolean;
   vatPercent: number;
+  isPreset: boolean;
+  presetName: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;

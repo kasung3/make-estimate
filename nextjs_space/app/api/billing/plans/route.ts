@@ -21,6 +21,7 @@ export async function GET() {
       boqItemsLimit: plan.boqItemsLimit,
       boqTemplatesLimit: plan.boqTemplatesLimit,
       coverTemplatesLimit: plan.coverTemplatesLimit,
+      boqPresetsLimit: plan.boqPresetsLimit,
       logoUploadAllowed: plan.logoUploadAllowed,
       sharingAllowed: plan.sharingAllowed,
       watermarkEnabled: plan.watermarkEnabled,

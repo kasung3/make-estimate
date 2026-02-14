@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { trackButtonClick } from '@/lib/meta-pixel';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -51,6 +52,7 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackButtonClick('Login', 'login');
     setLoading(true);
 
     try {

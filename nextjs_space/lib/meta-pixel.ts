@@ -119,6 +119,30 @@ export function metaTrackCustom(
   }
 }
 
+// ── Convenience helpers for common marketing events ─────────────────────────
+
+/**
+ * Track a CTA button click. Replaces Meta's noisy automatic SubscribedButtonClick.
+ * @param buttonName  Human-readable label, e.g. 'StartFree_Hero'
+ * @param page        Page where the click happened, e.g. 'home', 'pricing'
+ * @param extra       Optional additional params
+ */
+export function trackButtonClick(
+  buttonName: string,
+  page: string,
+  extra?: Record<string, unknown>
+): void {
+  metaTrackCustom('ButtonClick', { button_name: buttonName, page, ...extra });
+}
+
+/**
+ * Track when a user registers and activates the Free plan.
+ * Separate from CompleteRegistration so you can build a free-vs-paid funnel.
+ */
+export function trackFreePlanRegister(source: string): void {
+  metaTrackCustom('FreePlanRegister', { plan_key: 'free', source });
+}
+
 /**
  * @deprecated Use trackPageView() instead – it includes deduplication.
  */

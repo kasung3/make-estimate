@@ -58,7 +58,7 @@ import {
   Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { metaTrackCustom } from '@/lib/meta-pixel';
+import { metaTrackCustom, trackButtonClick } from '@/lib/meta-pixel';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType, PdfThemeType } from '@/lib/types';
 import {
   DndContext,
@@ -1912,6 +1912,7 @@ export function BoqEditorClient({
           
           // Track ExportPDF event
           metaTrackCustom('ExportPDF', { kind: 'boq' });
+          trackButtonClick('ExportPDF', 'boq_editor');
           toast.success('PDF downloaded', { id: toastId });
           return;
         }

@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { BillingPlanInfo } from '@/lib/types';
-import { metaTrack, metaTrackCustom, acquireEventLock } from '@/lib/meta-pixel';
+import { metaTrack, metaTrackCustom, acquireEventLock, trackButtonClick, trackFreePlanRegister } from '@/lib/meta-pixel';
 
 type BillingCycle = 'monthly' | 'annual';
 
@@ -83,6 +83,10 @@ function PricingContent() {
   }, [checkoutCanceled, trialEnded]);
 
   const handlePlanSelect = async (planKey: string) => {
+    // Track which plan button was clicked
+    trackButtonClick(`SelectPlan_${planKey}`, 'pricing', { billing_cycle: billingCycle });
+    metaTrackCustom('PricingPlanClick', { plan_key: planKey, billing_cycle: billingCycle });
+
     // If not logged in, go to register with plan and billing cycle
     if (status !== 'authenticated') {
       // Track Lead event for pricing page CTA
@@ -111,8 +115,8 @@ function PricingContent() {
 
       // Handle Free plan activation (no Stripe redirect)
       if (data.freePlanActivated) {
-        // Track FreePlanActivated custom event
         metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
+        trackFreePlanRegister('pricing');
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;

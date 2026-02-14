@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { trackButtonClick } from '@/lib/meta-pixel';
 
 const navLinks = [
   { name: 'Features', href: '/#features' },
@@ -51,6 +52,7 @@ export function MarketingNavbar() {
                 key={link.name}
                 href={link.href}
                 className="text-gray-600 hover:text-purple-600 transition-colors duration-200 font-medium"
+                onClick={() => trackButtonClick(`Nav_${link.name}`, 'navbar')}
               >
                 {link.name}
               </Link>
@@ -60,15 +62,15 @@ export function MarketingNavbar() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             {session ? (
-              <Link href="/app/dashboard">
+              <Link href="/app/dashboard" onClick={() => trackButtonClick('GoToDashboard', 'navbar')}>
                 <Button>Go to Dashboard</Button>
               </Link>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/login" onClick={() => trackButtonClick('Login', 'navbar')}>
                   <Button variant="ghost" className="text-gray-700">Login</Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/register" onClick={() => trackButtonClick('GetStarted', 'navbar')}>
                   <Button>Get Started</Button>
                 </Link>
               </>
@@ -101,22 +103,22 @@ export function MarketingNavbar() {
                 key={link.name}
                 href={link.href}
                 className="text-gray-600 hover:text-purple-600 transition-colors font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => { setMobileMenuOpen(false); trackButtonClick(`Nav_${link.name}_mobile`, 'navbar'); }}
               >
                 {link.name}
               </Link>
             ))}
             <div className="pt-4 flex flex-col space-y-3">
               {session ? (
-                <Link href="/app/dashboard">
+                <Link href="/app/dashboard" onClick={() => trackButtonClick('GoToDashboard_mobile', 'navbar')}>
                   <Button className="w-full">Go to Dashboard</Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/login">
+                  <Link href="/login" onClick={() => trackButtonClick('Login_mobile', 'navbar')}>
                     <Button variant="outline" className="w-full">Login</Button>
                   </Link>
-                  <Link href="/register">
+                  <Link href="/register" onClick={() => trackButtonClick('GetStarted_mobile', 'navbar')}>
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </>

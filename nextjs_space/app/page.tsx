@@ -26,7 +26,7 @@ import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { metaTrack } from '@/lib/meta-pixel';
+import { metaTrack, trackButtonClick } from '@/lib/meta-pixel';
 
 // ====== FEATURES DATA ======
 const features = [
@@ -200,9 +200,10 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 export default function HomePage() {
   const router = useRouter();
 
-  // Track Lead event and navigate to register
+  // Track Lead + ButtonClick events and navigate to register
   const handleStartFree = useCallback((source: string) => {
     metaTrack('Lead', { content_name: 'StartFree', source });
+    trackButtonClick(`StartFree_${source}`, 'home');
     router.push('/register');
   }, [router]);
 
@@ -264,7 +265,7 @@ export default function HomePage() {
                 Start Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Link href="/pricing">
+              <Link href="/pricing" onClick={() => trackButtonClick('ViewPricing_hero', 'home')}>
                 <Button variant="outline" size="lg" className="text-base px-8 py-6">
                   View Pricing
                 </Button>
@@ -551,7 +552,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-8">
-              <Link href="/pricing">
+              <Link href="/pricing" onClick={() => trackButtonClick('ViewAllPlans_pricing_teaser', 'home')}>
                 <Button
                   size="lg"
                   className="bg-white text-purple-600 hover:bg-purple-50 px-8 py-6 text-base shadow-lg"
@@ -610,7 +611,7 @@ export default function HomePage() {
                   Get Started Free
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-                <Link href="/pricing">
+                <Link href="/pricing" onClick={() => trackButtonClick('ComparePlans_final_cta', 'home')}>
                   <Button variant="outline" size="lg" className="px-8 py-6 text-base">
                     Compare Plans
                   </Button>

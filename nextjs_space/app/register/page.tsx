@@ -18,7 +18,7 @@ import {
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2, Check, CreditCard, Globe, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
+import { metaTrack, metaTrackCustom, trackButtonClick, trackFreePlanRegister, acquireEventLock } from '@/lib/meta-pixel';
 import { COUNTRIES, getCountryByCode } from '@/lib/countries';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -67,6 +67,15 @@ function RegisterForm() {
   // Phone number is already E.164 formatted from react-phone-number-input
   const fullPhoneNumber = phone || '';
 
+  // Track SignupPageView once per session
+  useEffect(() => {
+    if (acquireEventLock('SignupPageView')) {
+      metaTrackCustom('SignupPageView', {
+        plan_preselected: selectedPlan || 'none',
+      });
+    }
+  }, [selectedPlan]);
+
   useEffect(() => {
     if (status === 'authenticated') {
       // If authenticated and has a plan selected, go to checkout
@@ -95,8 +104,8 @@ function RegisterForm() {
 
       // Handle Free plan activation (no Stripe redirect needed)
       if (data.freePlanActivated) {
-        // Track FreePlanActivated custom event
         metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
+        trackFreePlanRegister('register');
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -142,6 +151,7 @@ function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackButtonClick('CreateAccount', 'register', { plan: selectedPlan || 'none' });
     setLoading(true);
 
     try {

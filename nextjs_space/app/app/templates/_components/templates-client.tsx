@@ -423,7 +423,7 @@ export function TemplatesClient({
                                 Close
                               </Button>
                             </div>
-                            <PdfThemeEditor companyName={companyName} selectedThemeId={template.id} />
+                            <PdfThemeEditor companyName={companyName} selectedThemeId={template.id} themeLimit={boqTemplatesLimit} />
                           </div>
                         )}
                       </div>
@@ -569,7 +569,7 @@ export function TemplatesClient({
                                 Close
                               </Button>
                             </div>
-                            <CoverTemplateEditor companyName={companyName} selectedTemplateId={template.id} />
+                            <CoverTemplateEditor companyName={companyName} selectedTemplateId={template.id} templateLimit={coverTemplatesLimit} />
                           </div>
                         )}
                       </div>

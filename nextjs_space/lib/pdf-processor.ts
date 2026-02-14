@@ -17,27 +17,27 @@ const formatNumber = (num: number, decimals: number = 2): string => {
   });
 };
 
-// Default theme configuration
+// Default theme configuration - lavender/purple brand colors
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
   header: {
-    borderColor: '#0891b2',
-    titleColor: '#0891b2',
+    borderColor: '#7c3aed',
+    titleColor: '#7c3aed',
     subtitleColor: '#666666',
   },
   categoryHeader: {
-    backgroundPrimary: '#0891b2',
-    backgroundSecondary: '#14b8a6',
+    backgroundPrimary: '#7c3aed',
+    backgroundSecondary: '#8b5cf6',
     textColor: '#ffffff',
   },
   table: {
-    headerBackground: '#f9fafb',
+    headerBackground: '#f5f3ff',
     headerTextColor: '#6b7280',
     borderColor: '#e5e7eb',
     bodyTextColor: '#333333',
   },
   subtotalRow: {
-    background: '#f0fdfa',
-    borderColor: '#14b8a6',
+    background: '#f5f3ff',
+    borderColor: '#8b5cf6',
     textColor: '#333333',
   },
   noteRow: {
@@ -45,7 +45,7 @@ const getDefaultThemeConfig = (): PdfThemeConfig => ({
     textColor: '#92400e',
   },
   totals: {
-    finalTotalBackground: '#0891b2',
+    finalTotalBackground: '#7c3aed',
     finalTotalTextColor: '#ffffff',
   },
 });
@@ -67,7 +67,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
         fontWeight: 'bold',
         italic: false,
         underline: false,
-        color: '#0891b2',
+        color: '#7c3aed',
         align: 'center',
         marginTop: 0,
         marginBottom: 20,
@@ -515,30 +515,37 @@ function generateFullHtml(
     }
     .final-total td { font-size: 14px; }
     ${watermarkOptions?.enabled ? `
-    /* Watermark styling */
+    /* Branding footer strip */
     .watermark {
       position: fixed;
-      bottom: 15px;
+      bottom: 0;
       left: 0;
       right: 0;
       text-align: center;
       font-size: 10px;
-      color: rgba(0, 0, 0, 0.15);
+      color: #7c3aed;
+      font-weight: 600;
       letter-spacing: 0.5px;
+      padding: 6px 0;
+      background: linear-gradient(90deg, #f5f3ff 0%, #ede9fe 50%, #f5f3ff 100%);
+      border-top: 1.5px solid #c4b5fd;
       z-index: 1000;
-      pointer-events: none;
+    }
+    .watermark a {
+      color: #7c3aed;
+      text-decoration: none;
     }
     @media print {
       .watermark {
         position: fixed;
-        bottom: 15px;
+        bottom: 0;
       }
     }
     ` : ''}
   </style>
 </head>
 <body>
-  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">${watermarkOptions.text}</div>` : ''}
+  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">📄 ${watermarkOptions.text} &nbsp;|&nbsp; Create your own BOQs free at <a href="https://makeestimate.com">MakeEstimate.com</a></div>` : ''}
   ${coverPageHtml}
 
   <div class="content-page">

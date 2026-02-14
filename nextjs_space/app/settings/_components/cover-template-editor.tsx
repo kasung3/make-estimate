@@ -96,7 +96,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
       id: 'project_name',
       type: 'project_name',
       enabled: true,
-      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 },
+      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 },
     },
     {
       id: 'subtitle',
@@ -779,7 +779,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
     
     switch (type) {
       case 'project_name':
-        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 };
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 };
         break;
       case 'subtitle':
         text = 'Bill of Quantities';
@@ -843,7 +843,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
         </div>
         <Button onClick={handleCreateTemplate}>
           <Plus className="w-4 h-4 mr-2" />
-          New Template
+          New Cover Template
         </Button>
       </div>
 
@@ -905,7 +905,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-            <DialogTitle>{editingTemplate ? 'Edit Template' : 'New Template'}</DialogTitle>
+            <DialogTitle>{editingTemplate ? 'Edit Cover Template' : 'New Cover Template'}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 flex">

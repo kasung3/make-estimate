@@ -2125,7 +2125,7 @@ export function BoqEditorClient({
                       <SelectValue placeholder="Cover Template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Company Default</SelectItem>
+                      <SelectItem value="default">Default Cover Page</SelectItem>
                       {coverTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name} {template.isDefault && '★'}

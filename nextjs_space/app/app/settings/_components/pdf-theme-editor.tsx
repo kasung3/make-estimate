@@ -26,28 +26,29 @@ import { PdfThemeConfig, PdfThemeType } from '@/lib/types';
 interface PdfThemeEditorProps {
   companyName: string;
   selectedThemeId?: string;
+  themeLimit?: number | null;
 }
 
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
   header: {
-    borderColor: '#0891b2',
-    titleColor: '#0891b2',
+    borderColor: '#7c3aed',
+    titleColor: '#7c3aed',
     subtitleColor: '#666666',
   },
   categoryHeader: {
-    backgroundPrimary: '#0891b2',
-    backgroundSecondary: '#14b8a6',
+    backgroundPrimary: '#7c3aed',
+    backgroundSecondary: '#8b5cf6',
     textColor: '#ffffff',
   },
   table: {
-    headerBackground: '#f9fafb',
+    headerBackground: '#f5f3ff',
     headerTextColor: '#6b7280',
     borderColor: '#e5e7eb',
     bodyTextColor: '#333333',
   },
   subtotalRow: {
-    background: '#f0fdfa',
-    borderColor: '#14b8a6',
+    background: '#f5f3ff',
+    borderColor: '#8b5cf6',
     textColor: '#333333',
   },
   noteRow: {
@@ -55,7 +56,7 @@ const getDefaultThemeConfig = (): PdfThemeConfig => ({
     textColor: '#92400e',
   },
   totals: {
-    finalTotalBackground: '#0891b2',
+    finalTotalBackground: '#7c3aed',
     finalTotalTextColor: '#ffffff',
   },
 });
@@ -263,7 +264,7 @@ function ThemePreview({ config }: { config: PdfThemeConfig }) {
   );
 }
 
-export function PdfThemeEditor({ companyName, selectedThemeId }: PdfThemeEditorProps) {
+export function PdfThemeEditor({ companyName, selectedThemeId, themeLimit }: PdfThemeEditorProps) {
   const [themes, setThemes] = useState<PdfThemeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -272,6 +273,8 @@ export function PdfThemeEditor({ companyName, selectedThemeId }: PdfThemeEditorP
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
+
+  const canCreateTheme = themeLimit == null || themes.length < themeLimit;
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -409,7 +412,7 @@ export function PdfThemeEditor({ companyName, selectedThemeId }: PdfThemeEditorP
           <h3 className="text-lg font-medium">PDF Color Themes</h3>
           <p className="text-sm text-gray-500">Customize colors and shading for BOQ pages</p>
         </div>
-        <Button onClick={handleCreateTheme}>
+        <Button onClick={handleCreateTheme} disabled={!canCreateTheme}>
           <Plus className="w-4 h-4 mr-2" />
           New Theme
         </Button>

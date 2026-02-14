@@ -205,7 +205,7 @@ function PricingContent() {
     if (billingCycle !== 'annual' || !plan.priceAnnualUsdCents) return null;
     const savings = calculateSavings(plan.priceMonthlyUsdCents, plan.priceAnnualUsdCents);
     return {
-      amount: formatPrice(savings.amount * 100), // Convert back to cents for formatPrice
+      amount: formatPrice(savings.amount), // savings.amount is already in cents
       percent: savings.percent,
     };
   };

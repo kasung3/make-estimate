@@ -62,6 +62,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 interface CoverTemplateEditorProps {
   companyName: string;
   selectedTemplateId?: string;
+  templateLimit?: number | null;
 }
 
 const ELEMENT_TYPE_LABELS: Record<CoverElement['type'], string> = {
@@ -97,7 +98,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
       id: 'project_name',
       type: 'project_name',
       enabled: true,
-      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 },
+      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 },
     },
     {
       id: 'subtitle',
@@ -658,7 +659,7 @@ function CoverPreview({
   );
 }
 
-export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTemplateEditorProps) {
+export function CoverTemplateEditor({ companyName, selectedTemplateId, templateLimit }: CoverTemplateEditorProps) {
   const [templates, setTemplates] = useState<PdfCoverTemplateType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -668,6 +669,8 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTe
   const [showEditor, setShowEditor] = useState(false);
   const [logoUploadAllowed, setLogoUploadAllowed] = useState(true);
   const [autoOpened, setAutoOpened] = useState(false);
+
+  const canCreateTemplate = templateLimit == null || templates.length < templateLimit;
   // Preview is always shown (no toggle needed)
 
   const sensors = useSensors(
@@ -824,7 +827,7 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTe
     
     switch (type) {
       case 'project_name':
-        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 };
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 };
         break;
       case 'subtitle':
         text = 'Bill of Quantities';
@@ -886,9 +889,9 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTe
           <h3 className="text-lg font-medium">PDF Cover Templates</h3>
           <p className="text-sm text-gray-500">Customize the cover page for your BOQ PDFs</p>
         </div>
-        <Button onClick={handleCreateTemplate}>
+        <Button onClick={handleCreateTemplate} disabled={!canCreateTemplate}>
           <Plus className="w-4 h-4 mr-2" />
-          New Template
+          New Cover Template
         </Button>
       </div>
 
@@ -950,7 +953,7 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId }: CoverTe
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-            <DialogTitle>{editingTemplate ? 'Edit Template' : 'New Template'}</DialogTitle>
+            <DialogTitle>{editingTemplate ? 'Edit Cover Template' : 'New Cover Template'}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 flex">

@@ -20,6 +20,8 @@ import { FileText, Loader2, Check, CreditCard, Globe, Phone } from 'lucide-react
 import toast from 'react-hot-toast';
 import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
 import { COUNTRIES, getCountryByCode } from '@/lib/countries';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const PLANS: Record<string, { name: string; price: string; features: string[]; isFree?: boolean }> = {
   free: {
@@ -52,8 +54,7 @@ function RegisterForm() {
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [country, setCountry] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phone, setPhone] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const router = useRouter();
@@ -63,23 +64,8 @@ function RegisterForm() {
   const selectedPlan = searchParams?.get('plan') || null;
   const planInfo = selectedPlan ? PLANS[selectedPlan] : null;
 
-  // Update phone code when country changes
-  useEffect(() => {
-    if (country) {
-      const countryData = getCountryByCode(country);
-      if (countryData) {
-        setPhoneCode(countryData.phoneCode);
-      }
-    }
-  }, [country]);
-
-  // Combined full phone number for submission
-  const fullPhoneNumber = useMemo(() => {
-    if (phoneCode && phoneNumber) {
-      return `${phoneCode}${phoneNumber}`;
-    }
-    return phoneNumber || '';
-  }, [phoneCode, phoneNumber]);
+  // Phone number is already E.164 formatted from react-phone-number-input
+  const fullPhoneNumber = phone || '';
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -360,25 +346,15 @@ function RegisterForm() {
                     <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                     Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
                   </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="phoneCode"
-                      type="text"
-                      value={phoneCode}
-                      onChange={(e) => setPhoneCode(e.target.value)}
-                      placeholder="+1"
-                      className="w-20 text-center"
-                      readOnly={!!country}
-                    />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="Phone number"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="flex-1"
-                    />
-                  </div>
+                  <PhoneInput
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="US"
+                    value={phone}
+                    onChange={setPhone}
+                    placeholder="Enter phone number"
+                    className="phone-input-custom"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>

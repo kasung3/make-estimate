@@ -1,15 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<svg xmlns="https://freesvg.org/img/Gradient-2.png" viewBox="0 0 256 256">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c4b5fd;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect width="256" height="256" fill="white"/>
-  <path d="M60 80 L60 176 L75 176 L75 135 L95 176 L110 176 L110 135 L130 176 L145 176 L145 80 L130 80 L130 135 L110 95 L95 95 L95 135 L75 95 L60 95 Z" fill="url(#grad)"/>
-  <path d="M165 80 L165 95 L210 95 L210 110 L180 110 L180 125 L210 125 L210 140 L180 140 L180 155 L210 155 L210 176 L165 176 L165 80 Z" fill="url(#grad)"/>
-  <rect x="50" y="190" width="156" height="8" fill="url(#grad)" opacity="0.3"/>
-  <rect x="60" y="202" width="40" height="4" fill="url(#grad)" opacity="0.3"/>
-  <rect x="110" y="202" width="60" height="4" fill="url(#grad)" opacity="0.3"/>
-  <rect x="180" y="202" width="26" height="4" fill="url(#grad)" opacity="0.3"/>
+  <rect width="256" height="256" rx="48" fill="url(#grad)"/>
+  <!-- Document icon -->
+  <rect x="70" y="40" width="116" height="150" rx="12" fill="white" opacity="0.95"/>
+  <!-- Document fold -->
+  <path d="M156 40 L186 70 L156 70 Z" fill="white" opacity="0.7"/>
+  <!-- Lines representing BOQ content -->
+  <rect x="90" y="85" width="76" height="8" rx="4" fill="#a855f7" opacity="0.8"/>
+  <rect x="90" y="105" width="56" height="6" rx="3" fill="#c4b5fd" opacity="0.7"/>
+  <rect x="90" y="120" width="66" height="6" rx="3" fill="#c4b5fd" opacity="0.7"/>
+  <rect x="90" y="145" width="76" height="8" rx="4" fill="#a855f7" opacity="0.8"/>
+  <rect x="90" y="165" width="50" height="6" rx="3" fill="#c4b5fd" opacity="0.7"/>
+  <!-- Bottom accent bar -->
+  <rect x="50" y="205" width="156" height="12" rx="6" fill="white" opacity="0.3"/>
 </svg>

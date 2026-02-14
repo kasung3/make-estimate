@@ -272,35 +272,114 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Hero visual placeholder */}
+          {/* BOQ Preview Card */}
           <motion.div
-            className="mt-16 max-w-4xl mx-auto"
+            className="mt-16 max-w-5xl mx-auto"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="relative bg-white rounded-3xl shadow-xl border border-purple-100/50 p-4 sm:p-6">
-              <div className="aspect-video bg-gradient-to-br from-purple-50 to-lavender-50 rounded-2xl flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-                    <FileText className="w-10 h-10 text-white" />
+            <div className="relative bg-white rounded-3xl shadow-2xl border border-purple-100/50 overflow-hidden group hover:shadow-purple-200/50 transition-all duration-500">
+              {/* Shimmer effect overlay */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none motion-safe:block motion-reduce:hidden" />
+              
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-500 to-lavender-500 px-4 sm:px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">Villa Construction - Phase 1</h3>
+                      <p className="text-white/70 text-sm">Acme Builders Ltd.</p>
+                    </div>
                   </div>
-                  <p className="mt-4 text-muted-foreground font-medium">Your Professional BOQ Dashboard</p>
-                  <div className="mt-6 flex justify-center gap-3 flex-wrap">
-                    {['Categories', 'Items', 'Totals', 'PDF Export'].map((label, i) => (
-                      <div
-                        key={label}
-                        className={cn(
-                          'px-4 py-2 rounded-xl text-sm font-medium',
-                          i === 0 && 'bg-purple-100 text-purple-700',
-                          i === 1 && 'bg-lavender-100 text-lavender-600',
-                          i === 2 && 'bg-emerald-100 text-emerald-700',
-                          i === 3 && 'bg-blue-100 text-blue-700'
-                        )}
-                      >
-                        {label}
-                      </div>
-                    ))}
+                  <div className="hidden sm:flex items-center gap-2">
+                    <span className="px-3 py-1 bg-white/20 rounded-lg text-white text-xs font-medium">Draft</span>
+                    <span className="px-3 py-1 bg-emerald-400/30 rounded-lg text-white text-xs font-medium">$125,450.00</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* BOQ Table Preview */}
+              <div className="p-4 sm:p-6 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-purple-100">
+                      <th className="text-left py-3 px-2 text-purple-600 font-semibold w-16">Item No</th>
+                      <th className="text-left py-3 px-2 text-purple-600 font-semibold">Description</th>
+                      <th className="text-center py-3 px-2 text-purple-600 font-semibold w-16">Unit</th>
+                      <th className="text-right py-3 px-2 text-purple-600 font-semibold w-20">Qty</th>
+                      <th className="text-right py-3 px-2 text-purple-600 font-semibold w-24">Rate</th>
+                      <th className="text-right py-3 px-2 text-purple-600 font-semibold w-28">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Category 1 */}
+                    <tr className="bg-gradient-to-r from-purple-50 to-lavender-50">
+                      <td colSpan={6} className="py-3 px-2 font-semibold text-purple-700">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className="w-4 h-4" />
+                          Foundation Works
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b border-purple-50 hover:bg-purple-50/30 transition-colors">
+                      <td className="py-2.5 px-2 text-gray-500">1.1</td>
+                      <td className="py-2.5 px-2 text-gray-700">Excavation for foundation</td>
+                      <td className="py-2.5 px-2 text-center text-gray-500">m³</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">150</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">$45.00</td>
+                      <td className="py-2.5 px-2 text-right font-medium text-gray-800">$6,750.00</td>
+                    </tr>
+                    <tr className="border-b border-purple-50 hover:bg-purple-50/30 transition-colors">
+                      <td className="py-2.5 px-2 text-gray-500">1.2</td>
+                      <td className="py-2.5 px-2 text-gray-700">Reinforced concrete footing</td>
+                      <td className="py-2.5 px-2 text-center text-gray-500">m³</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">80</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">$320.00</td>
+                      <td className="py-2.5 px-2 text-right font-medium text-gray-800">$25,600.00</td>
+                    </tr>
+                    
+                    {/* Category 2 */}
+                    <tr className="bg-gradient-to-r from-purple-50 to-lavender-50">
+                      <td colSpan={6} className="py-3 px-2 font-semibold text-purple-700">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className="w-4 h-4" />
+                          Structural Works
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b border-purple-50 hover:bg-purple-50/30 transition-colors">
+                      <td className="py-2.5 px-2 text-gray-500">2.1</td>
+                      <td className="py-2.5 px-2 text-gray-700">Steel reinforcement bars</td>
+                      <td className="py-2.5 px-2 text-center text-gray-500">kg</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">5,200</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">$1.85</td>
+                      <td className="py-2.5 px-2 text-right font-medium text-gray-800">$9,620.00</td>
+                    </tr>
+                    <tr className="border-b border-purple-50 hover:bg-purple-50/30 transition-colors">
+                      <td className="py-2.5 px-2 text-gray-500">2.2</td>
+                      <td className="py-2.5 px-2 text-gray-700">Concrete columns and beams</td>
+                      <td className="py-2.5 px-2 text-center text-gray-500">m³</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">120</td>
+                      <td className="py-2.5 px-2 text-right text-gray-700">$380.00</td>
+                      <td className="py-2.5 px-2 text-right font-medium text-gray-800">$45,600.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                {/* Summary Footer */}
+                <div className="mt-4 pt-4 border-t-2 border-purple-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium">2 Categories</span>
+                    <span className="px-3 py-1.5 bg-lavender-100 text-lavender-600 rounded-lg text-xs font-medium">4 Items</span>
+                    <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">Auto-calculated</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Subtotal</p>
+                    <p className="text-xl font-bold gradient-text">$87,570.00</p>
                   </div>
                 </div>
               </div>

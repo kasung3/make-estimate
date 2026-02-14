@@ -181,6 +181,8 @@ model Boq {
   vatEnabled      Boolean           @default(false)
   vatPercent      Float             @default(18)
   status          String            @default("draft")
+  isPreset        Boolean           @default(false)
+  presetName      String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -193,6 +195,7 @@ model Boq {
   @@index([companyId, updatedAt(sort: Desc)]) // Recent BOQs list (most common query)
   @@index([companyId, projectName]) // BOQ search by project name
   @@index([customerId]) // BOQs for a specific customer
+  @@index([companyId, isPreset]) // Presets list
 }
 
 model BoqCategory {
@@ -253,6 +256,7 @@ model BillingPlan {
   boqItemsLimit        Int? // null = unlimited, max items per BOQ
   boqTemplatesLimit    Int? // null = unlimited
   coverTemplatesLimit  Int? // null = unlimited
+  boqPresetsLimit      Int? // null = unlimited, number of BOQ presets allowed
   logoUploadAllowed    Boolean                   @default(false)
   sharingAllowed       Boolean                   @default(false) // Only Business
   watermarkEnabled     Boolean                   @default(false) // Add watermark to PDFs

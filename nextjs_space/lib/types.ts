@@ -30,6 +30,7 @@ export interface BillingStatus {
   // Template limits
   boqTemplatesLimit?: number | null;
   coverTemplatesLimit?: number | null;
+  boqPresetsLimit?: number | null;
   logoUploadAllowed?: boolean;
   sharingAllowed?: boolean;
   // Free plan specific
@@ -49,6 +50,7 @@ export interface BillingPlanInfo {
   boqItemsLimit: number | null;        // Max items per BOQ (null = unlimited)
   boqTemplatesLimit: number | null;
   coverTemplatesLimit: number | null;
+  boqPresetsLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
   watermarkEnabled: boolean;           // Whether PDFs have watermark

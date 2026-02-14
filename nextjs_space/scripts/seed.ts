@@ -22,8 +22,9 @@ async function main() {
       seatModel: 'single',
       boqLimitPerPeriod: null,       // Unlimited BOQs
       boqItemsLimit: 15,             // Max 15 items per BOQ
-      boqTemplatesLimit: 1,          // 1 BOQ template
+      boqTemplatesLimit: 1,          // 1 BOQ theme
       coverTemplatesLimit: 1,        // 1 cover template
+      boqPresetsLimit: 1,            // 1 BOQ preset
       logoUploadAllowed: false,      // No logo upload
       sharingAllowed: false,
       watermarkEnabled: true,        // Watermark on PDFs
@@ -33,8 +34,9 @@ async function main() {
         'Unlimited BOQ creations',
         '15 items per BOQ',
         'Single user',
-        '1 BOQ template',
+        '1 BOQ theme',
         '1 cover page template',
+        '1 BOQ preset',
         'PDF exports with watermark',
         'Customer management',
       ],
@@ -56,6 +58,7 @@ async function main() {
       boqItemsLimit: 15,
       boqTemplatesLimit: 1,
       coverTemplatesLimit: 1,
+      boqPresetsLimit: 1,
       logoUploadAllowed: false,
       sharingAllowed: false,
       watermarkEnabled: true,
@@ -65,8 +68,9 @@ async function main() {
         'Unlimited BOQ creations',
         '15 items per BOQ',
         'Single user',
-        '1 BOQ template',
+        '1 BOQ theme',
         '1 cover page template',
+        '1 BOQ preset',
         'PDF exports with watermark',
         'Customer management',
       ],
@@ -85,20 +89,22 @@ async function main() {
       priceMonthlyUsdCents: 1900,    // $19/month
       priceAnnualUsdCents: 19900,    // $199/year (saves $29)
       seatModel: 'single',
-      boqLimitPerPeriod: 5,          // 5 BOQs per period
+      boqLimitPerPeriod: 10,         // 10 BOQs per month
       boqItemsLimit: null,           // Unlimited items per BOQ
-      boqTemplatesLimit: 2,          // 2 BOQ templates
+      boqTemplatesLimit: 2,          // 2 BOQ themes
       coverTemplatesLimit: 2,        // 2 cover templates
+      boqPresetsLimit: null,         // Unlimited presets
       logoUploadAllowed: true,
       sharingAllowed: false,
       watermarkEnabled: false,       // No watermark
       watermarkText: null,
       maxActiveMembers: 1,
       features: [
-        '5 BOQ creations per month',
+        '10 BOQ creations per month',
         'Single user',
-        '2 BOQ templates',
+        '2 BOQ themes',
         '2 cover page templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'PDF exports',
         'Customer management',
@@ -113,20 +119,22 @@ async function main() {
       priceMonthlyUsdCents: 1900,
       priceAnnualUsdCents: 19900,
       seatModel: 'single',
-      boqLimitPerPeriod: 5,
+      boqLimitPerPeriod: 10,
       boqItemsLimit: null,
       boqTemplatesLimit: 2,
       coverTemplatesLimit: 2,
+      boqPresetsLimit: null,
       logoUploadAllowed: true,
       sharingAllowed: false,
       watermarkEnabled: false,
       watermarkText: null,
       maxActiveMembers: 1,
       features: [
-        '5 BOQ creations per month',
+        '10 BOQ creations per month',
         'Single user',
-        '2 BOQ templates',
+        '2 BOQ themes',
         '2 cover page templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'PDF exports',
         'Customer management',
@@ -148,8 +156,9 @@ async function main() {
       seatModel: 'single',
       boqLimitPerPeriod: null,       // Unlimited BOQs
       boqItemsLimit: null,           // Unlimited items per BOQ
-      boqTemplatesLimit: 10,         // 10 BOQ templates
+      boqTemplatesLimit: 10,         // 10 BOQ themes
       coverTemplatesLimit: 10,       // 10 cover templates
+      boqPresetsLimit: null,         // Unlimited presets
       logoUploadAllowed: true,
       sharingAllowed: false,
       watermarkEnabled: false,
@@ -158,8 +167,9 @@ async function main() {
       features: [
         'Unlimited BOQ creations',
         'Single user',
-        '10 BOQ templates',
+        '10 BOQ themes',
         '10 cover page templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'PDF exports',
         'Customer management',
@@ -179,6 +189,7 @@ async function main() {
       boqItemsLimit: null,
       boqTemplatesLimit: 10,
       coverTemplatesLimit: 10,
+      boqPresetsLimit: null,
       logoUploadAllowed: true,
       sharingAllowed: false,
       watermarkEnabled: false,
@@ -187,8 +198,9 @@ async function main() {
       features: [
         'Unlimited BOQ creations',
         'Single user',
-        '10 BOQ templates',
+        '10 BOQ themes',
         '10 cover page templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'PDF exports',
         'Customer management',
@@ -211,8 +223,9 @@ async function main() {
       seatModel: 'per_seat',
       boqLimitPerPeriod: null,       // Unlimited BOQs
       boqItemsLimit: null,           // Unlimited items per BOQ
-      boqTemplatesLimit: null,       // Unlimited templates
+      boqTemplatesLimit: null,       // Unlimited themes
       coverTemplatesLimit: null,     // Unlimited cover templates
+      boqPresetsLimit: null,         // Unlimited presets
       logoUploadAllowed: true,
       sharingAllowed: true,          // Only Business has sharing
       watermarkEnabled: false,
@@ -221,8 +234,9 @@ async function main() {
       features: [
         'Unlimited BOQ creations',
         'Unlimited team members',
-        'Unlimited BOQ templates',
+        'Unlimited BOQ themes',
         'Unlimited cover templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'Team collaboration & sharing',
         'PDF exports',
@@ -243,6 +257,7 @@ async function main() {
       boqItemsLimit: null,
       boqTemplatesLimit: null,
       coverTemplatesLimit: null,
+      boqPresetsLimit: null,
       logoUploadAllowed: true,
       sharingAllowed: true,
       watermarkEnabled: false,
@@ -251,8 +266,9 @@ async function main() {
       features: [
         'Unlimited BOQ creations',
         'Unlimited team members',
-        'Unlimited BOQ templates',
+        'Unlimited BOQ themes',
         'Unlimited cover templates',
+        'Unlimited BOQ presets',
         'Upload own logo',
         'Team collaboration & sharing',
         'PDF exports',

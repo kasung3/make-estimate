@@ -948,6 +948,10 @@ export function BoqEditorClient({
   // Mobile UI state
   const [mobileTotalsExpanded, setMobileTotalsExpanded] = useState(false);
   const [showMobileQuickAdd, setShowMobileQuickAdd] = useState(false);
+  const [showSaveAsPreset, setShowSaveAsPreset] = useState(false);
+  const [savePresetName, setSavePresetName] = useState('');
+  const [savePresetQuantities, setSavePresetQuantities] = useState(false);
+  const [savingPreset, setSavingPreset] = useState(false);
 
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
@@ -1838,6 +1842,24 @@ export function BoqEditorClient({
     }
   };
 
+  const handleSaveAsPreset = async () => {
+    if (!savePresetName.trim() || !boq) return;
+    setSavingPreset(true);
+    try {
+      const res = await fetch('/api/presets/from-boq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boqId: boq.id, presetName: savePresetName.trim(), saveQuantities: savePresetQuantities }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data?.error || 'Failed to save preset'); return; }
+      toast.success('BOQ saved as preset!');
+      setShowSaveAsPreset(false);
+      setSavePresetName('');
+      setSavePresetQuantities(false);
+    } catch { toast.error('An error occurred'); } finally { setSavingPreset(false); }
+  };
+
   const handleExportPdf = async () => {
     setExportingPdf(true);
     let toastId: string | undefined;
@@ -2239,6 +2261,12 @@ export function BoqEditorClient({
                 )}
                 Export PDF
               </Button>
+              {!boq?.isPreset && (
+                <Button variant="outline" onClick={() => { setSavePresetName(boq?.projectName || ''); setShowSaveAsPreset(true); }} className="hidden md:flex">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Save as Preset
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -2736,6 +2764,33 @@ export function BoqEditorClient({
                 Cancel
               </Button>
               <Button onClick={saveEditItemDialog}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Save as Preset Dialog */}
+        <Dialog open={showSaveAsPreset} onOpenChange={setShowSaveAsPreset}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Save as BOQ Preset</DialogTitle>
+              <DialogDescription>Create a reusable preset from this BOQ. All items, units, costs, and markups will be saved.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="presetName">Preset Name</Label>
+                <Input id="presetName" placeholder="Enter preset name" value={savePresetName} onChange={(e) => setSavePresetName(e.target.value)} />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={savePresetQuantities} onCheckedChange={setSavePresetQuantities} />
+                <Label className="text-sm">Save quantities (otherwise set to 0)</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSaveAsPreset(false)}>Cancel</Button>
+              <Button onClick={handleSaveAsPreset} disabled={savingPreset || !savePresetName.trim()}>
+                {savingPreset && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Save Preset
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

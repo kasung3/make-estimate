@@ -20,6 +20,7 @@ export interface BillingStatus {
   // Template limits
   boqTemplatesLimit: number | null;
   coverTemplatesLimit: number | null;
+  boqPresetsLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
   // Free plan specific
@@ -162,6 +163,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessSource: 'admin_override',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
       boqItemsLimit: plan?.boqItemsLimit ?? null,
@@ -202,6 +204,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessSource: 'grant',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
       boqItemsLimit: plan?.boqItemsLimit ?? null,
@@ -238,6 +241,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessSource: 'free_plan',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? false,
       sharingAllowed: plan?.sharingAllowed ?? false,
       boqItemsLimit: plan?.boqItemsLimit ?? null,
@@ -267,6 +271,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       accessSource: null,
       boqTemplatesLimit: null,
       coverTemplatesLimit: null,
+      boqPresetsLimit: null,
       logoUploadAllowed: false,
       sharingAllowed: false,
       boqItemsLimit: null,
@@ -327,6 +332,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     accessSource: 'subscription',
     boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
     coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
     logoUploadAllowed: plan?.logoUploadAllowed ?? true,
     sharingAllowed: plan?.sharingAllowed ?? true,
     boqItemsLimit: plan?.boqItemsLimit ?? null,

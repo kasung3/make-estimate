@@ -352,7 +352,7 @@ function PricingContent() {
                     {/* Plan Description */}
                     <p className="mt-4 text-sm text-muted-foreground">
                       {plan.boqLimitPerPeriod 
-                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per period`
+                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per month`
                         : 'Unlimited BOQ creations'}
                       {plan.seatModel === 'per_seat' && (
                         <span className="block mt-1 text-purple-600 font-medium">
@@ -439,7 +439,7 @@ function PricingContent() {
                     <tr>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Creations</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">5 / period</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">10 / month</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">Unlimited</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
@@ -451,6 +451,13 @@ function PricingContent() {
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Presets</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center font-medium">Unlimited</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">Unlimited</td>
+                    </tr>
+                    <tr>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Team Members</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
@@ -458,7 +465,7 @@ function PricingContent() {
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Templates</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Themes</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">2</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">10</td>

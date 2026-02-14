@@ -26,7 +26,7 @@ export default async function TemplatesPage() {
     redirect('/pricing?subscription=required');
   }
 
-  // Fetch BOQ templates (pdf themes)
+  // Fetch BOQ themes (pdf themes)
   const boqTemplates = await prisma.pdfTheme.findMany({
     where: { companyId },
     orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
@@ -38,18 +38,37 @@ export default async function TemplatesPage() {
     orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
   });
 
+  // Fetch BOQ presets
+  const boqPresets = await prisma.boq.findMany({
+    where: { companyId, isPreset: true },
+    include: {
+      categories: {
+        include: { items: true },
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
+    orderBy: { updatedAt: 'desc' },
+  });
+
   // Fetch company
   const company = await prisma.company.findUnique({
     where: { id: companyId },
-    select: {
-      name: true,
-    },
+    select: { name: true },
+  });
+
+  // Fetch customers for preset->BOQ flow
+  const customers = await prisma.customer.findMany({
+    where: { companyId },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
   });
 
   return (
     <TemplatesClient 
       boqTemplates={JSON.parse(JSON.stringify(boqTemplates ?? []))}
       coverTemplates={JSON.parse(JSON.stringify(coverTemplates ?? []))}
+      boqPresets={JSON.parse(JSON.stringify(boqPresets ?? []))}
+      customers={JSON.parse(JSON.stringify(customers ?? []))}
       billingStatus={JSON.parse(JSON.stringify(billingStatus))}
       companyName={company?.name ?? 'Company'}
     />

@@ -61,12 +61,12 @@ export async function GET() {
     // Monthly revenue from invoices
     const invoices = await prisma.billingInvoice.findMany({
       where: { status: 'paid' },
-      select: { amountCents: true, createdAt: true },
+      select: { amountPaid: true, createdAt: true },
       orderBy: { createdAt: 'asc' },
     });
 
     // Total revenue
-    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.amountCents, 0);
+    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.amountPaid, 0);
 
     // Monthly revenue breakdown (last 12 months)
     const monthlyRevenue: { month: string; revenue: number }[] = [];
@@ -76,7 +76,7 @@ export async function GET() {
       const monthInvoices = invoices.filter(
         (inv) => inv.createdAt >= monthStart && inv.createdAt < monthEnd
       );
-      const revenue = monthInvoices.reduce((sum, inv) => sum + inv.amountCents, 0);
+      const revenue = monthInvoices.reduce((sum, inv) => sum + inv.amountPaid, 0);
       monthlyRevenue.push({
         month: format(monthStart, 'MMM yyyy'),
         revenue: revenue / 100,
@@ -142,13 +142,13 @@ export async function GET() {
     const thisMonthStart = startOfMonth(now);
     const thisMonthRevenue = invoices
       .filter((inv) => inv.createdAt >= thisMonthStart)
-      .reduce((sum, inv) => sum + inv.amountCents, 0) / 100;
+      .reduce((sum, inv) => sum + inv.amountPaid, 0) / 100;
 
     // Last month's revenue
     const lastMonthStart = startOfMonth(subMonths(now, 1));
     const lastMonthRevenue = invoices
       .filter((inv) => inv.createdAt >= lastMonthStart && inv.createdAt < thisMonthStart)
-      .reduce((sum, inv) => sum + inv.amountCents, 0) / 100;
+      .reduce((sum, inv) => sum + inv.amountPaid, 0) / 100;
 
     return NextResponse.json({
       overview: {

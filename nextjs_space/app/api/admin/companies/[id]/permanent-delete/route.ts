@@ -78,8 +78,8 @@ export async function DELETE(
 
       // Delete billing data
       if (company.billing) {
-        await tx.billingInvoice.deleteMany({ where: { billingId: company.billing.id } });
-        await tx.couponRedemption.deleteMany({ where: { billingId: company.billing.id } });
+        await tx.billingInvoice.deleteMany({ where: { companyBillingId: company.billing.id } });
+        await tx.couponRedemption.deleteMany({ where: { companyBillingId: company.billing.id } });
         await tx.companyBilling.delete({ where: { companyId: id } });
       }
 
@@ -91,8 +91,6 @@ export async function DELETE(
       for (const userId of memberUserIds) {
         const otherMemberships = await tx.companyMembership.count({ where: { userId } });
         if (otherMemberships === 0) {
-          await tx.account.deleteMany({ where: { userId } });
-          await tx.session.deleteMany({ where: { userId } });
           await tx.user.delete({ where: { id: userId } });
         }
       }

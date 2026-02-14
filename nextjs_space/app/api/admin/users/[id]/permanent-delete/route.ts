@@ -41,10 +41,6 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       // Delete all memberships
       await tx.companyMembership.deleteMany({ where: { userId: id } });
-      // Delete accounts (NextAuth)
-      await tx.account.deleteMany({ where: { userId: id } });
-      // Delete sessions
-      await tx.session.deleteMany({ where: { userId: id } });
       // Delete the user
       await tx.user.delete({ where: { id } });
     });

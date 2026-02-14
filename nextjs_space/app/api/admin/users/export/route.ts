@@ -25,7 +25,7 @@ export async function GET() {
                   include: {
                     invoices: {
                       where: { status: 'paid' },
-                      select: { amountCents: true },
+                      select: { amountPaid: true },
                     },
                   },
                 },
@@ -43,7 +43,7 @@ export async function GET() {
     for (const user of users) {
       const company = user.memberships[0]?.company;
       const billing = company?.billing;
-      const totalPaid = billing?.invoices?.reduce((sum: number, inv: any) => sum + inv.amountCents, 0) || 0;
+      const totalPaid = billing?.invoices?.reduce((sum: number, inv: any) => sum + inv.amountPaid, 0) || 0;
       const effectivePlan = billing?.overridePlan || billing?.planKey || 'Free';
       const status = user.isBlocked ? 'Blocked' : 'Active';
       const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || '';

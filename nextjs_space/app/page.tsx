@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { metaTrack, trackButtonClick } from '@/lib/meta-pixel';
+import { gaEvent } from '@/components/google-analytics';
 
 // ====== FEATURES DATA ======
 const features = [
@@ -204,6 +205,7 @@ export default function HomePage() {
   const handleStartFree = useCallback((source: string) => {
     metaTrack('Lead', { content_name: 'StartFree', source });
     trackButtonClick(`StartFree_${source}`, 'home');
+    gaEvent('generate_lead', { content_name: 'StartFree', source });
     router.push('/register');
   }, [router]);
 

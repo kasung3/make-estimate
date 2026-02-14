@@ -19,6 +19,7 @@ import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2, Check, CreditCard, Globe, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrack, metaTrackCustom, trackButtonClick, trackFreePlanRegister, acquireEventLock } from '@/lib/meta-pixel';
+import { gaEvent } from '@/components/google-analytics';
 import { COUNTRIES, getCountryByCode } from '@/lib/countries';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -202,6 +203,7 @@ function RegisterForm() {
 
       // Track successful registration (no PII)
       metaTrack('CompleteRegistration', { method: 'email' });
+      gaEvent('sign_up', { method: 'email', plan: selectedPlan || 'free' });
 
       toast.success('Account created successfully!');
 

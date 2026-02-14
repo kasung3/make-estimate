@@ -12,6 +12,7 @@ import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trackButtonClick } from '@/lib/meta-pixel';
+import { gaEvent } from '@/components/google-analytics';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -53,6 +54,7 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     trackButtonClick('Login', 'login');
+    gaEvent('login', { method: 'email' });
     setLoading(true);
 
     try {

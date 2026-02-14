@@ -35,10 +35,8 @@ const userNavigation = [
 
 // Admin-only navigation (platform management)
 const adminNavigation = [
-  { name: 'Overview', href: '/app/glorand', icon: BarChart3 },
-  { name: 'Users', href: '/app/glorand?tab=users', icon: Users },
-  { name: 'Companies', href: '/app/glorand?tab=companies', icon: Building2 },
-  { name: 'Coupons', href: '/app/glorand?tab=coupons', icon: Ticket },
+  { name: 'Dashboard', href: '/app/glorand', icon: BarChart3 },
+  { name: 'Overview', href: '/app/glorand?tab=users', icon: Shield },
 ];
 
 export function Sidebar() {
@@ -118,7 +116,7 @@ export function Sidebar() {
           if (isAdminTabLink) {
             isActive = pathname === '/app/glorand' && currentTab === itemTab;
           } else if (item.href === '/app/glorand') {
-            isActive = pathname === '/app/glorand' && (!currentTab || currentTab === 'users');
+            isActive = pathname === '/app/glorand' && !currentTab;
           } else {
             isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/');
           }

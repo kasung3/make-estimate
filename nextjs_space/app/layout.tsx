@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
 import { MetaPixelProvider } from '@/components/meta-pixel-provider';
+import { GoogleAnalyticsProvider, GoogleTagManagerNoScript } from '@/components/google-analytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -55,6 +56,8 @@ export default function RootLayout({
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js" />
       </head>
       <body className={inter.className}>
+        <GoogleTagManagerNoScript />
+        <GoogleAnalyticsProvider />
         <AuthProvider>
           <Suspense fallback={null}>
             <MetaPixelProvider>{children}</MetaPixelProvider>

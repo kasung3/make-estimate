@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://makeestimate.com';
+const ogImageUrl = `${siteUrl}/og/og-makeestimate.png`;
+
 export const metadata: Metadata = {
   title: 'MakeEstimate — Fast BOQs, Professional PDFs',
   description: 'Create professional Bills of Quantities in minutes. No Excel, no spreadsheets — just fast estimation with clean PDF exports.',
@@ -22,10 +25,10 @@ export const metadata: Metadata = {
     siteName: 'MakeEstimate',
     title: 'Create BOQs in Minutes | MakeEstimate',
     description: 'Fast BOQs, professional PDFs—no Excel. Create professional Bills of Quantities in minutes with clean PDF exports.',
-    url: process.env.SITE_URL || 'https://makeestimate.com',
+    url: siteUrl,
     images: [
       {
-        url: '/og/og-makeestimate.png',
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: 'MakeEstimate - Create BOQs in Minutes',
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Create BOQs in Minutes | MakeEstimate',
     description: 'Fast BOQs, professional PDFs—no Excel. Create professional Bills of Quantities in minutes.',
-    images: ['/og/og-makeestimate.png'],
+    images: [ogImageUrl],
   },
   metadataBase: new URL(process.env.SITE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'),
 };

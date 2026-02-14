@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { BillingPlanInfo } from '@/lib/types';
-import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
+import { metaTrack, metaTrackCustom, acquireEventLock } from '@/lib/meta-pixel';
 
 type BillingCycle = 'monthly' | 'annual';
 
@@ -44,7 +44,7 @@ function PricingContent() {
   const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
   const trialEnded = searchParams?.get('trial') === 'ended';
 
-  const viewContentTracked = useRef(false);
+
 
   // Fetch plans from API
   useEffect(() => {
@@ -64,10 +64,9 @@ function PricingContent() {
     fetchPlans();
   }, []);
 
-  // Track ViewContent on pricing page (dedupe)
+  // Track ViewContent on pricing page (session-level dedupe)
   useEffect(() => {
-    if (!viewContentTracked.current) {
-      viewContentTracked.current = true;
+    if (acquireEventLock('ViewContent:pricing')) {
       metaTrack('ViewContent', { content_name: 'Pricing', content_category: 'pricing' });
     }
   }, []);

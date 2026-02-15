@@ -161,6 +161,17 @@ function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!country) {
+      toast.error('Please select your country');
+      return;
+    }
+    if (!fullPhoneNumber || fullPhoneNumber.length < 6) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
     trackButtonClick('CreateAccount', 'register', { plan: selectedPlan || 'none' });
     setLoading(true);
 
@@ -367,7 +378,7 @@ function RegisterForm() {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                    Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
+                    Phone Number
                   </Label>
                   <PhoneInput
                     international

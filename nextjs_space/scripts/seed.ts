@@ -297,6 +297,11 @@ async function main() {
       email: 'john@doe.com',
       password: hashedPassword,
       name: 'John Doe',
+      firstName: 'John',
+      lastName: 'Doe',
+      phone: '+94771234567',
+      phoneDigits: '94771234567',
+      country: 'LK',
     },
   });
 

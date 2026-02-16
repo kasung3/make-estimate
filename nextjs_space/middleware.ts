@@ -1,6 +1,36 @@
-import { withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
-import type { NextRequestWithAuth } from 'next-auth/middleware';
+import { withAuth, NextRequestWithAuth } from 'next-auth/middleware';
+import { NextResponse, NextRequest } from 'next/server';
+
+// Security headers applied to all responses
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect.facebook.net",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com https://www.facebook.com",
+    "font-src 'self' data:",
+    "connect-src 'self' https://i.ytimg.com/vi/ul45AXxEZb8/maxresdefault.jpg https://api.stripe.com https://www.facebook.com https://connect.facebook.net",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.facebook.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ].join('; '),
+};
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  // Remove X-Powered-By
+  response.headers.delete('X-Powered-By');
+  return response;
+}
 
 // Check if email is a platform admin
 function isPlatformAdminEmail(email: string | null | undefined): boolean {
@@ -9,23 +39,22 @@ function isPlatformAdminEmail(email: string | null | undefined): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
-export default withAuth(
+// Auth-protected middleware for /app/* routes
+const authMiddleware = withAuth(
   function middleware(req: NextRequestWithAuth) {
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
 
-    // Platform admin route protection (using /app/glorand as the secret URL)
+    // Platform admin route protection
     if (pathname.startsWith('/app/glorand')) {
       if (!isPlatformAdminEmail(token?.email as string)) {
-        return NextResponse.redirect(new URL('/app/dashboard', req.url));
+        const response = NextResponse.redirect(new URL('/app/dashboard', req.url));
+        return applySecurityHeaders(response);
       }
     }
 
-    // Check for user blocked status (token should have isBlocked from session)
-    // The actual blocking check is done in the callback below
-    // Additional blocking logic is handled in API routes and page components
-
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return applySecurityHeaders(response);
   },
   {
     callbacks: {
@@ -37,7 +66,24 @@ export default withAuth(
   }
 );
 
-// Protect all routes under /app/*
+// Main middleware: applies security headers to ALL routes,
+// and auth protection to /app/* routes
+export default function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+
+  // For /app/* routes, use auth middleware (which also applies security headers)
+  if (pathname.startsWith('/app/')) {
+    return (authMiddleware as any)(req);
+  }
+
+  // For all other routes, just apply security headers
+  const response = NextResponse.next();
+  return applySecurityHeaders(response);
+}
+
 export const config = {
-  matcher: ['/app/:path*'],
+  matcher: [
+    // Match all routes except static files and _next
+    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$).*)',
+  ],
 };

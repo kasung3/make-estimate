@@ -167,22 +167,12 @@ function LogoUploadSection({
 
       const { uploadUrl, cloud_storage_path } = await presignedRes.json();
 
-      // Check if content-disposition is in signed headers
-      const signedHeadersMatch = uploadUrl.match(/X-Amz-SignedHeaders=([^&]+)/);
-      const signedHeaders = signedHeadersMatch ? decodeURIComponent(signedHeadersMatch[1]).split(';') : [];
-      const needsContentDisposition = signedHeaders.includes('content-disposition');
-
-      // Upload file to S3
-      const uploadHeaders: HeadersInit = {
-        'Content-Type': file.type,
-      };
-      if (needsContentDisposition) {
-        uploadHeaders['Content-Disposition'] = 'attachment';
-      }
-
+      // Upload file to Supabase Storage using the signed upload URL
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
-        headers: uploadHeaders,
+        headers: {
+          'Content-Type': file.type,
+        },
         body: file,
       });
 
@@ -190,10 +180,9 @@ function LogoUploadSection({
         throw new Error('Failed to upload file');
       }
 
-      // Extract the public URL from the upload URL (which contains bucket info)
-      // The presigned URL format is: https://bucket.s3.region.amazonaws.com/key?...
-      const urlParts = new URL(uploadUrl);
-      const publicUrl = `${urlParts.protocol}//${urlParts.host}/${cloud_storage_path}`;
+      // Construct the public URL for Supabase Storage
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/uploads/${cloud_storage_path}`;
 
       onUpdate({ 
         logoUrl: publicUrl,

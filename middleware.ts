@@ -10,16 +10,16 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect.facebook.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect.facebook.net https://apps.abacus.ai https://www.googletagmanager.com https://www.google-analytics.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com https://www.facebook.com",
+    "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com https://www.facebook.com https://www.google-analytics.com https://www.googletagmanager.com",
     "font-src 'self' data:",
-    "connect-src 'self' https://i.ytimg.com/vi/ul45AXxEZb8/maxresdefault.jpg https://api.stripe.com https://www.facebook.com https://connect.facebook.net",
+    "connect-src 'self' https://*.supabase.co https://api.stripe.com https://www.facebook.com https://connect.facebook.net https://www.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com https://*.g.doubleclick.net",
     "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.facebook.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'self'",
+    "frame-ancestors 'self' https://*.abacus.ai https://*.abacusai.com",
   ].join('; '),
 };
 

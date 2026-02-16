@@ -43,6 +43,7 @@ function PricingContent() {
   const subscriptionRequired = searchParams?.get('subscription') === 'required';
   const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
   const trialEnded = searchParams?.get('trial') === 'ended';
+  const paymentFailed = searchParams?.get('payment') === 'failed';
 
   const viewContentTracked = useRef(false);
 
@@ -81,7 +82,10 @@ function PricingContent() {
     if (trialEnded) {
       toast.error('Your trial period has ended. Please select a plan to continue.');
     }
-  }, [checkoutCanceled, trialEnded]);
+    if (paymentFailed) {
+      toast.error('Your payment failed. Please renew your subscription to continue using MakeEstimate.');
+    }
+  }, [checkoutCanceled, trialEnded, paymentFailed]);
 
   const handlePlanSelect = async (planKey: string) => {
     // If not logged in, go to register with plan and billing cycle
@@ -259,24 +263,26 @@ function PricingContent() {
         </div>
       </section>
 
-      {/* Alert for subscription required / trial ended */}
-      {(subscriptionRequired || trialEnded || (isLoggedIn && checkoutCanceled)) && (
+      {/* Alert for subscription required / trial ended / payment failed */}
+      {(subscriptionRequired || trialEnded || paymentFailed || (isLoggedIn && checkoutCanceled)) && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-4">
           <Alert variant="default" className={cn(
             "border rounded-xl",
-            trialEnded ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
+            (trialEnded || paymentFailed) ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
           )}>
-            {trialEnded ? (
+            {(trialEnded || paymentFailed) ? (
               <Clock className="h-4 w-4 text-red-600" />
             ) : (
               <AlertTriangle className="h-4 w-4 text-amber-600" />
             )}
-            <AlertDescription className={trialEnded ? "text-red-800" : "text-amber-800"}>
-              {trialEnded
-                ? 'Your trial period has ended. Please select a plan to continue using MakeEstimate.'
-                : subscriptionRequired
-                  ? 'Please select a plan to access your dashboard and start creating BOQs.'
-                  : 'Your checkout was canceled. Select a plan to continue.'}
+            <AlertDescription className={(trialEnded || paymentFailed) ? "text-red-800" : "text-amber-800"}>
+              {paymentFailed
+                ? 'Your subscription payment failed. Please renew your plan to continue using MakeEstimate.'
+                : trialEnded
+                  ? 'Your trial period has ended. Please select a plan to continue using MakeEstimate.'
+                  : subscriptionRequired
+                    ? 'Please select a plan to access your dashboard and start creating BOQs.'
+                    : 'Your checkout was canceled. Select a plan to continue.'}
             </AlertDescription>
           </Alert>
         </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { stripe, getPlanByPriceId, mapStripeStatus, PlanKey } from '@/lib/stripe';
+import { stripe, getPlanByPriceId, getPlanByPriceIdFromDb, mapStripeStatus, PlanKey } from '@/lib/stripe';
 import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
 
@@ -187,9 +187,17 @@ async function updateBillingFromSubscription(
   companyId: string,
   subscription: Stripe.Subscription
 ) {
-  // Get plan from first line item
+  // Get plan from first line item - check DB for dynamic pricing
   const priceId = subscription.items.data[0]?.price?.id;
-  const plan = priceId ? getPlanByPriceId(priceId) : null;
+  let plan = priceId ? getPlanByPriceId(priceId) : null;
+  
+  // If not found in hardcoded PLANS, look up in database (handles monthly/annual/dynamic prices)
+  if (!plan && priceId) {
+    const dbPlan = await getPlanByPriceIdFromDb(priceId);
+    if (dbPlan) {
+      plan = { key: dbPlan.planKey, name: dbPlan.name, priceId, price: 0, boqLimit: dbPlan.boqLimitPerPeriod, description: dbPlan.name } as any;
+    }
+  }
 
   // Access period dates from subscription (cast to any for compatibility with different API versions)
   const subAny = subscription as any;

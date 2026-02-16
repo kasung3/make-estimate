@@ -29,7 +29,28 @@ export const PLANS = {
 export type PlanKey = keyof typeof PLANS;
 
 export function getPlanByPriceId(priceId: string) {
-  return Object.values(PLANS).find(plan => plan.priceId === priceId);
+  // First check hardcoded PLANS for backwards compatibility
+  const hardcodedPlan = Object.values(PLANS).find(plan => plan.priceId === priceId);
+  if (hardcodedPlan) return hardcodedPlan;
+  
+  // Return null for sync lookup - use async version for DB lookup
+  return null;
+}
+
+/**
+ * Look up plan by Stripe price ID from the database.
+ * This handles monthly, annual, and dynamically configured price IDs.
+ */
+export async function getPlanByPriceIdFromDb(priceId: string) {
+  const plan = await prisma.billingPlan.findFirst({
+    where: {
+      OR: [
+        { stripePriceIdMonthly: priceId },
+        { stripePriceIdAnnual: priceId },
+      ],
+    },
+  });
+  return plan;
 }
 
 export function mapStripeStatus(status: Stripe.Subscription.Status) {

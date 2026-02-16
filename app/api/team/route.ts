@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { getCompanyBillingStatus } from '@/lib/billing';
 import bcrypt from 'bcryptjs';
 import { syncStripeQuantity } from '@/lib/stripe';
+import { botProtection, sanitizeText } from '@/lib/sanitize';
 
 // GET - List all team members
 export async function GET() {
@@ -75,6 +76,10 @@ export async function GET() {
 // POST - Invite a new team member
 export async function POST(request: Request) {
   try {
+    // Bot protection
+    const botBlock = botProtection(request);
+    if (botBlock) return botBlock;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.companyId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -117,10 +122,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, firstName, lastName, role = 'MEMBER', password } = body;
+    const email = sanitizeText(body.email, 254)?.toLowerCase();
+    const firstName = sanitizeText(body.firstName, 100);
+    const lastName = sanitizeText(body.lastName, 100);
+    const role = ['ADMIN', 'MEMBER'].includes(body.role) ? body.role : 'MEMBER';
+    const password = body.password; // Don't sanitize password
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
     }
 
     // Check if user already exists
@@ -139,8 +148,9 @@ export async function POST(request: Request) {
         }, { status: 400 });
       }
     } else {
-      // Create new user with provided or generated password
-      const hashedPassword = await bcrypt.hash(password || 'temppass123', 10);
+      // Create new user with provided or cryptographically random password
+      const invitePassword = password || require('crypto').randomBytes(24).toString('base64url');
+      const hashedPassword = await bcrypt.hash(invitePassword, 12);
       user = await prisma.user.create({
         data: {
           email,

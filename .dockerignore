@@ -8,7 +8,6 @@ yarn.lock
 *.md
 .env
 .env.*
-Dockerfile
 .dockerignore
 __tests__
 jest.config.js

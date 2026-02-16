@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { createTimer, logRequestMetrics, logError } from './performance';
 import { checkRateLimit, rateLimitResponse, RATE_LIMITS, rateLimitKey, type RateLimitConfig } from './rate-limiter';
+import { botProtection } from './sanitize';
 
 export interface InstrumentedContext {
   session: any;
@@ -47,6 +48,15 @@ export function instrumentRoute(
     let errorMessage: string | undefined;
 
     try {
+      // Bot detection for mutating requests
+      if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+        const botBlock = botProtection(request);
+        if (botBlock) {
+          statusCode = 403;
+          return botBlock as any;
+        }
+      }
+
       // Auth check if required
       let session = null;
       if (options.requireAuth) {

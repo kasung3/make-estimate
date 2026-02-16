@@ -4,12 +4,17 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { botProtection, sanitizeText, sanitizeNumber } from '@/lib/sanitize';
 
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Bot protection
+    const botBlock = botProtection(request);
+    if (botBlock) return botBlock;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -29,12 +34,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
+    // Sanitize inputs
+    const updateData: any = {};
+    if (body?.name !== undefined) updateData.name = sanitizeText(body.name, 200);
+    if (body?.sortOrder !== undefined) updateData.sortOrder = sanitizeNumber(body.sortOrder, 0, 0, 99999);
+
     const category = await prisma.boqCategory.update({
       where: { id: params?.id },
-      data: {
-        name: body?.name,
-        sortOrder: body?.sortOrder,
-      },
+      data: updateData,
       include: { items: { orderBy: { sortOrder: 'asc' } } },
     });
 
@@ -50,6 +57,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Bot protection
+    const botBlock = botProtection(request);
+    if (botBlock) return botBlock;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

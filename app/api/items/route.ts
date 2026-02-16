@@ -5,16 +5,37 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { getCompanyBillingStatus } from '@/lib/billing';
+import { botProtection, sanitizeText, sanitizeMultilineText, sanitizeNumber, isValidId } from '@/lib/sanitize';
 
 export async function POST(request: Request) {
   try {
+    // Bot protection - no rate limiting to avoid disrupting users
+    const botBlock = botProtection(request);
+    if (botBlock) return botBlock;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const companyId = (session.user as any)?.companyId;
-    const { categoryId, description, unit, unitCost, markupPct, quantity, sortOrder, isNote, noteContent, includeInPdf } = await request.json();
+    const body = await request.json();
+
+    // Validate and sanitize all inputs
+    const categoryId = body.categoryId;
+    if (!isValidId(categoryId)) {
+      return NextResponse.json({ error: 'Invalid category ID' }, { status: 400 });
+    }
+
+    const description = sanitizeText(body.description, 1000);
+    const unit = sanitizeText(body.unit, 50);
+    const unitCost = sanitizeNumber(body.unitCost, 0, 0, 999999999);
+    const markupPct = sanitizeNumber(body.markupPct, 0, -100, 10000);
+    const quantity = sanitizeNumber(body.quantity, 0, 0, 999999999);
+    const sortOrder = sanitizeNumber(body.sortOrder, 0, 0, 99999);
+    const isNote = body.isNote === true;
+    const noteContent = sanitizeMultilineText(body.noteContent, 5000);
+    const includeInPdf = body.includeInPdf !== false;
 
     const category = await prisma.boqCategory.findFirst({
       where: {
@@ -68,15 +89,15 @@ export async function POST(request: Request) {
     const item = await prisma.boqItem.create({
       data: {
         categoryId,
-        description: description || '',
-        unit: unit || '',
-        unitCost: unitCost ?? 0,
-        markupPct: markupPct ?? 0,
-        quantity: quantity ?? 0,
-        sortOrder: sortOrder ?? 0,
-        isNote: isNote ?? false,
+        description,
+        unit,
+        unitCost,
+        markupPct,
+        quantity,
+        sortOrder,
+        isNote,
         noteContent: noteContent || null,
-        includeInPdf: includeInPdf ?? true,
+        includeInPdf,
       },
     });
 

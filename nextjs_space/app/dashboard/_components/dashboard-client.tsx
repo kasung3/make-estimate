@@ -39,7 +39,6 @@ import {
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
 import { Paywall } from '@/components/paywall';
-import { gaEvent } from '@/components/google-analytics';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -209,7 +208,6 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       setShowNewBoqDialog(false);
       setNewProjectName('');
       setSelectedCustomerId('');
-      gaEvent('create_boq', { boq_id: data?.id });
       router.push(`/boq/${data?.id}`);
     } catch (error) {
       toast.error('An error occurred');

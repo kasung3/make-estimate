@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,8 +14,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { BillingPlanInfo } from '@/lib/types';
-import { metaTrack, metaTrackCustom, acquireEventLock, trackButtonClick, trackFreePlanRegister } from '@/lib/meta-pixel';
-import { gaEvent } from '@/components/google-analytics';
+import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
 
 type BillingCycle = 'monthly' | 'annual';
 
@@ -45,7 +44,7 @@ function PricingContent() {
   const checkoutCanceled = searchParams?.get('checkout') === 'canceled';
   const trialEnded = searchParams?.get('trial') === 'ended';
 
-
+  const viewContentTracked = useRef(false);
 
   // Fetch plans from API
   useEffect(() => {
@@ -65,9 +64,10 @@ function PricingContent() {
     fetchPlans();
   }, []);
 
-  // Track ViewContent on pricing page (session-level dedupe)
+  // Track ViewContent on pricing page (dedupe)
   useEffect(() => {
-    if (acquireEventLock('ViewContent:pricing')) {
+    if (!viewContentTracked.current) {
+      viewContentTracked.current = true;
       metaTrack('ViewContent', { content_name: 'Pricing', content_category: 'pricing' });
     }
   }, []);
@@ -84,11 +84,6 @@ function PricingContent() {
   }, [checkoutCanceled, trialEnded]);
 
   const handlePlanSelect = async (planKey: string) => {
-    // Track which plan button was clicked
-    trackButtonClick(`SelectPlan_${planKey}`, 'pricing', { billing_cycle: billingCycle });
-    metaTrackCustom('PricingPlanClick', { plan_key: planKey, billing_cycle: billingCycle });
-    gaEvent('select_plan', { plan_key: planKey, billing_cycle: billingCycle });
-
     // If not logged in, go to register with plan and billing cycle
     if (status !== 'authenticated') {
       // Track Lead event for pricing page CTA
@@ -117,12 +112,8 @@ function PricingContent() {
 
       // Handle Free plan activation (no Stripe redirect)
       if (data.freePlanActivated) {
-        if (acquireEventLock('FreePlanActivated')) {
-          metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
-        }
-        if (acquireEventLock('FreePlanRegister')) {
-          trackFreePlanRegister('pricing');
-        }
+        // Track FreePlanActivated custom event
+        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -131,7 +122,7 @@ function PricingContent() {
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
         // Track trial activation
-        if (data.grantType === 'trial' && acquireEventLock('StartTrial')) {
+        if (data.grantType === 'trial') {
           metaTrack('StartTrial', { 
             content_name: planKey,
             trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
@@ -207,7 +198,7 @@ function PricingContent() {
     if (billingCycle !== 'annual' || !plan.priceAnnualUsdCents) return null;
     const savings = calculateSavings(plan.priceMonthlyUsdCents, plan.priceAnnualUsdCents);
     return {
-      amount: formatPrice(savings.amount), // savings.amount is already in cents
+      amount: formatPrice(savings.amount * 100), // Convert back to cents for formatPrice
       percent: savings.percent,
     };
   };
@@ -354,7 +345,7 @@ function PricingContent() {
                     {/* Plan Description */}
                     <p className="mt-4 text-sm text-muted-foreground">
                       {plan.boqLimitPerPeriod 
-                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per month`
+                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per period`
                         : 'Unlimited BOQ creations'}
                       {plan.seatModel === 'per_seat' && (
                         <span className="block mt-1 text-purple-600 font-medium">
@@ -441,7 +432,7 @@ function PricingContent() {
                     <tr>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Creations</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">10 / month</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">5 / period</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">Unlimited</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
@@ -453,13 +444,6 @@ function PricingContent() {
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Presets</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center font-medium">Unlimited</td>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-purple-500 text-center">Unlimited</td>
-                    </tr>
-                    <tr>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">Team Members</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
@@ -467,7 +451,7 @@ function PricingContent() {
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Themes</td>
+                      <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground">BOQ Templates</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">1</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-muted-foreground text-center">2</td>
                       <td className="px-3 lg:px-4 py-4 text-sm text-foreground text-center font-medium">10</td>

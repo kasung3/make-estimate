@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
-import { metaTrackCustom, trackButtonClick } from '@/lib/meta-pixel';
+import { metaTrackCustom } from '@/lib/meta-pixel';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -226,7 +226,6 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
 
       // Track CreateBOQ event
       metaTrackCustom('CreateBOQ', { source: 'dashboard' });
-      trackButtonClick('CreateBOQ', 'dashboard');
 
       // Refresh billing status from server to get accurate usage count
       await fetchBillingStatus();

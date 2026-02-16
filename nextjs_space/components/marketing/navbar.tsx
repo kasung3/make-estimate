@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { FileText, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { trackButtonClick } from '@/lib/meta-pixel';
 
 const navLinks = [
   { name: 'Features', href: '/#features' },
@@ -30,8 +29,8 @@ export function MarketingNavbar() {
     <header className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
       scrolled 
-        ? 'bg-white/95 backdrop-blur-lg border-b border-purple-100/50 shadow-sm' 
-        : 'bg-white/80 backdrop-blur-md border-b border-purple-100/30'
+        ? 'bg-white/90 backdrop-blur-lg border-b border-purple-100/50 shadow-sm' 
+        : 'bg-transparent'
     )}>
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -52,7 +51,6 @@ export function MarketingNavbar() {
                 key={link.name}
                 href={link.href}
                 className="text-gray-600 hover:text-purple-600 transition-colors duration-200 font-medium"
-                onClick={() => trackButtonClick(`Nav_${link.name}`, 'navbar')}
               >
                 {link.name}
               </Link>
@@ -62,15 +60,15 @@ export function MarketingNavbar() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             {session ? (
-              <Link href="/app/dashboard" onClick={() => trackButtonClick('GoToDashboard', 'navbar')}>
+              <Link href="/app/dashboard">
                 <Button>Go to Dashboard</Button>
               </Link>
             ) : (
               <>
-                <Link href="/login" onClick={() => trackButtonClick('Login', 'navbar')}>
+                <Link href="/login">
                   <Button variant="ghost" className="text-gray-700">Login</Button>
                 </Link>
-                <Link href="/register" onClick={() => trackButtonClick('GetStarted', 'navbar')}>
+                <Link href="/register">
                   <Button>Get Started</Button>
                 </Link>
               </>
@@ -93,7 +91,7 @@ export function MarketingNavbar() {
         {/* Mobile menu */}
         <div
           className={cn(
-            'md:hidden overflow-hidden transition-all duration-300 bg-white/95 backdrop-blur-lg rounded-b-2xl',
+            'md:hidden overflow-hidden transition-all duration-300',
             mobileMenuOpen ? 'max-h-96 pb-4' : 'max-h-0'
           )}
         >
@@ -103,22 +101,22 @@ export function MarketingNavbar() {
                 key={link.name}
                 href={link.href}
                 className="text-gray-600 hover:text-purple-600 transition-colors font-medium py-2"
-                onClick={() => { setMobileMenuOpen(false); trackButtonClick(`Nav_${link.name}_mobile`, 'navbar'); }}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
             <div className="pt-4 flex flex-col space-y-3">
               {session ? (
-                <Link href="/app/dashboard" onClick={() => trackButtonClick('GoToDashboard_mobile', 'navbar')}>
+                <Link href="/app/dashboard">
                   <Button className="w-full">Go to Dashboard</Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" onClick={() => trackButtonClick('Login_mobile', 'navbar')}>
+                  <Link href="/login">
                     <Button variant="outline" className="w-full">Login</Button>
                   </Link>
-                  <Link href="/register" onClick={() => trackButtonClick('GetStarted_mobile', 'navbar')}>
+                  <Link href="/register">
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </>

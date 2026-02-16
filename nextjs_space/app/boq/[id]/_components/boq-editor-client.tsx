@@ -97,12 +97,9 @@ interface EditItemDialogData {
 // =============================================================================
 // SORTABLE ITEM COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
-// Helper function to generate the grid template string - all fixed pixel widths for reliable resizing
+// Helper function to generate the grid template string
 function getGridTemplateColumns(columnWidths: Record<string, number>): string {
-  return `${columnWidths.grip}px ${columnWidths.number}px ${columnWidths.description}px ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
-}
-function getTotalTableWidth(columnWidths: Record<string, number>): number {
-  return Object.values(columnWidths).reduce((sum, w) => sum + w, 0);
+  return `${columnWidths.grip}px ${columnWidths.number}px minmax(200px, 1fr) ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
 }
 
 interface SortableItemRowProps {
@@ -594,12 +591,12 @@ function SortableCategory({
                 onDragEnd={(e) => handleItemDragEnd(e, category.id)}
                 modifiers={[restrictToVerticalAxis]}
               >
-                <div className="overflow-x-auto scrollbar-thin">
+                <div className="overflow-x-auto">
                   {/* Grid-based table using divs for proper CSS transform support */}
                   <div 
                     className="text-sm flex flex-col" 
                     role="table"
-                    style={{ minWidth: `${getTotalTableWidth(columnWidths)}px` }}
+                    style={{ minWidth: '900px' }}
                   >
                     {/* Header row */}
                     <div 
@@ -786,7 +783,6 @@ export function BoqEditorClient({
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartXRef = useRef<number>(0);
   const resizeStartWidthRef = useRef<number>(0);
-  const resizingColumnRef = useRef<string | null>(null);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
@@ -1022,7 +1018,6 @@ export function BoqEditorClient({
     (e: React.MouseEvent, columnKey: string) => {
       e.preventDefault();
       e.stopPropagation();
-      resizingColumnRef.current = columnKey;
       setResizingColumn(columnKey);
       resizeStartXRef.current = e.clientX;
       resizeStartWidthRef.current = columnWidths[columnKey];
@@ -1030,38 +1025,40 @@ export function BoqEditorClient({
     [columnWidths]
   );
 
-  useEffect(() => {
-    if (!resizingColumn) return;
-
-    const onMove = (e: MouseEvent) => {
-      const col = resizingColumnRef.current;
-      if (!col) return;
+  const handleResizeMove = useCallback(
+    (e: MouseEvent) => {
+      if (!resizingColumn) return;
       const diff = e.clientX - resizeStartXRef.current;
       const newWidth = Math.max(40, resizeStartWidthRef.current + diff);
-      setColumnWidths((prev) => ({ ...prev, [col]: newWidth }));
-    };
+      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
+    },
+    [resizingColumn]
+  );
 
-    const onUp = () => {
-      resizingColumnRef.current = null;
-      setResizingColumn(null);
-      setColumnWidths((current) => {
-        saveColumnWidths(current);
-        return current;
-      });
-    };
+  const handleResizeEnd = useCallback(() => {
+    if (resizingColumn) {
+      saveColumnWidths(columnWidths);
+    }
+    setResizingColumn(null);
+  }, [resizingColumn, columnWidths, saveColumnWidths]);
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
     return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [resizingColumn, saveColumnWidths]);
+  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 
   const resetColumnWidths = useCallback(() => {
     setColumnWidths(DEFAULT_COLUMN_WIDTHS);
@@ -1788,7 +1785,7 @@ export function BoqEditorClient({
                       <SelectValue placeholder="Cover Template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Default Cover Page</SelectItem>
+                      <SelectItem value="default">Company Default</SelectItem>
                       {coverTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name} {template.isDefault && '★'}

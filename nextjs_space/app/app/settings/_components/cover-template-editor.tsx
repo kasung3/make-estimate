@@ -61,8 +61,6 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface CoverTemplateEditorProps {
   companyName: string;
-  selectedTemplateId?: string;
-  templateLimit?: number | null;
 }
 
 const ELEMENT_TYPE_LABELS: Record<CoverElement['type'], string> = {
@@ -98,7 +96,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
       id: 'project_name',
       type: 'project_name',
       enabled: true,
-      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 },
+      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 },
     },
     {
       id: 'subtitle',
@@ -171,12 +169,22 @@ function LogoUploadSection({
 
       const { uploadUrl, cloud_storage_path } = await presignedRes.json();
 
-      // Upload file to Supabase Storage using the signed upload URL
+      // Check if content-disposition is in signed headers
+      const signedHeadersMatch = uploadUrl.match(/X-Amz-SignedHeaders=([^&]+)/);
+      const signedHeaders = signedHeadersMatch ? decodeURIComponent(signedHeadersMatch[1]).split(';') : [];
+      const needsContentDisposition = signedHeaders.includes('content-disposition');
+
+      // Upload file to S3
+      const uploadHeaders: HeadersInit = {
+        'Content-Type': file.type,
+      };
+      if (needsContentDisposition) {
+        uploadHeaders['Content-Disposition'] = 'attachment';
+      }
+
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
+        headers: uploadHeaders,
         body: file,
       });
 
@@ -184,9 +192,10 @@ function LogoUploadSection({
         throw new Error('Failed to upload file');
       }
 
-      // Construct the public URL for Supabase Storage
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/uploads/${cloud_storage_path}`;
+      // Extract the public URL from the upload URL (which contains bucket info)
+      // The presigned URL format is: https://bucket.s3.region.amazonaws.com/key?...
+      const urlParts = new URL(uploadUrl);
+      const publicUrl = `${urlParts.protocol}//${urlParts.host}/${cloud_storage_path}`;
 
       onUpdate({ 
         logoUrl: publicUrl,
@@ -648,7 +657,7 @@ function CoverPreview({
   );
 }
 
-export function CoverTemplateEditor({ companyName, selectedTemplateId, templateLimit }: CoverTemplateEditorProps) {
+export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
   const [templates, setTemplates] = useState<PdfCoverTemplateType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -657,9 +666,6 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId, templateL
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
   const [logoUploadAllowed, setLogoUploadAllowed] = useState(true);
-  const [autoOpened, setAutoOpened] = useState(false);
-
-  const canCreateTemplate = templateLimit == null || templates.length < templateLimit;
   // Preview is always shown (no toggle needed)
 
   const sensors = useSensors(
@@ -698,20 +704,6 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId, templateL
     fetchTemplates();
     fetchBillingStatus();
   }, [fetchTemplates, fetchBillingStatus]);
-
-  // Auto-open editor for specific template when used from Templates page
-  useEffect(() => {
-    if (selectedTemplateId && templates.length > 0 && !autoOpened) {
-      const targetTemplate = templates.find(t => t.id === selectedTemplateId);
-      if (targetTemplate) {
-        setEditingTemplate(targetTemplate);
-        setEditingName(targetTemplate.name);
-        setEditingConfig(targetTemplate.configJson as CoverPageConfig);
-        setShowEditor(true);
-        setAutoOpened(true);
-      }
-    }
-  }, [selectedTemplateId, templates, autoOpened]);
 
   const handleCreateTemplate = () => {
     setEditingTemplate(null);
@@ -816,7 +808,7 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId, templateL
     
     switch (type) {
       case 'project_name':
-        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 };
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 };
         break;
       case 'subtitle':
         text = 'Bill of Quantities';
@@ -878,9 +870,9 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId, templateL
           <h3 className="text-lg font-medium">PDF Cover Templates</h3>
           <p className="text-sm text-gray-500">Customize the cover page for your BOQ PDFs</p>
         </div>
-        <Button onClick={handleCreateTemplate} disabled={!canCreateTemplate}>
+        <Button onClick={handleCreateTemplate}>
           <Plus className="w-4 h-4 mr-2" />
-          New Cover Template
+          New Template
         </Button>
       </div>
 
@@ -942,7 +934,7 @@ export function CoverTemplateEditor({ companyName, selectedTemplateId, templateL
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-            <DialogTitle>{editingTemplate ? 'Edit Cover Template' : 'New Cover Template'}</DialogTitle>
+            <DialogTitle>{editingTemplate ? 'Edit Template' : 'New Template'}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 flex">

@@ -25,30 +25,28 @@ import { PdfThemeConfig, PdfThemeType } from '@/lib/types';
 
 interface PdfThemeEditorProps {
   companyName: string;
-  selectedThemeId?: string;
-  themeLimit?: number | null;
 }
 
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
   header: {
-    borderColor: '#7c3aed',
-    titleColor: '#7c3aed',
+    borderColor: '#0891b2',
+    titleColor: '#0891b2',
     subtitleColor: '#666666',
   },
   categoryHeader: {
-    backgroundPrimary: '#7c3aed',
-    backgroundSecondary: '#8b5cf6',
+    backgroundPrimary: '#0891b2',
+    backgroundSecondary: '#14b8a6',
     textColor: '#ffffff',
   },
   table: {
-    headerBackground: '#f5f3ff',
+    headerBackground: '#f9fafb',
     headerTextColor: '#6b7280',
     borderColor: '#e5e7eb',
     bodyTextColor: '#333333',
   },
   subtotalRow: {
-    background: '#f5f3ff',
-    borderColor: '#8b5cf6',
+    background: '#f0fdfa',
+    borderColor: '#14b8a6',
     textColor: '#333333',
   },
   noteRow: {
@@ -56,7 +54,7 @@ const getDefaultThemeConfig = (): PdfThemeConfig => ({
     textColor: '#92400e',
   },
   totals: {
-    finalTotalBackground: '#7c3aed',
+    finalTotalBackground: '#0891b2',
     finalTotalTextColor: '#ffffff',
   },
 });
@@ -264,7 +262,7 @@ function ThemePreview({ config }: { config: PdfThemeConfig }) {
   );
 }
 
-export function PdfThemeEditor({ companyName, selectedThemeId, themeLimit }: PdfThemeEditorProps) {
+export function PdfThemeEditor({ companyName }: PdfThemeEditorProps) {
   const [themes, setThemes] = useState<PdfThemeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -272,9 +270,6 @@ export function PdfThemeEditor({ companyName, selectedThemeId, themeLimit }: Pdf
   const [editingConfig, setEditingConfig] = useState<PdfThemeConfig | null>(null);
   const [editingName, setEditingName] = useState('');
   const [showEditor, setShowEditor] = useState(false);
-  const [autoOpened, setAutoOpened] = useState(false);
-
-  const canCreateTheme = themeLimit == null || themes.length < themeLimit;
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -293,20 +288,6 @@ export function PdfThemeEditor({ companyName, selectedThemeId, themeLimit }: Pdf
   useEffect(() => {
     fetchThemes();
   }, [fetchThemes]);
-
-  // Auto-open editor for specific theme when used from Templates page
-  useEffect(() => {
-    if (selectedThemeId && themes.length > 0 && !autoOpened) {
-      const targetTheme = themes.find(t => t.id === selectedThemeId);
-      if (targetTheme) {
-        setEditingTheme(targetTheme);
-        setEditingName(targetTheme.name);
-        setEditingConfig(targetTheme.configJson as PdfThemeConfig);
-        setShowEditor(true);
-        setAutoOpened(true);
-      }
-    }
-  }, [selectedThemeId, themes, autoOpened]);
 
   const handleCreateTheme = () => {
     setEditingTheme(null);
@@ -412,7 +393,7 @@ export function PdfThemeEditor({ companyName, selectedThemeId, themeLimit }: Pdf
           <h3 className="text-lg font-medium">PDF Color Themes</h3>
           <p className="text-sm text-gray-500">Customize colors and shading for BOQ pages</p>
         </div>
-        <Button onClick={handleCreateTheme} disabled={!canCreateTheme}>
+        <Button onClick={handleCreateTheme}>
           <Plus className="w-4 h-4 mr-2" />
           New Theme
         </Button>

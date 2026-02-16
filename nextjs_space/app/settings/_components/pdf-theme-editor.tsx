@@ -29,24 +29,24 @@ interface PdfThemeEditorProps {
 
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
   header: {
-    borderColor: '#7c3aed',
-    titleColor: '#7c3aed',
+    borderColor: '#0891b2',
+    titleColor: '#0891b2',
     subtitleColor: '#666666',
   },
   categoryHeader: {
-    backgroundPrimary: '#7c3aed',
-    backgroundSecondary: '#8b5cf6',
+    backgroundPrimary: '#0891b2',
+    backgroundSecondary: '#14b8a6',
     textColor: '#ffffff',
   },
   table: {
-    headerBackground: '#f5f3ff',
+    headerBackground: '#f9fafb',
     headerTextColor: '#6b7280',
     borderColor: '#e5e7eb',
     bodyTextColor: '#333333',
   },
   subtotalRow: {
-    background: '#f5f3ff',
-    borderColor: '#8b5cf6',
+    background: '#f0fdfa',
+    borderColor: '#14b8a6',
     textColor: '#333333',
   },
   noteRow: {
@@ -54,7 +54,7 @@ const getDefaultThemeConfig = (): PdfThemeConfig => ({
     textColor: '#92400e',
   },
   totals: {
-    finalTotalBackground: '#7c3aed',
+    finalTotalBackground: '#0891b2',
     finalTotalTextColor: '#ffffff',
   },
 });

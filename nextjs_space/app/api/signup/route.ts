@@ -15,32 +15,9 @@ export async function POST(request: Request) {
   try {
     const { email, password, companyName, firstName, lastName, phone, country } = await request.json();
 
-    if (!email || !password || !companyName || !firstName || !lastName) {
+    if (!email || !password || !companyName) {
       return NextResponse.json(
-        { error: 'All fields are required: first name, last name, email, password, and company name' },
-        { status: 400 }
-      );
-    }
-
-    if (!country) {
-      return NextResponse.json(
-        { error: 'Country is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!phone || phone.length < 6) {
-      return NextResponse.json(
-        { error: 'A valid phone number is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address' },
+        { error: 'Email, password, and company name are required' },
         { status: 400 }
       );
     }

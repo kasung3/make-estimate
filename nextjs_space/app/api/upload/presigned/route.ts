@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
-import { generatePresignedUploadUrl } from '@/lib/storage';
+import { generatePresignedUploadUrl } from '@/lib/s3';
 
 export async function POST(request: Request) {
   try {

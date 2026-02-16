@@ -19,9 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-Dialog,
+  Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -57,11 +56,9 @@ import {
   Palette,
   Calendar,
   Info,
-  Copy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { metaTrackCustom, trackButtonClick } from '@/lib/meta-pixel';
-import { gaEvent } from '@/components/google-analytics';
+import { metaTrackCustom } from '@/lib/meta-pixel';
 import { BoqWithRelations, CategoryWithItems, BoqItemType, CustomerType, CompanySettings, PdfCoverTemplateType, PdfThemeType } from '@/lib/types';
 import {
   DndContext,
@@ -101,13 +98,9 @@ interface EditItemDialogData {
 // =============================================================================
 // SORTABLE ITEM COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
-// Helper function to generate the grid template string - all fixed pixel widths for reliable resizing
+// Helper function to generate the grid template string
 function getGridTemplateColumns(columnWidths: Record<string, number>): string {
-  return `${columnWidths.grip}px ${columnWidths.number}px ${columnWidths.description}px ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
-}
-// Calculate total table width from column widths
-function getTotalTableWidth(columnWidths: Record<string, number>): number {
-  return Object.values(columnWidths).reduce((sum, w) => sum + w, 0);
+  return `${columnWidths.grip}px ${columnWidths.number}px minmax(200px, 1fr) ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
 }
 
 interface SortableItemRowProps {
@@ -238,7 +231,7 @@ function SortableItemRow({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
+                        className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
                         onClick={(e) => {
                           e.preventDefault();
                           saveInlineEdit(item.id);
@@ -252,7 +245,7 @@ function SortableItemRow({
                 </div>
               ) : (
                 <div
-                  className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-purple-400 transition-colors"
+                  className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-cyan-400 transition-colors"
                   onClick={() =>
                     handleNoteClick(
                       item,
@@ -278,7 +271,7 @@ function SortableItemRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-purple-600 flex-shrink-0"
+                className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
                 onClick={() => openEditItemDialog(item, categoryId, categoryName, null)}
                 title="Edit note with formatting (B/I/U)"
               >
@@ -356,7 +349,7 @@ function SortableItemRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-purple-600 flex-shrink-0"
+            className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
             onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
             title="Expand to edit"
           >
@@ -418,7 +411,7 @@ function SortableItemRow({
         />
       </div>
       {/* Amount */}
-      <div className="py-2 px-2 text-right font-semibold text-purple-600 text-sm whitespace-nowrap" role="cell">{formatCurrency(amount)}</div>
+      <div className="py-2 px-2 text-right font-semibold text-cyan-600 text-sm whitespace-nowrap" role="cell">{formatCurrency(amount)}</div>
       {/* Delete button */}
       <div className="py-2 px-2 flex items-center justify-center" role="cell">
         <Button
@@ -437,125 +430,6 @@ function SortableItemRow({
 // =============================================================================
 // SORTABLE CATEGORY COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
-// =============================================================================
-// MOBILE ITEM CARD COMPONENT
-// =============================================================================
-interface MobileItemCardProps {
-  item: BoqItemType;
-  itemNumber: string | null;
-  categoryId: string;
-  categoryName: string;
-  getItemValue: (itemId: string, field: keyof BoqItemType, originalValue: any) => any;
-  handleDeleteItem: (itemId: string) => void;
-  openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
-  formatNumber: (num: number, decimals?: number) => string;
-  formatCurrency: (amount: number) => string;
-  sanitizeHtml: (html: string) => string;
-}
-
-function MobileItemCard({
-  item,
-  itemNumber,
-  categoryId,
-  categoryName,
-  getItemValue,
-  handleDeleteItem,
-  openEditItemDialog,
-  formatNumber,
-  formatCurrency,
-  sanitizeHtml,
-}: MobileItemCardProps) {
-  if (item?.isNote) {
-    // Note card for mobile
-    const noteContent = getItemValue(item.id, 'noteContent', item?.noteContent) ?? '';
-    return (
-      <div 
-        className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2"
-        onClick={() => openEditItemDialog(item, categoryId, categoryName, null)}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <StickyNote className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              {noteContent ? (
-                <div 
-                  className="text-sm text-gray-700 line-clamp-2 prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(noteContent) }}
-                />
-              ) : (
-                <span className="text-sm text-gray-400 italic">Empty note - tap to edit</span>
-              )}
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-red-500 flex-shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteItem(item.id);
-            }}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Regular item card for mobile
-  const unitCost = getItemValue(item.id, 'unitCost', item?.unitCost) ?? 0;
-  const markupPct = getItemValue(item.id, 'markupPct', item?.markupPct) ?? 0;
-  const quantity = getItemValue(item.id, 'quantity', item?.quantity) ?? 0;
-  const unitPrice = unitCost * (1 + markupPct / 100);
-  const amount = unitPrice * quantity;
-  const description = getItemValue(item.id, 'description', item?.description) ?? '';
-  const unit = getItemValue(item.id, 'unit', item?.unit) ?? '';
-
-  return (
-    <div 
-      className="bg-white border border-gray-200 rounded-lg p-3 mb-2 shadow-sm active:bg-gray-50 transition-colors"
-      onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
-    >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0">
-            {itemNumber}
-          </span>
-          <p className="text-sm font-medium text-gray-900 line-clamp-2 flex-1">
-            {description || <span className="text-gray-400 italic">No description</span>}
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-gray-400 hover:text-red-500 flex-shrink-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteItem(item.id);
-          }}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <span className="text-gray-500 block">Qty</span>
-          <span className="font-medium">{formatNumber(quantity)} {unit}</span>
-        </div>
-        <div>
-          <span className="text-gray-500 block">Unit Price</span>
-          <span className="font-medium">{formatNumber(unitPrice)}</span>
-        </div>
-        <div className="text-right">
-          <span className="text-gray-500 block">Amount</span>
-          <span className="font-semibold text-purple-600">{formatCurrency(amount)}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface SortableCategoryProps {
   category: CategoryWithItems;
   categoryIndex: number;
@@ -661,22 +535,22 @@ function SortableCategory({
     >
       <Card
         className={`shadow-md border-0 overflow-hidden transition-shadow ${
-          isDragging ? 'shadow-xl ring-2 ring-purple-400' : ''
+          isDragging ? 'shadow-xl ring-2 ring-cyan-400' : ''
         }`}
       >
         <Collapsible open={isExpanded} onOpenChange={() => toggleCategory(category?.id)}>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors px-3 md:px-6 py-3 md:py-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <div
                     ref={setActivatorNodeRef}
                     {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded select-none flex-shrink-0"
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded select-none"
                     style={{ touchAction: 'none', userSelect: 'none' }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <GripVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-400 pointer-events-none" />
+                    <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0 pointer-events-none" />
                   </div>
                   <span className="text-sm font-medium text-gray-500 flex-shrink-0">
                     {categoryIndex + 1}.
@@ -688,25 +562,20 @@ function SortableCategory({
                       handleUpdateCategory(category?.id, e.target.value);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    onFocus={(e) => e.stopPropagation()}
-                    onTouchEnd={(e) => {
-                      // Prevent collapsible toggle on mobile when tapping the input
-                      e.stopPropagation();
-                    }}
-                    className="text-base md:text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
+                    className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
                   />
-                  <span className="text-xs md:text-sm text-gray-500 flex-shrink-0 hidden md:inline">
+                  <span className="text-sm text-gray-500 flex-shrink-0">
                     ({(category?.items ?? []).filter((i) => !i?.isNote).length} items)
                   </span>
                 </div>
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <span className="text-sm md:text-lg font-semibold text-purple-600 whitespace-nowrap">
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="text-lg font-semibold text-cyan-600">
                     {formatCurrency(getCategorySubtotal(category))}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-red-500 h-7 w-7 md:h-9 md:w-9"
+                    className="text-gray-400 hover:text-red-500"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteCategory(category?.id);
@@ -715,9 +584,9 @@ function SortableCategory({
                     <Trash2 className="w-4 h-4" />
                   </Button>
                   {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
                   )}
                 </div>
               </div>
@@ -725,164 +594,118 @@ function SortableCategory({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0">
-              {/* Desktop View - Grid Table */}
-              <div className="hidden md:block">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleItemDragStart}
-                  onDragEnd={(e) => handleItemDragEnd(e, category.id)}
-                  modifiers={[restrictToVerticalAxis]}
-                >
-                  <div className="overflow-x-auto scrollbar-thin">
-                    {/* Grid-based table using divs for proper CSS transform support */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleItemDragStart}
+                onDragEnd={(e) => handleItemDragEnd(e, category.id)}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <div className="overflow-x-auto">
+                  {/* Grid-based table using divs for proper CSS transform support */}
+                  <div 
+                    className="text-sm flex flex-col" 
+                    role="table"
+                    style={{ minWidth: '900px' }}
+                  >
+                    {/* Header row */}
                     <div 
-                      className="text-sm flex flex-col" 
-                      role="table"
-                      style={{ minWidth: `${getTotalTableWidth(columnWidths)}px` }}
+                      role="row"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: getGridTemplateColumns(columnWidths),
+                      }}
                     >
-                      {/* Header row */}
-                      <div 
-                        role="row"
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: getGridTemplateColumns(columnWidths),
-                        }}
-                      >
-                        <div className="py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
-                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          #
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'number')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Description
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'description')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Unit
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'unit')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Unit Cost
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Markup %
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'markup')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Unit Price
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Qty
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'qty')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
-                          Amount
-                          <div
-                            className="absolute -right-1 top-0 bottom-0 w-3 cursor-col-resize group z-10"
-                            onMouseDown={(e) => handleResizeStart(e, 'amount')}
-                          >
-                            <div className="absolute left-1/2 -translate-x-1/2 top-1 bottom-1 w-0.5 bg-gray-200 group-hover:bg-purple-400 group-hover:w-1 transition-all rounded-full" />
-                          </div>
-                        </div>
-                        <div className="border-b border-gray-200" role="columnheader"></div>
+                      <div className="py-2 px-1 font-medium text-gray-500 border-b border-gray-200" role="columnheader"></div>
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        #
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'number')}
+                        />
                       </div>
-                      {/* Sortable items */}
-                      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                        {(category?.items ?? []).map((item, itemIndex) => (
-                          <SortableItemRow
-                            key={item?.id}
-                            item={item}
-                            itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
-                            categoryId={category.id}
-                            categoryName={category.name ?? ''}
-                            columnWidths={columnWidths}
-                            getItemValue={getItemValue}
-                            handleUpdateItem={handleUpdateItem}
-                            handleDeleteItem={handleDeleteItem}
-                            openEditItemDialog={openEditItemDialog}
-                            handleNoteClick={handleNoteClick}
-                            inlineEditingNoteId={inlineEditingNoteId}
-                            inlineEditText={inlineEditText}
-                            setInlineEditText={setInlineEditText}
-                            inlineTextareaRef={inlineTextareaRef}
-                            handleInlineNoteKeyDown={handleInlineNoteKeyDown}
-                            saveInlineEdit={saveInlineEdit}
-                            cancelInlineEdit={cancelInlineEdit}
-                            sanitizeHtml={sanitizeHtml}
-                            formatNumber={formatNumber}
-                            formatCurrency={formatCurrency}
-                          />
-                        ))}
-                      </SortableContext>
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Description
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'description')}
+                        />
+                      </div>
+                      <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Unit
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'unit')}
+                        />
+                      </div>
+                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Unit Cost
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
+                        />
+                      </div>
+                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Markup %
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'markup')}
+                        />
+                      </div>
+                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Unit Price
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
+                        />
+                      </div>
+                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Qty
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'qty')}
+                        />
+                      </div>
+                      <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
+                        Amount
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, 'amount')}
+                        />
+                      </div>
+                      <div className="border-b border-gray-200" role="columnheader"></div>
                     </div>
+                    {/* Sortable items */}
+                    <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                      {(category?.items ?? []).map((item, itemIndex) => (
+                        <SortableItemRow
+                          key={item?.id}
+                          item={item}
+                          itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
+                          categoryId={category.id}
+                          categoryName={category.name ?? ''}
+                          columnWidths={columnWidths}
+                          getItemValue={getItemValue}
+                          handleUpdateItem={handleUpdateItem}
+                          handleDeleteItem={handleDeleteItem}
+                          openEditItemDialog={openEditItemDialog}
+                          handleNoteClick={handleNoteClick}
+                          inlineEditingNoteId={inlineEditingNoteId}
+                          inlineEditText={inlineEditText}
+                          setInlineEditText={setInlineEditText}
+                          inlineTextareaRef={inlineTextareaRef}
+                          handleInlineNoteKeyDown={handleInlineNoteKeyDown}
+                          saveInlineEdit={saveInlineEdit}
+                          cancelInlineEdit={cancelInlineEdit}
+                          sanitizeHtml={sanitizeHtml}
+                          formatNumber={formatNumber}
+                          formatCurrency={formatCurrency}
+                        />
+                      ))}
+                    </SortableContext>
                   </div>
-                </DndContext>
-              </div>
-
-              {/* Mobile View - Stacked Cards */}
-              <div className="block md:hidden">
-                {(category?.items ?? []).length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    No items yet. Tap "Add Item" to get started.
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    {(category?.items ?? []).map((item, itemIndex) => (
-                      <MobileItemCard
-                        key={item?.id}
-                        item={item}
-                        itemNumber={getItemNumber(categoryIndex, category?.items ?? [], itemIndex)}
-                        categoryId={category.id}
-                        categoryName={category.name ?? ''}
-                        getItemValue={getItemValue}
-                        handleDeleteItem={handleDeleteItem}
-                        openEditItemDialog={openEditItemDialog}
-                        formatNumber={formatNumber}
-                        formatCurrency={formatCurrency}
-                        sanitizeHtml={sanitizeHtml}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              </DndContext>
               <div className="flex flex-col space-y-2 mt-3">
                 {isAtItemLimit && (
                   <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
@@ -893,7 +716,7 @@ function SortableCategory({
                 <div className="flex space-x-2">
                   <Button
                     variant="ghost"
-                    className={`flex-1 ${isAtItemLimit ? 'text-gray-400 cursor-not-allowed' : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'}`}
+                    className={`flex-1 ${isAtItemLimit ? 'text-gray-400 cursor-not-allowed' : 'text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50'}`}
                     onClick={() => handleAddItem(category?.id, false)}
                     disabled={isAtItemLimit}
                   >
@@ -947,14 +770,6 @@ export function BoqEditorClient({
   // Item limit tracking (for Free plan)
   const [itemLimit, setItemLimit] = useState<number | null>(null);
   const [planKey, setPlanKey] = useState<string | null>(null);
-  
-  // Mobile UI state
-  const [mobileTotalsExpanded, setMobileTotalsExpanded] = useState(false);
-  const [showMobileQuickAdd, setShowMobileQuickAdd] = useState(false);
-  const [showSaveAsPreset, setShowSaveAsPreset] = useState(false);
-  const [savePresetName, setSavePresetName] = useState('');
-  const [savePresetQuantities, setSavePresetQuantities] = useState(false);
-  const [savingPreset, setSavingPreset] = useState(false);
 
   // Edit item dialog state
   const [editItemDialog, setEditItemDialog] = useState<EditItemDialogData | null>(null);
@@ -976,35 +791,21 @@ export function BoqEditorClient({
 
   // Column resize state - widths match the previous table layout
   const DEFAULT_COLUMN_WIDTHS = {
-    grip: 36,
-    number: 56,
-    description: 320, // wider for description content, also uses minmax in grid
-    unit: 90,
-    unitCost: 110,
-    markup: 90,
-    unitPrice: 110,
-    qty: 80,
-    amount: 140,
-    actions: 48,
+    grip: 32,
+    number: 52,
+    description: 280, // wider for description content, also uses minmax in grid
+    unit: 80,
+    unitCost: 100,
+    markup: 80,
+    unitPrice: 100,
+    qty: 70,
+    amount: 130,
+    actions: 44,
   };
-
-  // Per-column min/max width constraints for better UX
-  const COLUMN_WIDTH_CONSTRAINTS: Record<string, { min: number; max: number }> = {
-    number: { min: 40, max: 120 },
-    description: { min: 150, max: 800 },
-    unit: { min: 60, max: 200 },
-    unitCost: { min: 80, max: 250 },
-    markup: { min: 60, max: 180 },
-    unitPrice: { min: 80, max: 250 },
-    qty: { min: 50, max: 180 },
-    amount: { min: 100, max: 300 },
-  };
-
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartXRef = useRef<number>(0);
   const resizeStartWidthRef = useRef<number>(0);
-  const resizingColumnRef = useRef<string | null>(null);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
@@ -1243,34 +1044,16 @@ export function BoqEditorClient({
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
 
-  // Load column widths from localStorage with validation
+  // Load column widths from localStorage
   useEffect(() => {
     try {
       const savedWidths = localStorage.getItem('boq_column_widths');
       if (savedWidths) {
         const parsed = JSON.parse(savedWidths);
-        // Validate and constrain each saved width
-        const validatedWidths: Record<string, number> = {};
-        for (const key of Object.keys(DEFAULT_COLUMN_WIDTHS)) {
-          if (typeof parsed[key] === 'number' && !isNaN(parsed[key])) {
-            const constraints = COLUMN_WIDTH_CONSTRAINTS[key];
-            if (constraints) {
-              // Clamp to valid range
-              validatedWidths[key] = Math.max(constraints.min, Math.min(constraints.max, parsed[key]));
-            } else {
-              validatedWidths[key] = parsed[key];
-            }
-          }
-        }
-        if (Object.keys(validatedWidths).length > 0) {
-          setColumnWidths((prev) => ({ ...prev, ...validatedWidths }));
-        }
+        setColumnWidths((prev) => ({ ...prev, ...parsed }));
       }
     } catch (e) {
-      // If localStorage is corrupted, clear it and use defaults
-      try {
-        localStorage.removeItem('boq_column_widths');
-      } catch (_) {}
+      // Ignore
     }
   }, []);
 
@@ -1287,7 +1070,6 @@ export function BoqEditorClient({
     (e: React.MouseEvent, columnKey: string) => {
       e.preventDefault();
       e.stopPropagation();
-      resizingColumnRef.current = columnKey;
       setResizingColumn(columnKey);
       resizeStartXRef.current = e.clientX;
       resizeStartWidthRef.current = columnWidths[columnKey];
@@ -1295,48 +1077,40 @@ export function BoqEditorClient({
     [columnWidths]
   );
 
-  // Use refs in move/end handlers to avoid stale closure issues
-  useEffect(() => {
-    if (!resizingColumn) return;
-
-    const onMove = (e: MouseEvent) => {
-      const col = resizingColumnRef.current;
-      if (!col) return;
+  const handleResizeMove = useCallback(
+    (e: MouseEvent) => {
+      if (!resizingColumn) return;
       const diff = e.clientX - resizeStartXRef.current;
-      const constraints = COLUMN_WIDTH_CONSTRAINTS[col];
-      let newWidth = resizeStartWidthRef.current + diff;
-      if (constraints) {
-        newWidth = Math.max(constraints.min, Math.min(constraints.max, newWidth));
-      } else {
-        newWidth = Math.max(40, newWidth);
-      }
-      setColumnWidths((prev) => ({ ...prev, [col]: newWidth }));
-    };
+      const newWidth = Math.max(40, resizeStartWidthRef.current + diff);
+      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
+    },
+    [resizingColumn]
+  );
 
-    const onUp = () => {
-      resizingColumnRef.current = null;
-      setResizingColumn(null);
-      // Save after state update
-      setColumnWidths((current) => {
-        saveColumnWidths(current);
-        return current;
-      });
-    };
+  const handleResizeEnd = useCallback(() => {
+    if (resizingColumn) {
+      saveColumnWidths(columnWidths);
+    }
+    setResizingColumn(null);
+  }, [resizingColumn, columnWidths, saveColumnWidths]);
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.body.classList.add('resizing-column');
-
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      document.body.classList.remove('resizing-column');
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
-  }, [resizingColumn, saveColumnWidths]);
+  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 
   const resetColumnWidths = useCallback(() => {
     setColumnWidths(DEFAULT_COLUMN_WIDTHS);
@@ -1845,24 +1619,6 @@ export function BoqEditorClient({
     }
   };
 
-  const handleSaveAsPreset = async () => {
-    if (!savePresetName.trim() || !boq) return;
-    setSavingPreset(true);
-    try {
-      const res = await fetch('/api/presets/from-boq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ boqId: boq.id, presetName: savePresetName.trim(), saveQuantities: savePresetQuantities }),
-      });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data?.error || 'Failed to save preset'); return; }
-      toast.success('BOQ saved as preset!');
-      setShowSaveAsPreset(false);
-      setSavePresetName('');
-      setSavePresetQuantities(false);
-    } catch { toast.error('An error occurred'); } finally { setSavingPreset(false); }
-  };
-
   const handleExportPdf = async () => {
     setExportingPdf(true);
     let toastId: string | undefined;
@@ -1943,8 +1699,6 @@ export function BoqEditorClient({
           
           // Track ExportPDF event
           metaTrackCustom('ExportPDF', { kind: 'boq' });
-          trackButtonClick('ExportPDF', 'boq_editor');
-          gaEvent('export_pdf', { content_type: 'boq' });
           toast.success('PDF downloaded', { id: toastId });
           return;
         }
@@ -2020,99 +1774,45 @@ export function BoqEditorClient({
     <AppLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-3 md:p-4">
-          {/* Mobile Header */}
-          <div className="flex md:hidden items-center justify-between gap-2 mb-2">
+        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4 flex-1 min-w-0">
             <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="flex-shrink-0 h-9 w-9">
+              <Button variant="ghost" size="icon" className="flex-shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 max-w-2xl">
               <Input
                 value={localProjectName}
                 onChange={(e) => handleProjectNameChange(e.target.value)}
-                className="text-base font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
+                className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
                 placeholder="Project Name"
               />
-            </div>
-            <div className="flex items-center text-xs text-gray-500 flex-shrink-0">
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : lastSaved ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : null}
-            </div>
-          </div>
-          <div className="flex md:hidden items-center gap-2 mb-2">
-            <Select
-              value={boq?.customerId ?? 'none'}
-              onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
-            >
-              <SelectTrigger className="h-8 text-sm flex-1">
-                <SelectValue placeholder="Select customer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No customer</SelectItem>
-                {(customers ?? []).map((customer) => (
-                  <SelectItem key={customer?.id} value={customer?.id ?? ''}>
-                    {customer?.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)} className="flex-shrink-0">
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={exportingPdf} className="flex-shrink-0">
-              {exportingPdf ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <FileDown className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-
-          {/* Desktop Header */}
-          <div className="hidden md:flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1 min-w-0">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="flex-shrink-0">
-                  <ArrowLeft className="w-5 h-5" />
+              <div className="flex items-center space-x-2 mt-1">
+                <Select
+                  value={boq?.customerId ?? 'none'}
+                  onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
+                >
+                  <SelectTrigger className="h-8 text-sm w-[200px]">
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No customer</SelectItem>
+                    {(customers ?? []).map((customer) => (
+                      <SelectItem key={customer?.id} value={customer?.id ?? ''}>
+                        {customer?.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
+                  <Plus className="w-4 h-4" />
                 </Button>
-              </Link>
-              <div className="flex-1 min-w-0 max-w-2xl">
-                <Input
-                  value={localProjectName}
-                  onChange={(e) => handleProjectNameChange(e.target.value)}
-                  className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
-                  placeholder="Project Name"
-                />
-                <div className="flex items-center space-x-2 mt-1">
-                  <Select
-                    value={boq?.customerId ?? 'none'}
-                    onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
-                  >
-                    <SelectTrigger className="h-8 text-sm w-[200px]">
-                      <SelectValue placeholder="Select customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No customer</SelectItem>
-                      {(customers ?? []).map((customer) => (
-                        <SelectItem key={customer?.id} value={customer?.id ?? ''}>
-                          {customer?.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-3 flex-shrink-0">
-              <div className="flex items-center text-sm text-gray-500">
+          </div>
+          <div className="flex items-center space-x-3 flex-shrink-0">
+            <div className="flex items-center text-sm text-gray-500">
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-1" />
@@ -2145,7 +1845,7 @@ export function BoqEditorClient({
                     value={boq?.coverTemplateId || 'default'}
                     onValueChange={(value) => {
                       if (value === 'create_new') {
-                        router.push('/app/templates?tab=cover');
+                        router.push('/app/settings?tab=pdf');
                         return;
                       }
                       const newValue = value === 'default' ? null : value;
@@ -2157,14 +1857,14 @@ export function BoqEditorClient({
                       <SelectValue placeholder="Cover Template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Default Cover Page</SelectItem>
+                      <SelectItem value="default">Company Default</SelectItem>
                       {coverTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name} {template.isDefault && '★'}
                         </SelectItem>
                       ))}
                       <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-purple-600">
+                      <SelectItem value="create_new" className="text-cyan-600">
                         <Plus className="w-3 h-3 mr-1 inline" />
                         Create new template...
                       </SelectItem>
@@ -2189,7 +1889,7 @@ export function BoqEditorClient({
                     value={boq?.pdfThemeId || 'default'}
                     onValueChange={(value) => {
                       if (value === 'create_new') {
-                        router.push('/app/templates?tab=boq');
+                        router.push('/app/settings?tab=pdf');
                         return;
                       }
                       const newValue = value === 'default' ? null : value;
@@ -2208,7 +1908,7 @@ export function BoqEditorClient({
                         </SelectItem>
                       ))}
                       <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-purple-600">
+                      <SelectItem value="create_new" className="text-cyan-600">
                         <Plus className="w-3 h-3 mr-1 inline" />
                         Create new theme...
                       </SelectItem>
@@ -2250,92 +1950,30 @@ export function BoqEditorClient({
                         type="date"
                         value={boq?.preparationDate ? new Date(boq.preparationDate).toISOString().split('T')[0] : ''}
                         onChange={(e) => updateBoq({ preparationDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
                       />
                     )}
                   </div>
                 </div>
               </div>
             </TooltipProvider>
-              <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
-                {exportingPdf ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <FileDown className="w-4 h-4 mr-2" />
-                )}
-                Export PDF
-              </Button>
-              {!boq?.isPreset && (
-                <Button variant="outline" onClick={() => { setSavePresetName(boq?.projectName || ''); setShowSaveAsPreset(true); }} className="hidden md:flex">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Save as Preset
-                </Button>
+            <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
+              {exportingPdf ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <FileDown className="w-4 h-4 mr-2" />
               )}
-            </div>
+              Export PDF
+            </Button>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-3 md:p-4 lg:p-6">
-          <div className="space-y-4 md:space-y-6">
-            {/* Mobile Totals Summary - Collapsible */}
-            <div className="block md:hidden">
-              <Card 
-                className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50 cursor-pointer"
-                onClick={() => setMobileTotalsExpanded(!mobileTotalsExpanded)}
-              >
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-600">Final Total</span>
-                      <span className="text-xl font-bold text-purple-600">
-                        {formatCurrency(totals.finalTotal)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <span className="text-xs">{mobileTotalsExpanded ? 'Hide details' : 'Show details'}</span>
-                      {mobileTotalsExpanded ? (
-                        <ChevronUp className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
-                      )}
-                    </div>
-                  </div>
-                  {mobileTotalsExpanded && (
-                    <div className="mt-4 pt-3 border-t border-purple-200 space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
-                      </div>
-                      {boq?.discountEnabled && totals.discount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Discount</span>
-                          <span className="font-medium text-red-500">-{formatCurrency(totals.discount)}</span>
-                        </div>
-                      )}
-                      {boq?.vatEnabled && totals.vatAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">VAT ({boq?.vatPercent}%)</span>
-                          <span className="font-medium">+{formatCurrency(totals.vatAmount)}</span>
-                        </div>
-                      )}
-                      <div className="pt-2 border-t border-purple-100">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Profit</span>
-                          <span className={`font-medium ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {formatCurrency(totals.profit)} ({formatNumber(totals.grossProfitPct)}%)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Desktop Totals & Profit Analysis - Full Cards */}
-            <div className="hidden md:grid max-w-5xl grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-lavender-50">
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Totals & Profit Analysis */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="shadow-md border-0 bg-gradient-to-br from-cyan-50 to-teal-50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">Totals</CardTitle>
                 </CardHeader>
@@ -2410,9 +2048,9 @@ export function BoqEditorClient({
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center py-2 border-t-2 border-purple-200">
+                  <div className="flex justify-between items-center py-2 border-t-2 border-cyan-200">
                     <span className="text-lg font-semibold text-gray-900">Final Total</span>
-                    <span className="text-2xl font-bold text-purple-600">
+                    <span className="text-2xl font-bold text-cyan-600">
                       {formatCurrency(totals.finalTotal)}
                     </span>
                   </div>
@@ -2456,13 +2094,13 @@ export function BoqEditorClient({
               </Card>
             </div>
 
-            {/* Categories & Items - full width for desktop editing */}
-            <div className="space-y-4 w-full">
-              {/* Column width reset - Desktop only */}
-              <div className="hidden md:flex justify-end">
+            {/* Categories & Items */}
+            <div className="space-y-4">
+              {/* Column width reset */}
+              <div className="flex justify-end">
                 <button
                   onClick={resetColumnWidths}
-                  className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                  className="text-xs text-gray-500 hover:text-cyan-600 transition-colors"
                   title="Reset column widths to default"
                 >
                   Reset column widths
@@ -2576,10 +2214,10 @@ export function BoqEditorClient({
           </DialogContent>
         </Dialog>
 
-        {/* Edit Item Dialog - Mobile optimized */}
+        {/* Edit Item Dialog */}
         <Dialog open={!!editItemDialog} onOpenChange={(open) => !open && setEditItemDialog(null)}>
-          <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)] max-h-[90vh] sm:max-h-[85vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
               <DialogTitle>
                 {editItemDialog?.item.isNote
                   ? 'Edit Note'
@@ -2587,7 +2225,7 @@ export function BoqEditorClient({
               </DialogTitle>
               <p className="text-sm text-gray-500">Category: {editItemDialog?.categoryName}</p>
             </DialogHeader>
-            <div className="space-y-4 py-4 overflow-y-auto flex-1">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
               {editItemDialog?.item.isNote ? (
                 // Note editing with rich text
                 <div className="space-y-4">
@@ -2751,7 +2389,7 @@ export function BoqEditorClient({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Amount:</span>
-                      <span className="font-semibold text-purple-600">
+                      <span className="font-semibold text-cyan-600">
                         {formatCurrency(
                           (editItemValues.unitCost ?? 0) *
                             (1 + (editItemValues.markupPct ?? 0) / 100) *
@@ -2763,7 +2401,7 @@ export function BoqEditorClient({
                 </div>
               )}
             </div>
-            <DialogFooter className="flex-shrink-0 pt-4 border-t mt-auto">
+            <DialogFooter>
               <Button variant="outline" onClick={() => setEditItemDialog(null)}>
                 Cancel
               </Button>
@@ -2771,81 +2409,6 @@ export function BoqEditorClient({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Save as Preset Dialog */}
-        <Dialog open={showSaveAsPreset} onOpenChange={setShowSaveAsPreset}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Save as BOQ Preset</DialogTitle>
-              <DialogDescription>Create a reusable preset from this BOQ. All items, units, costs, and markups will be saved.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="presetName">Preset Name</Label>
-                <Input id="presetName" placeholder="Enter preset name" value={savePresetName} onChange={(e) => setSavePresetName(e.target.value)} />
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch checked={savePresetQuantities} onCheckedChange={setSavePresetQuantities} />
-                <Label className="text-sm">Save quantities (otherwise set to 0)</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowSaveAsPreset(false)}>Cancel</Button>
-              <Button onClick={handleSaveAsPreset} disabled={savingPreset || !savePresetName.trim()}>
-                {savingPreset && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Save Preset
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Mobile Floating Quick Add Button - offset for bottom nav */}
-        <div className="md:hidden fixed bottom-[76px] right-4 z-50">
-          <div className="flex flex-col items-end gap-2">
-            {showMobileQuickAdd && (
-              <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-200">
-                <Button
-                  className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg rounded-full h-12 px-4"
-                  onClick={() => {
-                    const firstCategory = boq?.categories?.[0];
-                    if (firstCategory) {
-                      handleAddItem(firstCategory.id, true);
-                    }
-                    setShowMobileQuickAdd(false);
-                  }}
-                  disabled={!boq?.categories?.[0]}
-                >
-                  <StickyNote className="w-5 h-5 mr-2" />
-                  Add Note
-                </Button>
-                <Button
-                  className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg rounded-full h-12 px-4"
-                  onClick={() => {
-                    const firstCategory = boq?.categories?.[0];
-                    if (firstCategory && !isAtItemLimit) {
-                      handleAddItem(firstCategory.id, false);
-                    }
-                    setShowMobileQuickAdd(false);
-                  }}
-                  disabled={!boq?.categories?.[0] || isAtItemLimit}
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add Item {itemLimit !== null && `(${currentItemCount}/${itemLimit})`}
-                </Button>
-              </div>
-            )}
-            <Button
-              className="bg-gradient-to-r from-purple-500 to-lavender-500 text-white shadow-xl rounded-full h-14 w-14 p-0"
-              onClick={() => setShowMobileQuickAdd(!showMobileQuickAdd)}
-            >
-              {showMobileQuickAdd ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Plus className="w-6 h-6" />
-              )}
-            </Button>
-          </div>
-        </div>
       </div>
     </AppLayout>
   );

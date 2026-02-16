@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,59 +65,10 @@ import {
   Pencil,
   GripVertical,
   Globe,
-  Download,
-  BarChart3,
-  TrendingUp,
-  Activity,
-  FileText,
-  Skull,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  Area,
-  AreaChart,
-} from 'recharts';
-
-interface DashboardData {
-  overview: {
-    totalUsers: number;
-    totalCompanies: number;
-    totalBoqs: number;
-    totalCustomers: number;
-    totalRevenue: number;
-    thisMonthRevenue: number;
-    lastMonthRevenue: number;
-    recentSignups: number;
-    activeUsers: number;
-  };
-  planDistribution: {
-    free: number;
-    starter: number;
-    advance: number;
-    business: number;
-    noPlan: number;
-  };
-  monthlyRevenue: { month: string; revenue: number }[];
-  userGrowth: { month: string; newUsers: number; cumulativeUsers: number }[];
-  boqTrend: { month: string; boqs: number }[];
-}
-
-const PLAN_COLORS = ['#a78bfa', '#8b5cf6', '#6d28d9', '#4c1d95', '#c4b5fd'];
 
 interface UserData {
   id: string;
@@ -266,27 +216,13 @@ interface BillingPlan {
 }
 
 export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams?.get('tab');
-  const [activeTab, setActiveTab] = useState(tabParam || 'dashboard');
+  const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState<UserData[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [billingPlans, setBillingPlans] = useState<BillingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [plansLoading, setPlansLoading] = useState(false);
-  
-  // Dashboard state
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [dashboardLoading, setDashboardLoading] = useState(false);
-  
-  // Permanent delete state
-  const [showPermanentDeleteUserDialog, setShowPermanentDeleteUserDialog] = useState(false);
-  const [permanentDeleteUserConfirmText, setPermanentDeleteUserConfirmText] = useState('');
-  const [permanentDeletingUser, setPermanentDeletingUser] = useState(false);
-  const [showPermanentDeleteCompanyDialog, setShowPermanentDeleteCompanyDialog] = useState(false);
-  const [permanentDeleteCompanyConfirmText, setPermanentDeleteCompanyConfirmText] = useState('');
-  const [permanentDeletingCompany, setPermanentDeletingCompany] = useState(false);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, totalCount: 0, totalPages: 0 });
   
   // Plan editing state
@@ -394,13 +330,6 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       fetchUsers();
     }
   }, [activeTab, debouncedQuery, planFilter, statusFilter, blockedFilter, sortBy, pagination.page]);
-
-  // Fetch dashboard
-  useEffect(() => {
-    if (activeTab === 'dashboard') {
-      fetchDashboard();
-    }
-  }, [activeTab]);
 
   // Fetch other tabs
   useEffect(() => {
@@ -573,91 +502,6 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       toast.error(err.message || 'Failed to delete user');
     } finally {
       setDeletingUser(false);
-    }
-  };
-
-  // Fetch dashboard data
-  const fetchDashboard = async () => {
-    setDashboardLoading(true);
-    try {
-      const res = await fetch('/api/admin/dashboard');
-      if (!res.ok) throw new Error('Failed to fetch dashboard');
-      const data = await res.json();
-      setDashboardData(data);
-    } catch (err) {
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setDashboardLoading(false);
-    }
-  };
-
-  // CSV download helpers
-  const handleDownloadUsersCsv = () => {
-    const a = document.createElement('a');
-    a.href = '/api/admin/users/export';
-    a.download = `users-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    toast.success('Users CSV download started');
-  };
-
-  const handleDownloadCompaniesCsv = () => {
-    const a = document.createElement('a');
-    a.href = '/api/admin/companies/export';
-    a.download = `companies-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    toast.success('Companies CSV download started');
-  };
-
-  // Permanent delete user
-  const openPermanentDeleteUserDialog = () => {
-    setPermanentDeleteUserConfirmText('');
-    setShowPermanentDeleteUserDialog(true);
-  };
-
-  const handlePermanentDeleteUser = async () => {
-    if (!selectedUser || permanentDeleteUserConfirmText !== 'PERMANENT DELETE') return;
-    setPermanentDeletingUser(true);
-    try {
-      const res = await fetch(`/api/admin/users/${selectedUser.id}/permanent-delete`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to permanently delete');
-      toast.success(data.message || 'User permanently deleted');
-      setShowPermanentDeleteUserDialog(false);
-      closeUserDrawer();
-      fetchUsers();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to permanently delete user');
-    } finally {
-      setPermanentDeletingUser(false);
-    }
-  };
-
-  // Permanent delete company
-  const openPermanentDeleteCompanyDialog = (company: Company) => {
-    setSelectedCompany(company);
-    setPermanentDeleteCompanyConfirmText('');
-    setShowPermanentDeleteCompanyDialog(true);
-  };
-
-  const handlePermanentDeleteCompany = async () => {
-    if (!selectedCompany || permanentDeleteCompanyConfirmText !== 'PERMANENT DELETE') return;
-    setPermanentDeletingCompany(true);
-    try {
-      const res = await fetch(`/api/admin/companies/${selectedCompany.id}/permanent-delete`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to permanently delete');
-      toast.success(data.message || 'Company permanently deleted');
-      setShowPermanentDeleteCompanyDialog(false);
-      closeCompanyDrawer();
-      fetchCompanies();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to permanently delete company');
-    } finally {
-      setPermanentDeletingCompany(false);
     }
   };
 
@@ -1094,10 +938,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 flex-wrap">
-            <TabsTrigger value="dashboard" className="gap-2">
-              <BarChart3 className="h-4 w-4" /> Dashboard
-            </TabsTrigger>
+          <TabsList className="mb-6">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" /> Users
             </TabsTrigger>
@@ -1112,169 +953,12 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
             </TabsTrigger>
           </TabsList>
 
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard">
-            {dashboardLoading ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-              </div>
-            ) : dashboardData ? (
-              <div className="space-y-6">
-                {/* Overview Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { label: 'Total Users', value: dashboardData.overview.totalUsers, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-                    { label: 'Total Companies', value: dashboardData.overview.totalCompanies, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Total BOQs', value: dashboardData.overview.totalBoqs, icon: FileText, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Total Revenue', value: `$${dashboardData.overview.totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'This Month Revenue', value: `$${dashboardData.overview.thisMonthRevenue.toFixed(2)}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    { label: 'Last Month Revenue', value: `$${dashboardData.overview.lastMonthRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-slate-600', bg: 'bg-slate-50' },
-                    { label: 'Signups (7d)', value: dashboardData.overview.recentSignups, icon: Plus, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                    { label: 'Active Users (30d)', value: dashboardData.overview.activeUsers, icon: Activity, color: 'text-pink-600', bg: 'bg-pink-50' },
-                  ].map((stat, i) => (
-                    <Card key={i} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${stat.bg}`}>
-                            <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
-                            <p className="text-lg font-bold tabular-nums">{stat.value}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Charts Row 1: Revenue + Plan Distribution */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <Card className="lg:col-span-2">
-                    <CardHeader>
-                      <CardTitle className="text-base">Monthly Revenue</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={dashboardData.monthlyRevenue}>
-                            <defs>
-                              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
-                            <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']} />
-                            <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fill="url(#revenueGradient)" strokeWidth={2} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Plan Distribution</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Free', value: dashboardData.planDistribution.free },
-                                { name: 'Starter', value: dashboardData.planDistribution.starter },
-                                { name: 'Advance', value: dashboardData.planDistribution.advance },
-                                { name: 'Business', value: dashboardData.planDistribution.business },
-                              ].filter(d => d.value > 0)}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={80}
-                              paddingAngle={3}
-                              dataKey="value"
-                              label={({ name, value }) => `${name}: ${value}`}
-                            >
-                              {PLAN_COLORS.map((color, index) => (
-                                <Cell key={`cell-${index}`} fill={color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Charts Row 2: User Growth + BOQ Trend */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">User Growth (12 Months)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={dashboardData.userGrowth}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                            <YAxis tick={{ fontSize: 11 }} />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="cumulativeUsers" stroke="#6d28d9" strokeWidth={2} name="Total Users" dot={{ r: 3 }} />
-                            <Line type="monotone" dataKey="newUsers" stroke="#a78bfa" strokeWidth={2} name="New Users" dot={{ r: 3 }} />
-                            <Legend />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">BOQs Created (12 Months)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={dashboardData.boqTrend}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                            <YAxis tick={{ fontSize: 11 }} />
-                            <Tooltip />
-                            <Bar dataKey="boqs" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="BOQs Created" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="py-16 text-center text-muted-foreground">
-                  Failed to load dashboard data. Please try again.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
           {/* Users Tab */}
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>Search and manage all platform users</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={handleDownloadUsersCsv} className="gap-2">
-                    <Download className="h-4 w-4" /> Export CSV
-                  </Button>
-                </div>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Search and manage all platform users</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Search and Filters */}
@@ -1434,20 +1118,13 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
           <TabsContent value="companies">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <span>Companies</span>
-                      <span className="text-sm font-normal text-muted-foreground">
-                        {companyPagination.totalCount} total
-                      </span>
-                    </CardTitle>
-                    <CardDescription>Manage company accounts, billing, and access</CardDescription>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Companies</span>
+                  <div className="text-sm font-normal text-muted-foreground">
+                    {companyPagination.totalCount} total
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleDownloadCompaniesCsv} className="gap-2">
-                    <Download className="h-4 w-4" /> Export CSV
-                  </Button>
-                </div>
+                </CardTitle>
+                <CardDescription>Manage company accounts, billing, and access</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Search */}
@@ -2154,26 +1831,15 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                   {/* Delete User - Danger Zone */}
                   <div className="pt-4 mt-4 border-t border-red-200">
                     <p className="text-xs text-muted-foreground mb-2">Danger Zone</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={openDeleteUserDialog}
-                        disabled={!!userDetail.user.deletedAt}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {userDetail.user.deletedAt ? 'User Deleted' : 'Soft Delete User'}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={openPermanentDeleteUserDialog}
-                        className="bg-red-800 hover:bg-red-900"
-                      >
-                        <Skull className="h-4 w-4 mr-2" />
-                        Permanently Delete
-                      </Button>
-                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={openDeleteUserDialog}
+                      disabled={!!userDetail.user.deletedAt}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {userDetail.user.deletedAt ? 'User Deleted' : 'Delete User'}
+                    </Button>
                     {userDetail.user.deletedAt && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Deleted on {format(new Date(userDetail.user.deletedAt), 'MMM d, yyyy')}
@@ -2421,17 +2087,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                         size="sm"
                         onClick={() => openDeleteCompanyDialog(selectedCompany!)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" /> Soft Delete
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Company
                       </Button>
                     )}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => openPermanentDeleteCompanyDialog(selectedCompany!)}
-                      className="bg-red-800 hover:bg-red-900"
-                    >
-                      <Skull className="h-4 w-4 mr-2" /> Permanently Delete
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -2532,107 +2190,6 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               >
                 {deletingUser && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Delete User
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Permanent Delete User Dialog */}
-        <Dialog open={showPermanentDeleteUserDialog} onOpenChange={setShowPermanentDeleteUserDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-800">
-                <Skull className="h-5 w-5" />
-                Permanently Delete User
-              </DialogTitle>
-              <DialogDescription>
-                This will permanently remove "{selectedUser?.email}" and all associated data from the database.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="p-4 bg-red-100 border border-red-300 rounded-lg text-sm">
-                <p className="font-bold text-red-900 mb-2">⚠️ IRREVERSIBLE ACTION</p>
-                <ul className="list-disc list-inside text-red-800 space-y-1">
-                  <li>User record will be permanently erased from the database</li>
-                  <li>All sessions, accounts, and memberships will be deleted</li>
-                  <li>This action <strong>cannot be undone</strong></li>
-                  <li>Use this only for test/temporary accounts</li>
-                </ul>
-              </div>
-              <div>
-                <Label htmlFor="permanentDeleteUserConfirm" className="text-sm font-medium">
-                  Type <span className="font-mono font-bold text-red-800">PERMANENT DELETE</span> to confirm
-                </Label>
-                <Input
-                  id="permanentDeleteUserConfirm"
-                  value={permanentDeleteUserConfirmText}
-                  onChange={(e) => setPermanentDeleteUserConfirmText(e.target.value)}
-                  placeholder="PERMANENT DELETE"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowPermanentDeleteUserDialog(false)}>Cancel</Button>
-              <Button
-                variant="destructive"
-                onClick={handlePermanentDeleteUser}
-                disabled={permanentDeleteUserConfirmText !== 'PERMANENT DELETE' || permanentDeletingUser}
-                className="bg-red-800 hover:bg-red-900"
-              >
-                {permanentDeletingUser && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Permanently Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Permanent Delete Company Dialog */}
-        <Dialog open={showPermanentDeleteCompanyDialog} onOpenChange={setShowPermanentDeleteCompanyDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-800">
-                <Skull className="h-5 w-5" />
-                Permanently Delete Company
-              </DialogTitle>
-              <DialogDescription>
-                This will permanently remove "{selectedCompany?.name}" and ALL related data from the database.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="p-4 bg-red-100 border border-red-300 rounded-lg text-sm">
-                <p className="font-bold text-red-900 mb-2">⚠️ IRREVERSIBLE ACTION</p>
-                <ul className="list-disc list-inside text-red-800 space-y-1">
-                  <li>Company and ALL data (BOQs, categories, items, customers, themes, billing) will be erased</li>
-                  <li>Active Stripe subscription will be cancelled</li>
-                  <li>Users with no other company will also be permanently deleted</li>
-                  <li>This action <strong>cannot be undone</strong></li>
-                  <li>Use this only for test/temporary accounts</li>
-                </ul>
-              </div>
-              <div>
-                <Label htmlFor="permanentDeleteCompanyConfirm" className="text-sm font-medium">
-                  Type <span className="font-mono font-bold text-red-800">PERMANENT DELETE</span> to confirm
-                </Label>
-                <Input
-                  id="permanentDeleteCompanyConfirm"
-                  value={permanentDeleteCompanyConfirmText}
-                  onChange={(e) => setPermanentDeleteCompanyConfirmText(e.target.value)}
-                  placeholder="PERMANENT DELETE"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowPermanentDeleteCompanyDialog(false)}>Cancel</Button>
-              <Button
-                variant="destructive"
-                onClick={handlePermanentDeleteCompany}
-                disabled={permanentDeleteCompanyConfirmText !== 'PERMANENT DELETE' || permanentDeletingCompany}
-                className="bg-red-800 hover:bg-red-900"
-              >
-                {permanentDeletingCompany && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Permanently Delete
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -57,25 +57,25 @@ enum CouponType {
 }
 
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  password           String
-  name               String?
-  firstName          String?
-  lastName           String?
-  phone              String?
-  phoneDigits        String? // digits-only for search
-  country            String?
-  isBlocked          Boolean              @default(false)
-  blockReason        String?
-  deletedAt          DateTime? // Soft delete timestamp
-  forcePasswordReset Boolean              @default(false)
-  lastLoginAt        DateTime?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  memberships        CompanyMembership[]
-  adminGrants        CompanyAccessGrant[] @relation("AdminGrants") // Grants created by this admin
-
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  password            String
+  name                String?
+  firstName           String?
+  lastName            String?
+  phone               String?
+  phoneDigits         String?  // digits-only for search
+  country             String?
+  isBlocked           Boolean  @default(false)
+  blockReason         String?
+  deletedAt           DateTime? // Soft delete timestamp
+  forcePasswordReset  Boolean  @default(false)
+  lastLoginAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  memberships         CompanyMembership[]
+  adminGrants         CompanyAccessGrant[] @relation("AdminGrants") // Grants created by this admin
+  
   @@index([email])
   @@index([phone])
   @@index([country])
@@ -83,16 +83,16 @@ model User {
 }
 
 model Company {
-  id                String              @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  currencySymbol    String              @default("Rs.")
-  currencyPosition  String              @default("left")
-  defaultVatPercent Float               @default(18)
-  isBlocked         Boolean             @default(false)
+  currencySymbol    String    @default("Rs.")
+  currencyPosition  String    @default("left")
+  defaultVatPercent Float     @default(18)
+  isBlocked         Boolean   @default(false)
   blockReason       String?
   deletedAt         DateTime? // Soft delete timestamp
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   memberships       CompanyMembership[]
   customers         Customer[]
   boqs              Boq[]
@@ -139,16 +139,16 @@ model CompanyMembership {
   userId    String
   companyId String
   role      Role     @default(MEMBER)
-  isActive  Boolean  @default(true) // For seat-based billing
+  isActive  Boolean  @default(true)  // For seat-based billing
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
-  @@index([companyId]) // Fast lookup of all users in a company
+  @@index([companyId])           // Fast lookup of all users in a company
   @@index([companyId, isActive]) // Fast count of active members
-  @@index([userId]) // Fast lookup of all companies for a user
+  @@index([userId])              // Fast lookup of all companies for a user
 }
 
 model Customer {
@@ -163,7 +163,7 @@ model Customer {
   boqs      Boq[]
 
   @@index([companyId])
-  @@index([companyId, name]) // Fast customer search within company
+  @@index([companyId, name])  // Fast customer search within company
 }
 
 model Boq {
@@ -181,8 +181,6 @@ model Boq {
   vatEnabled      Boolean           @default(false)
   vatPercent      Float             @default(18)
   status          String            @default("draft")
-  isPreset        Boolean           @default(false)
-  presetName      String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -192,10 +190,9 @@ model Boq {
   categories      BoqCategory[]
 
   @@index([companyId])
-  @@index([companyId, updatedAt(sort: Desc)]) // Recent BOQs list (most common query)
-  @@index([companyId, projectName]) // BOQ search by project name
-  @@index([customerId]) // BOQs for a specific customer
-  @@index([companyId, isPreset]) // Presets list
+  @@index([companyId, updatedAt(sort: Desc)])  // Recent BOQs list (most common query)
+  @@index([companyId, projectName])            // BOQ search by project name
+  @@index([customerId])                        // BOQs for a specific customer
 }
 
 model BoqCategory {
@@ -246,45 +243,44 @@ enum GrantType {
 
 // Dynamic billing plans - admin editable
 model BillingPlan {
-  id                   String                    @id @default(cuid())
-  planKey              String                    @unique // 'free', 'starter', 'advance', 'business'
-  name                 String // Display name
-  priceMonthlyUsdCents Int // Monthly price in cents (0 for free, 1900 = $19)
-  priceAnnualUsdCents  Int? // Annual price in cents (null = no annual option)
-  seatModel            SeatModel                 @default(single) // single or per_seat (business)
-  boqLimitPerPeriod    Int? // null = unlimited
-  boqItemsLimit        Int? // null = unlimited, max items per BOQ
-  boqTemplatesLimit    Int? // null = unlimited
-  coverTemplatesLimit  Int? // null = unlimited
-  boqPresetsLimit      Int? // null = unlimited, number of BOQ presets allowed
-  logoUploadAllowed    Boolean                   @default(false)
-  sharingAllowed       Boolean                   @default(false) // Only Business
-  watermarkEnabled     Boolean                   @default(false) // Add watermark to PDFs
-  watermarkText        String? // Custom watermark text (defaults to "BOQ generated with MakeEstimate.com")
-  maxActiveMembers     Int                       @default(1) // 1 for single, null for unlimited
-  features             Json                      @default("[]") // Array of feature strings
-  isMostPopular        Boolean                   @default(false)
-  sortOrder            Int                       @default(0)
-  active               Boolean                   @default(true)
-  stripeProductId      String?
-  stripePriceIdMonthly String? // Current Stripe price for monthly billing
-  stripePriceIdAnnual  String? // Current Stripe price for annual billing
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  priceHistory         BillingPlanPriceHistory[]
+  id                     String                 @id @default(cuid())
+  planKey                String                 @unique  // 'free', 'starter', 'advance', 'business'
+  name                   String                 // Display name
+  priceMonthlyUsdCents   Int                    // Monthly price in cents (0 for free, 1900 = $19)
+  priceAnnualUsdCents    Int?                   // Annual price in cents (null = no annual option)
+  seatModel              SeatModel              @default(single) // single or per_seat (business)
+  boqLimitPerPeriod      Int?                   // null = unlimited
+  boqItemsLimit          Int?                   // null = unlimited, max items per BOQ
+  boqTemplatesLimit      Int?                   // null = unlimited
+  coverTemplatesLimit    Int?                   // null = unlimited
+  logoUploadAllowed      Boolean                @default(false)
+  sharingAllowed         Boolean                @default(false) // Only Business
+  watermarkEnabled       Boolean                @default(false) // Add watermark to PDFs
+  watermarkText          String?                // Custom watermark text (defaults to "BOQ generated with MakeEstimate.com")
+  maxActiveMembers       Int                    @default(1)     // 1 for single, null for unlimited
+  features               Json                   @default("[]")  // Array of feature strings
+  isMostPopular          Boolean                @default(false)
+  sortOrder              Int                    @default(0)
+  active                 Boolean                @default(true)
+  stripeProductId        String?
+  stripePriceIdMonthly   String?                // Current Stripe price for monthly billing
+  stripePriceIdAnnual    String?                // Current Stripe price for annual billing
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  priceHistory           BillingPlanPriceHistory[]
 
   @@index([active, sortOrder])
 }
 
 model BillingPlanPriceHistory {
-  id            String          @id @default(cuid())
-  billingPlanId String
-  stripePriceId String
-  amountCents   Int
-  interval      BillingInterval @default(month) // month or year
-  isCurrent     Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  billingPlan   BillingPlan     @relation(fields: [billingPlanId], references: [id], onDelete: Cascade)
+  id             String          @id @default(cuid())
+  billingPlanId  String
+  stripePriceId  String
+  amountCents    Int
+  interval       BillingInterval @default(month) // month or year
+  isCurrent      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  billingPlan    BillingPlan     @relation(fields: [billingPlanId], references: [id], onDelete: Cascade)
 
   @@index([billingPlanId])
   @@index([stripePriceId])
@@ -292,20 +288,20 @@ model BillingPlanPriceHistory {
 
 // Internal access grants (trials/free without Stripe)
 model CompanyAccessGrant {
-  id                   String    @id @default(cuid())
+  id                   String     @id @default(cuid())
   companyId            String
   grantType            GrantType
-  planKey              String? // Which plan level they get access to
-  couponId             String? // Optional link to coupon that created this
-  startsAt             DateTime  @default(now())
-  endsAt               DateTime? // null = never expires (free_forever)
+  planKey              String?    // Which plan level they get access to
+  couponId             String?    // Optional link to coupon that created this
+  startsAt             DateTime   @default(now())
+  endsAt               DateTime?  // null = never expires (free_forever)
   revokedAt            DateTime?
-  revokedById          String? // Admin who revoked
-  createdByAdminUserId String? // Platform admin who created this grant
-  notes                String? // Optional notes
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  createdByAdmin       User?     @relation("AdminGrants", fields: [createdByAdminUserId], references: [id], onDelete: SetNull)
+  revokedById          String?    // Admin who revoked
+  createdByAdminUserId String?    // Platform admin who created this grant
+  notes                String?    // Optional notes
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  createdByAdmin       User?      @relation("AdminGrants", fields: [createdByAdminUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId, revokedAt])
   @@index([companyId, endsAt])
@@ -319,7 +315,7 @@ model CompanyBilling {
   stripeSubscriptionId String?             @unique
   planKey              PlanKey?
   billingInterval      BillingInterval     @default(month) // month or year
-  seatQuantity         Int                 @default(1) // for per_seat plans
+  seatQuantity         Int                 @default(1)     // for per_seat plans
   status               SubscriptionStatus?
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
@@ -372,35 +368,35 @@ model StripeWebhookEvent {
 }
 
 model BillingInvoice {
-  id               String         @id @default(cuid())
-  companyBillingId String
-  stripeInvoiceId  String         @unique
-  amountPaid       Int // in cents
-  amountDue        Int // in cents
-  currency         String         @default("usd")
-  status           String // draft, open, paid, uncollectible, void
-  hostedInvoiceUrl String?
-  pdfUrl           String?
-  periodStart      DateTime?
-  periodEnd        DateTime?
-  createdAt        DateTime       @default(now())
-  companyBilling   CompanyBilling @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
+  id                String          @id @default(cuid())
+  companyBillingId  String
+  stripeInvoiceId   String          @unique
+  amountPaid        Int             // in cents
+  amountDue         Int             // in cents
+  currency          String          @default("usd")
+  status            String          // draft, open, paid, uncollectible, void
+  hostedInvoiceUrl  String?
+  pdfUrl            String?
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  createdAt         DateTime        @default(now())
+  companyBilling    CompanyBilling  @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
 
   @@index([companyBillingId])
   @@index([stripeInvoiceId])
 }
 
 model CouponRedemption {
-  id                    String         @id @default(cuid())
+  id                    String          @id @default(cuid())
   companyBillingId      String
   couponCode            String
   couponType            CouponType
   stripePromotionCodeId String?
-  redeemedAt            DateTime       @default(now())
+  redeemedAt            DateTime        @default(now())
   revokedAt             DateTime?
   revokedByAdminId      String?
-  source                String         @default("checkout") // checkout, admin_grant
-  companyBilling        CompanyBilling @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
+  source                String          @default("checkout") // checkout, admin_grant
+  companyBilling        CompanyBilling  @relation(fields: [companyBillingId], references: [id], onDelete: Cascade)
 
   @@index([companyBillingId])
   @@index([couponCode])
@@ -416,17 +412,17 @@ enum PdfJobStatus {
 }
 
 model PdfExportJob {
-  id           String       @id @default(cuid())
-  boqId        String
-  companyId    String
-  userId       String
-  status       PdfJobStatus @default(pending)
-  pdfUrl       String? // URL to download the completed PDF
-  errorMessage String?
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  boqId         String
+  companyId     String
+  userId        String
+  status        PdfJobStatus @default(pending)
+  pdfUrl        String?      // URL to download the completed PDF
+  errorMessage  String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([companyId, createdAt(sort: Desc)])
   @@index([boqId])

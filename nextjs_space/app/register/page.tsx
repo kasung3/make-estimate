@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -18,11 +18,8 @@ import {
 import { MarketingNavbar } from '@/components/marketing/navbar';
 import { FileText, Loader2, Check, CreditCard, Globe, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { metaTrack, metaTrackCustom, trackButtonClick, trackFreePlanRegister, acquireEventLock } from '@/lib/meta-pixel';
-import { gaEvent } from '@/components/google-analytics';
+import { metaTrack, metaTrackCustom } from '@/lib/meta-pixel';
 import { COUNTRIES, getCountryByCode } from '@/lib/countries';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 
 const PLANS: Record<string, { name: string; price: string; features: string[]; isFree?: boolean }> = {
   free: {
@@ -55,39 +52,41 @@ function RegisterForm() {
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [country, setCountry] = useState('');
-  const [phone, setPhone] = useState<string | undefined>(undefined);
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession() || {};
-  // Ref to prevent handleCheckout from being called twice
-  // (once from handleSubmit and once from useEffect when status changes)
-  const checkoutInitiatedRef = useRef(false);
 
   const selectedPlan = searchParams?.get('plan') || null;
   const planInfo = selectedPlan ? PLANS[selectedPlan] : null;
 
-  // Phone number is already E.164 formatted from react-phone-number-input
-  const fullPhoneNumber = phone || '';
-
-  // Track SignupPageView once per session
+  // Update phone code when country changes
   useEffect(() => {
-    if (acquireEventLock('SignupPageView')) {
-      metaTrackCustom('SignupPageView', {
-        plan_preselected: selectedPlan || 'none',
-      });
+    if (country) {
+      const countryData = getCountryByCode(country);
+      if (countryData) {
+        setPhoneCode(countryData.phoneCode);
+      }
     }
-  }, [selectedPlan]);
+  }, [country]);
+
+  // Combined full phone number for submission
+  const fullPhoneNumber = useMemo(() => {
+    if (phoneCode && phoneNumber) {
+      return `${phoneCode}${phoneNumber}`;
+    }
+    return phoneNumber || '';
+  }, [phoneCode, phoneNumber]);
 
   useEffect(() => {
     if (status === 'authenticated') {
       // If authenticated and has a plan selected, go to checkout
-      // Skip if checkout was already initiated from handleSubmit
-      if (selectedPlan && !checkoutInitiatedRef.current) {
-        checkoutInitiatedRef.current = true;
+      if (selectedPlan) {
         handleCheckout(selectedPlan);
-      } else if (!selectedPlan) {
+      } else {
         router.replace('/app/dashboard');
       }
     }
@@ -110,12 +109,8 @@ function RegisterForm() {
 
       // Handle Free plan activation (no Stripe redirect needed)
       if (data.freePlanActivated) {
-        if (acquireEventLock('FreePlanActivated')) {
-          metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
-        }
-        if (acquireEventLock('FreePlanRegister')) {
-          trackFreePlanRegister('register');
-        }
+        // Track FreePlanActivated custom event
+        metaTrackCustom('FreePlanActivated', { plan_key: 'free' });
         toast.success('Free plan activated! Redirecting...');
         router.push(data.url);
         return;
@@ -124,7 +119,7 @@ function RegisterForm() {
       // Handle grant-based access (no Stripe redirect)
       if (data.grantCreated) {
         // Track trial activation
-        if (data.grantType === 'trial' && acquireEventLock('StartTrial')) {
+        if (data.grantType === 'trial') {
           metaTrack('StartTrial', { 
             content_name: planKey,
             trial_days: data.endsAt ? Math.ceil((new Date(data.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
@@ -161,18 +156,6 @@ function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
-    if (!country) {
-      toast.error('Please select your country');
-      return;
-    }
-    if (!fullPhoneNumber || fullPhoneNumber.length < 6) {
-      toast.error('Please enter a valid phone number');
-      return;
-    }
-
-    trackButtonClick('CreateAccount', 'register', { plan: selectedPlan || 'none' });
     setLoading(true);
 
     try {
@@ -214,14 +197,11 @@ function RegisterForm() {
 
       // Track successful registration (no PII)
       metaTrack('CompleteRegistration', { method: 'email' });
-      gaEvent('sign_up', { method: 'email', plan: selectedPlan || 'free' });
 
       toast.success('Account created successfully!');
 
       // If plan was selected, redirect to checkout
       if (selectedPlan) {
-        // Mark checkout as initiated so useEffect doesn't double-fire it
-        checkoutInitiatedRef.current = true;
         // Small delay to ensure session is fully established
         setTimeout(() => {
           handleCheckout(selectedPlan);
@@ -378,17 +358,27 @@ function RegisterForm() {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                    Phone Number
+                    Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
                   </Label>
-                  <PhoneInput
-                    international
-                    countryCallingCodeEditable={false}
-                    defaultCountry="US"
-                    value={phone}
-                    onChange={setPhone}
-                    placeholder="Enter phone number"
-                    className="phone-input-custom"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="phoneCode"
+                      type="text"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value)}
+                      placeholder="+1"
+                      className="w-20 text-center"
+                      readOnly={!!country}
+                    />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Phone number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>

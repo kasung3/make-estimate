@@ -21,7 +21,7 @@ export async function GET() {
     }
 
     const boqs = await prisma.boq.findMany({
-      where: { companyId, isPreset: false },
+      where: { companyId },
       include: {
         customer: true,
         categories: {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, DollarSign, Loader2, Save, Percent, CreditCard } from 'lucide-react';
+import { Building2, DollarSign, Loader2, Save, Percent, FileText, Palette, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanySettings } from '@/lib/types';
+import { CoverTemplateEditor } from './cover-template-editor';
+import { PdfThemeEditor } from './pdf-theme-editor';
 import { BillingSection } from './billing-section';
 
 interface SettingsClientProps {
@@ -27,23 +29,17 @@ interface SettingsClientProps {
 
 export function SettingsClient({ company: initialCompany, isAdmin }: SettingsClientProps) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [company, setCompany] = useState<CompanySettings>(initialCompany);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('company');
 
-  // Handle tab from URL params - redirect old pdf tab to templates
+  // Handle tab from URL params
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab === 'pdf') {
-      // Redirect old pdf tab to templates page
-      router.replace('/app/templates');
-      return;
-    }
-    if (tab && ['company', 'billing'].includes(tab)) {
+    if (tab && ['company', 'pdf', 'billing'].includes(tab)) {
       setActiveTab(tab);
     }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -76,14 +72,18 @@ export function SettingsClient({ company: initialCompany, isAdmin }: SettingsCli
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your company settings and billing</p>
+          <p className="text-gray-500 mt-1">Manage your company and PDF settings</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="company" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Company
+            </TabsTrigger>
+            <TabsTrigger value="pdf" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              PDF Templates
             </TabsTrigger>
             <TabsTrigger value="billing" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
@@ -95,7 +95,7 @@ export function SettingsClient({ company: initialCompany, isAdmin }: SettingsCli
           <Card className="shadow-md border-0">
             <CardHeader>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-lavender-400 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -217,6 +217,42 @@ export function SettingsClient({ company: initialCompany, isAdmin }: SettingsCli
               </>
             )}
           </Button>
+          </TabsContent>
+
+          <TabsContent value="pdf" className="space-y-8">
+            <Card className="shadow-md border-0">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Cover Page Templates</CardTitle>
+                    <CardDescription>Customize cover page content and formatting</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CoverTemplateEditor companyName={company?.name ?? 'Company'} />
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-md border-0">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">BOQ Color Themes</CardTitle>
+                    <CardDescription>Customize colors and shading for BOQ pages</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <PdfThemeEditor companyName={company?.name ?? 'Company'} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="billing">

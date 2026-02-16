@@ -17,27 +17,27 @@ const formatNumber = (num: number, decimals: number = 2): string => {
   });
 };
 
-// Default theme configuration - lavender/purple brand colors
+// Default theme configuration
 const getDefaultThemeConfig = (): PdfThemeConfig => ({
   header: {
-    borderColor: '#7c3aed',
-    titleColor: '#7c3aed',
+    borderColor: '#0891b2',
+    titleColor: '#0891b2',
     subtitleColor: '#666666',
   },
   categoryHeader: {
-    backgroundPrimary: '#7c3aed',
-    backgroundSecondary: '#8b5cf6',
+    backgroundPrimary: '#0891b2',
+    backgroundSecondary: '#14b8a6',
     textColor: '#ffffff',
   },
   table: {
-    headerBackground: '#f5f3ff',
+    headerBackground: '#f9fafb',
     headerTextColor: '#6b7280',
     borderColor: '#e5e7eb',
     bodyTextColor: '#333333',
   },
   subtotalRow: {
-    background: '#f5f3ff',
-    borderColor: '#8b5cf6',
+    background: '#f0fdfa',
+    borderColor: '#14b8a6',
     textColor: '#333333',
   },
   noteRow: {
@@ -45,7 +45,7 @@ const getDefaultThemeConfig = (): PdfThemeConfig => ({
     textColor: '#92400e',
   },
   totals: {
-    finalTotalBackground: '#7c3aed',
+    finalTotalBackground: '#0891b2',
     finalTotalTextColor: '#ffffff',
   },
 });
@@ -67,7 +67,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
         fontWeight: 'bold',
         italic: false,
         underline: false,
-        color: '#7c3aed',
+        color: '#0891b2',
         align: 'center',
         marginTop: 0,
         marginBottom: 20,
@@ -331,27 +331,76 @@ export async function processPdfExport(
     // Generate full HTML (same as sync version)
     const html = generateFullHtml(boq, company, coverPageHtml, themeConfig, currencySymbol, formatCurrency, formatNumber, watermarkOptions);
 
-    // Generate PDF using Puppeteer
-    const { generatePdfBase64 } = await import('@/lib/pdf-puppeteer');
-    const pdfBase64 = await generatePdfBase64(html, {
-      format: 'A4',
-      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-      printBackground: true,
+    // Generate PDF using the HTML2PDF API
+    const createResponse = await fetch('https://apps.abacus.ai/api/createConvertHtmlToPdfRequest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deployment_token: process.env.ABACUSAI_API_KEY,
+        html_content: html,
+        pdf_options: {
+          format: 'A4',
+          margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+          print_background: true,
+        },
+        base_url: process.env.NEXTAUTH_URL || '',
+      }),
     });
 
-    const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
+    if (!createResponse.ok) {
+      throw new Error('Failed to create PDF request');
+    }
 
-    await prisma.pdfExportJob.update({
-      where: { id: jobId },
-      data: {
-        status: 'completed',
-        pdfUrl: pdfDataUrl,
-        completedAt: new Date(),
-      },
-    });
+    const { request_id } = await createResponse.json();
+    if (!request_id) {
+      throw new Error('No request ID returned');
+    }
 
-    console.log(`[PDF_PROCESSOR_SUCCESS] Job: ${jobId}, Time: ${timer.elapsed()}ms`);
-    return;
+    // Poll for status until completion
+    const maxAttempts = 300;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const statusResponse = await fetch('https://apps.abacus.ai/api/getConvertHtmlToPdfStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_id, deployment_token: process.env.ABACUSAI_API_KEY }),
+      });
+
+      const statusResult = await statusResponse.json();
+      const status = statusResult?.status || 'FAILED';
+      const result = statusResult?.result || null;
+
+      if (status === 'SUCCESS') {
+        if (result && result.result) {
+          // Store the base64 PDF as a data URL (for immediate download)
+          // In production, you'd upload this to S3 and store the URL
+          const pdfBase64 = result.result;
+          const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
+
+          await prisma.pdfExportJob.update({
+            where: { id: jobId },
+            data: {
+              status: 'completed',
+              pdfUrl: pdfDataUrl,
+              completedAt: new Date(),
+            },
+          });
+
+          console.log(`[PDF_PROCESSOR_SUCCESS] Job: ${jobId}, Time: ${timer.elapsed()}ms`);
+          return;
+        } else {
+          throw new Error('PDF generation completed but no result data');
+        }
+      } else if (status === 'FAILED') {
+        throw new Error(result?.error || 'PDF generation failed');
+      }
+      attempts++;
+    }
+
+    throw new Error('PDF generation timed out');
   } catch (error) {
     console.error(`[PDF_PROCESSOR_ERROR] Job: ${jobId}, Error:`, error);
 
@@ -466,37 +515,30 @@ function generateFullHtml(
     }
     .final-total td { font-size: 14px; }
     ${watermarkOptions?.enabled ? `
-    /* Branding footer strip */
+    /* Watermark styling */
     .watermark {
       position: fixed;
-      bottom: 0;
+      bottom: 15px;
       left: 0;
       right: 0;
       text-align: center;
       font-size: 10px;
-      color: #7c3aed;
-      font-weight: 600;
+      color: rgba(0, 0, 0, 0.15);
       letter-spacing: 0.5px;
-      padding: 6px 0;
-      background: linear-gradient(90deg, #f5f3ff 0%, #ede9fe 50%, #f5f3ff 100%);
-      border-top: 1.5px solid #c4b5fd;
       z-index: 1000;
-    }
-    .watermark a {
-      color: #7c3aed;
-      text-decoration: none;
+      pointer-events: none;
     }
     @media print {
       .watermark {
         position: fixed;
-        bottom: 0;
+        bottom: 15px;
       }
     }
     ` : ''}
   </style>
 </head>
 <body>
-  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">📄 ${watermarkOptions.text} &nbsp;|&nbsp; Create your own BOQs free at <a href="https://makeestimate.com">MakeEstimate.com</a></div>` : ''}
+  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">${watermarkOptions.text}</div>` : ''}
   ${coverPageHtml}
 
   <div class="content-page">

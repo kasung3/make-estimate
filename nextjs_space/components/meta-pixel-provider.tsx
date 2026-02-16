@@ -1,57 +1,71 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { isPixelEnabled, getPixelId, trackPageView } from '@/lib/meta-pixel';
+import { isPixelEnabled, getPixelId, metaTrackPageView } from '@/lib/meta-pixel';
 
-// Evaluated once at module level (deterministic, safe for SSR)
+// Constants evaluated at build time (consistent server/client)
 const PIXEL_ENABLED = isPixelEnabled();
 const PIXEL_ID = getPixelId();
 
 /**
  * MetaPixelProvider
- *
+ * 
  * Loads the Meta (Facebook) Pixel script and handles:
- * - Pixel initialisation via inline script: fbq('init', PIXEL_ID)
- * - PageView tracking from a SINGLE source (useEffect on route changes)
- *
- * The inline fbq snippet creates a stub that queues all calls until
- * fbevents.js finishes loading, so we can safely call fbq('track','PageView')
- * from the useEffect even before the SDK has fully loaded.
- *
- * Place this component once in the root layout.
+ * - Initial pixel initialization
+ * - PageView tracking on initial load
+ * - PageView tracking on SPA route changes
+ * 
+ * Place this component in the root layout.
+ * 
+ * Environment Variables:
+ * - NEXT_PUBLIC_META_PIXEL_ID: Your Meta Pixel ID
+ * - NEXT_PUBLIC_ENABLE_META_PIXEL: 'true' to enable
  */
 export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const lastHref = useRef<string | null>(null);
+  const isInitialized = useRef(false);
+  const lastTrackedPath = useRef<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // ── SINGLE source of truth for PageView tracking ──────────────────────
-  // Fires on:
-  //   • initial mount (first PageView)
-  //   • every SPA route change
-  // The fbq stub queues the call if fbevents.js hasn't loaded yet,
-  // so no onLoad / scriptReady tracking is needed.
+  // Set mounted state after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Track page views on route changes (SPA navigation)
   useEffect(() => {
     if (!PIXEL_ENABLED || !PIXEL_ID) return;
+    if (!mounted) return;
     if (typeof window === 'undefined') return;
-    // fbq stub is created by the inline script; check it exists
     if (typeof window.fbq !== 'function') return;
 
-    const search = searchParams?.toString() || '';
-    const currentHref = search ? `${pathname}?${search}` : (pathname || '/');
+    // Build current path including search params
+    const searchString = searchParams?.toString() || '';
+    const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
 
-    // Skip if href hasn't changed (handles Strict Mode double-fire
-    // and any re-render that doesn't change the route)
-    if (currentHref === lastHref.current) return;
+    // Prevent duplicate tracking on initial render
+    // The initial PageView is fired by the script's inline code
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      lastTrackedPath.current = currentPath;
+      return;
+    }
 
-    lastHref.current = currentHref;
-    trackPageView(); // has its own 2-second hard dedupe as safety net
-  }, [pathname, searchParams]);
+    // Only track if path actually changed
+    if (currentPath !== lastTrackedPath.current) {
+      lastTrackedPath.current = currentPath;
+      metaTrackPageView();
+    }
+  }, [pathname, searchParams, mounted]);
 
+  // Always render children consistently (avoids hydration mismatch)
+  // Script is added conditionally but doesn't affect children rendering
   return (
     <>
+      {/* Only render pixel script if enabled - this is fine since Script doesn't affect hydration */}
       {PIXEL_ENABLED && PIXEL_ID && (
         <>
           <Script
@@ -67,8 +81,8 @@ export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
                 t.src=v;s=b.getElementsByTagName(e)[0];
                 s.parentNode.insertBefore(t,s)}(window, document,'script',
                 'https://connect.facebook.net/en_US/fbevents.js');
-                fbq('set', 'autoConfig', 'false', '${PIXEL_ID}');
                 fbq('init', '${PIXEL_ID}');
+                fbq('track', 'PageView');
               `,
             }}
           />

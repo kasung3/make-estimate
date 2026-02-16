@@ -96,7 +96,7 @@ const getDefaultCoverConfig = (): CoverPageConfig => ({
       id: 'project_name',
       type: 'project_name',
       enabled: true,
-      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 },
+      style: { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 },
     },
     {
       id: 'subtitle',
@@ -167,12 +167,22 @@ function LogoUploadSection({
 
       const { uploadUrl, cloud_storage_path } = await presignedRes.json();
 
-      // Upload file to Supabase Storage using the signed upload URL
+      // Check if content-disposition is in signed headers
+      const signedHeadersMatch = uploadUrl.match(/X-Amz-SignedHeaders=([^&]+)/);
+      const signedHeaders = signedHeadersMatch ? decodeURIComponent(signedHeadersMatch[1]).split(';') : [];
+      const needsContentDisposition = signedHeaders.includes('content-disposition');
+
+      // Upload file to S3
+      const uploadHeaders: HeadersInit = {
+        'Content-Type': file.type,
+      };
+      if (needsContentDisposition) {
+        uploadHeaders['Content-Disposition'] = 'attachment';
+      }
+
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
+        headers: uploadHeaders,
         body: file,
       });
 
@@ -180,9 +190,10 @@ function LogoUploadSection({
         throw new Error('Failed to upload file');
       }
 
-      // Construct the public URL for Supabase Storage
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/uploads/${cloud_storage_path}`;
+      // Extract the public URL from the upload URL (which contains bucket info)
+      // The presigned URL format is: https://bucket.s3.region.amazonaws.com/key?...
+      const urlParts = new URL(uploadUrl);
+      const publicUrl = `${urlParts.protocol}//${urlParts.host}/${cloud_storage_path}`;
 
       onUpdate({ 
         logoUrl: publicUrl,
@@ -768,7 +779,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
     
     switch (type) {
       case 'project_name':
-        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#7c3aed', marginBottom: 20 };
+        style = { ...DEFAULT_ELEMENT_STYLE, fontSize: 36, fontWeight: 'bold', color: '#0891b2', marginBottom: 20 };
         break;
       case 'subtitle':
         text = 'Bill of Quantities';
@@ -832,7 +843,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
         </div>
         <Button onClick={handleCreateTemplate}>
           <Plus className="w-4 h-4 mr-2" />
-          New Cover Template
+          New Template
         </Button>
       </div>
 
@@ -894,7 +905,7 @@ export function CoverTemplateEditor({ companyName }: CoverTemplateEditorProps) {
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-            <DialogTitle>{editingTemplate ? 'Edit Cover Template' : 'New Cover Template'}</DialogTitle>
+            <DialogTitle>{editingTemplate ? 'Edit Template' : 'New Template'}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 flex">

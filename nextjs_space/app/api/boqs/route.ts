@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { checkRateLimit, RATE_LIMITS, rateLimitKey, rateLimitResponse } from '@/lib/rate-limiter';
 import { getCompanyBillingStatus, getPlanFromDb } from '@/lib/billing';
 import { format } from 'date-fns';
+import { botProtection, sanitizeText, isValidId } from '@/lib/sanitize';
 
 export async function GET() {
   try {
@@ -60,10 +61,21 @@ export async function POST(request: Request) {
       return rateLimitResponse(rateResult);
     }
 
-    const { projectName, customerId } = await request.json();
+    // Bot protection
+    const botBlock = botProtection(request);
+    if (botBlock) return botBlock;
 
-    if (!projectName) {
+    const body = await request.json();
+    const projectName = sanitizeText(body.projectName, 200);
+    const customerId = body.customerId ? String(body.customerId) : null;
+
+    if (!projectName || projectName.length < 1) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
+    }
+
+    // Validate customerId format if provided
+    if (customerId && !isValidId(customerId)) {
+      return NextResponse.json({ error: 'Invalid customer ID' }, { status: 400 });
     }
 
     // Use centralized billing status function for all entitlement checks

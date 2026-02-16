@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { instrumentRoute, timedOperation } from '@/lib/api-instrumentation';
+import { sanitizeText, sanitizeNumber, isValidId } from '@/lib/sanitize';
 
 export const GET = instrumentRoute(
   '/api/boqs/[id]',
@@ -49,21 +50,42 @@ export const PUT = instrumentRoute(
       return NextResponse.json({ error: 'BOQ not found' }, { status: 404 });
     }
 
-    // Build update data - only include fields that are explicitly provided
+    // Build update data - only include fields that are explicitly provided, sanitized
     const updateData: Record<string, any> = {};
     
-    if (body?.projectName !== undefined) updateData.projectName = body.projectName;
-    if (body?.customerId !== undefined) updateData.customerId = body.customerId || null;
+    if (body?.projectName !== undefined) updateData.projectName = sanitizeText(body.projectName, 200);
+    if (body?.customerId !== undefined) {
+      if (body.customerId && !isValidId(body.customerId)) {
+        return NextResponse.json({ error: 'Invalid customer ID' }, { status: 400 });
+      }
+      updateData.customerId = body.customerId || null;
+    }
     if (body?.coverTemplateId !== undefined) updateData.coverTemplateId = body.coverTemplateId || null;
     if (body?.pdfThemeId !== undefined) updateData.pdfThemeId = body.pdfThemeId || null;
-    if (body?.dateMode !== undefined) updateData.dateMode = body.dateMode;
-    if (body?.preparationDate !== undefined) updateData.preparationDate = body.preparationDate ? new Date(body.preparationDate) : null;
-    if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled;
-    if (body?.discountType !== undefined) updateData.discountType = body.discountType;
-    if (body?.discountValue !== undefined) updateData.discountValue = body.discountValue;
-    if (body?.vatEnabled !== undefined) updateData.vatEnabled = body.vatEnabled;
-    if (body?.vatPercent !== undefined) updateData.vatPercent = body.vatPercent;
-    if (body?.status !== undefined) updateData.status = body.status;
+    if (body?.dateMode !== undefined) {
+      const validDateModes = ['auto', 'manual', 'none'];
+      updateData.dateMode = validDateModes.includes(body.dateMode) ? body.dateMode : 'auto';
+    }
+    if (body?.preparationDate !== undefined) {
+      if (body.preparationDate) {
+        const d = new Date(body.preparationDate);
+        updateData.preparationDate = isNaN(d.getTime()) ? null : d;
+      } else {
+        updateData.preparationDate = null;
+      }
+    }
+    if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled === true;
+    if (body?.discountType !== undefined) {
+      const validTypes = ['percentage', 'fixed'];
+      updateData.discountType = validTypes.includes(body.discountType) ? body.discountType : 'percentage';
+    }
+    if (body?.discountValue !== undefined) updateData.discountValue = sanitizeNumber(body.discountValue, 0, 0, 999999999);
+    if (body?.vatEnabled !== undefined) updateData.vatEnabled = body.vatEnabled === true;
+    if (body?.vatPercent !== undefined) updateData.vatPercent = sanitizeNumber(body.vatPercent, 0, 0, 100);
+    if (body?.status !== undefined) {
+      const validStatuses = ['DRAFT', 'SENT', 'APPROVED', 'REJECTED'];
+      updateData.status = validStatuses.includes(body.status) ? body.status : 'DRAFT';
+    }
 
     const boq = await timedOperation('boq.update', () =>
       prisma.boq.update({

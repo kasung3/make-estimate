@@ -9,17 +9,6 @@ import { prisma } from '@/lib/db';
 import { CoverPageConfig, CoverElement, PdfThemeConfig } from '@/lib/types';
 import { createTimer } from '@/lib/performance';
 
-// Escape HTML to prevent XSS in PDF generation
-function escapeHtml(str: string | null | undefined): string {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 // Format number with thousand separators
 const formatNumber = (num: number, decimals: number = 2): string => {
   return num.toLocaleString('en-US', {
@@ -203,7 +192,7 @@ function generateCoverPageHtml(
         break;
     }
 
-    return `<div style="${style}">${escapeHtml(content)}</div>`;
+    return `<div style="${style}">${content}</div>`;
   };
 
   const elementsHtml = config.elements.map(renderElement).join('');
@@ -526,13 +515,13 @@ function generateFullHtml(
   </style>
 </head>
 <body>
-  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">${escapeHtml(watermarkOptions.text)}</div>` : ''}
+  ${watermarkOptions?.enabled && watermarkOptions?.text ? `<div class="watermark">${watermarkOptions.text}</div>` : ''}
   ${coverPageHtml}
 
   <div class="content-page">
     <div class="header">
-      <h1>${escapeHtml(boq?.projectName) || 'Project'}</h1>
-      ${boq?.customer ? `<p>Customer: ${escapeHtml(boq.customer.name)}</p>` : ''}
+      <h1>${boq?.projectName ?? 'Project'}</h1>
+      ${boq?.customer ? `<p>Customer: ${boq.customer.name}</p>` : ''}
     </div>
 
     ${(boq?.categories ?? []).map((category: any, catIndex: number) => {
@@ -564,8 +553,8 @@ function generateFullHtml(
         return `
           <tr>
             <td>${catIndex + 1}.${itemNumber}</td>
-            <td>${escapeHtml(item?.description)}</td>
-            <td>${escapeHtml(item?.unit)}</td>
+            <td>${item?.description ?? ''}</td>
+            <td>${item?.unit ?? ''}</td>
             <td class="text-right">${formatNumber(item?.quantity ?? 0, 2)}</td>
             <td class="text-right">${formatNumber(unitPrice, 2)}</td>
             <td class="text-right">${formatNumber(amount, 2)}</td>
@@ -575,7 +564,7 @@ function generateFullHtml(
 
       return `
         <div class="category">
-          <div class="category-header">${catIndex + 1}. ${escapeHtml(category?.name) || 'Category'}</div>
+          <div class="category-header">${catIndex + 1}. ${category?.name ?? 'Category'}</div>
           <table>
             <thead>
               <tr>

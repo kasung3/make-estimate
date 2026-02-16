@@ -385,11 +385,11 @@ function RegisterForm() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Min 8 chars, uppercase, lowercase, number"
+                    placeholder="Create a password (min 6 characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={8}
+                    minLength={6}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>

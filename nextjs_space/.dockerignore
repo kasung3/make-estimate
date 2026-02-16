@@ -1,5 +1,6 @@
 node_modules
 .next
+.build
 .git
 .yarn
 .yarnrc.yml
@@ -8,9 +9,9 @@ yarn.lock
 *.md
 .env
 .env.*
-Dockerfile
 .dockerignore
 __tests__
 jest.config.js
 docs
 backup_screenshots*
+tsconfig.tsbuildinfo

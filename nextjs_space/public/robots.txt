@@ -1,3 +1,27 @@
-# Allow all web crawlers to access all content
 User-agent: *
 Allow: /
+Allow: /pricing
+Allow: /login
+Allow: /register
+
+# Block all bots from app routes and API
+Disallow: /app/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+
+# Block common attack scanners
+User-agent: sqlmap
+Disallow: /
+
+User-agent: nikto
+Disallow: /
+
+User-agent: nessus
+Disallow: /
+
+User-agent: dirbuster
+Disallow: /
+
+User-agent: gobuster
+Disallow: /

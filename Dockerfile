@@ -4,6 +4,8 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json ./
+# Force NODE_ENV=development so devDependencies (tailwindcss, typescript, etc.) are installed
+ENV NODE_ENV=development
 RUN yarn install --ignore-engines
 
 # Stage 2: Build

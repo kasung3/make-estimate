@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
 import { MetaPixelProvider } from '@/components/meta-pixel-provider';
+import { GoogleAnalytics } from '@/components/google-analytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <Suspense fallback={null}>
+            <GoogleAnalytics />
             <MetaPixelProvider>{children}</MetaPixelProvider>
           </Suspense>
         </AuthProvider>

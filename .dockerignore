@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.yarn
+.yarnrc.yml
+yarn.lock
+.gitignore
+*.md
+.env
+.env.*
+Dockerfile
+.dockerignore
+__tests__
+jest.config.js
+docs
+backup_screenshots*

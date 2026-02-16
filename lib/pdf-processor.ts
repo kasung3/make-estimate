@@ -331,76 +331,53 @@ export async function processPdfExport(
     // Generate full HTML (same as sync version)
     const html = generateFullHtml(boq, company, coverPageHtml, themeConfig, currencySymbol, formatCurrency, formatNumber, watermarkOptions);
 
-    // Generate PDF using the HTML2PDF API
-    const createResponse = await fetch('https://apps.abacus.ai/api/createConvertHtmlToPdfRequest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deployment_token: process.env.ABACUSAI_API_KEY,
-        html_content: html,
-        pdf_options: {
-          format: 'A4',
-          margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-          print_background: true,
-        },
-        base_url: process.env.NEXTAUTH_URL || '',
-      }),
+    // Generate PDF using Puppeteer
+    const puppeteer = require('puppeteer');
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process',
+      ],
     });
 
-    if (!createResponse.ok) {
-      throw new Error('Failed to create PDF request');
-    }
-
-    const { request_id } = await createResponse.json();
-    if (!request_id) {
-      throw new Error('No request ID returned');
-    }
-
-    // Poll for status until completion
-    const maxAttempts = 300;
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const statusResponse = await fetch('https://apps.abacus.ai/api/getConvertHtmlToPdfStatus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_id, deployment_token: process.env.ABACUSAI_API_KEY }),
+    try {
+      const page = await browser.newPage();
+      
+      // Set base URL for relative resources (e.g., logo images)
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      await page.setContent(html, { 
+        waitUntil: 'networkidle0',
+        timeout: 30000,
       });
 
-      const statusResult = await statusResponse.json();
-      const status = statusResult?.status || 'FAILED';
-      const result = statusResult?.result || null;
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+        printBackground: true,
+      });
 
-      if (status === 'SUCCESS') {
-        if (result && result.result) {
-          // Store the base64 PDF as a data URL (for immediate download)
-          // In production, you'd upload this to S3 and store the URL
-          const pdfBase64 = result.result;
-          const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
+      // Store as base64 data URL
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+      const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
 
-          await prisma.pdfExportJob.update({
-            where: { id: jobId },
-            data: {
-              status: 'completed',
-              pdfUrl: pdfDataUrl,
-              completedAt: new Date(),
-            },
-          });
+      await prisma.pdfExportJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'completed',
+          pdfUrl: pdfDataUrl,
+          completedAt: new Date(),
+        },
+      });
 
-          console.log(`[PDF_PROCESSOR_SUCCESS] Job: ${jobId}, Time: ${timer.elapsed()}ms`);
-          return;
-        } else {
-          throw new Error('PDF generation completed but no result data');
-        }
-      } else if (status === 'FAILED') {
-        throw new Error(result?.error || 'PDF generation failed');
-      }
-      attempts++;
+      console.log(`[PDF_PROCESSOR_SUCCESS] Job: ${jobId}, Time: ${timer.elapsed()}ms`);
+    } finally {
+      await browser.close();
     }
-
-    throw new Error('PDF generation timed out');
   } catch (error) {
     console.error(`[PDF_PROCESSOR_ERROR] Job: ${jobId}, Error:`, error);
 

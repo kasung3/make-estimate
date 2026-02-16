@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script src="https://apps.abacus.ai/chatllm/appllm-lib.js" />
+        {/* External scripts removed for self-hosted deployment */}
       </head>
       <body className={inter.className}>
         <AuthProvider>

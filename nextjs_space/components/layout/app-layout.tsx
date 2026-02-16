@@ -58,6 +58,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Check if payment failed (past_due or unpaid) — prompt renewal
+        if (data.status === 'past_due' || data.status === 'unpaid') {
+          router.replace('/pricing?payment=failed');
+          return;
+        }
+
         // Check if user has no active subscription and no active grant
         if (!data.hasActiveSubscription && !data.hasAdminGrant && !data.hasTrialGrant) {
           router.replace('/pricing?subscription=required');

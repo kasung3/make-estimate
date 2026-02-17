@@ -19,6 +19,7 @@ export interface BillingStatus {
   accessSource: 'subscription' | 'grant' | 'admin_override' | 'free_plan' | null;
   // Template limits
   boqTemplatesLimit: number | null;
+  boqPresetsLimit: number | null;
   coverTemplatesLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
@@ -161,6 +162,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       trialEndsAt: adminGrant?.endsAt ?? null,
       accessSource: 'admin_override',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
@@ -201,6 +203,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       trialEndsAt: trialGrant.endsAt,
       accessSource: 'grant',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? true,
       sharingAllowed: plan?.sharingAllowed ?? true,
@@ -237,6 +240,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       trialEndsAt: null,
       accessSource: 'free_plan',
       boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
       coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
       logoUploadAllowed: plan?.logoUploadAllowed ?? false,
       sharingAllowed: plan?.sharingAllowed ?? false,
@@ -266,6 +270,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
       trialEndsAt: null,
       accessSource: null,
       boqTemplatesLimit: null,
+      boqPresetsLimit: null,
       coverTemplatesLimit: null,
       logoUploadAllowed: false,
       sharingAllowed: false,
@@ -326,6 +331,7 @@ export async function getCompanyBillingStatus(companyId: string): Promise<Billin
     trialEndsAt: billing.status === 'trialing' ? periodEnd : null,
     accessSource: 'subscription',
     boqTemplatesLimit: plan?.boqTemplatesLimit ?? null,
+      boqPresetsLimit: plan?.boqPresetsLimit ?? null,
     coverTemplatesLimit: plan?.coverTemplatesLimit ?? null,
     logoUploadAllowed: plan?.logoUploadAllowed ?? true,
     sharingAllowed: plan?.sharingAllowed ?? true,

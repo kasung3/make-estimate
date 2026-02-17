@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -25,6 +27,9 @@ import {
   AlertTriangle,
   Loader2,
   Crown,
+  Layers,
+  Copy,
+  ArrowRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BillingStatus } from '@/lib/types';
@@ -68,6 +73,108 @@ export function TemplatesClient({
   const [templateToDelete, setTemplateToDelete] = useState<{ id: string; type: 'boq' | 'cover'; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  // Preset state
+  const router = useRouter();
+  const [presets, setPresets] = useState<any[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [creatingPreset, setCreatingPreset] = useState(false);
+  const [newPresetName, setNewPresetName] = useState('');
+  const [showCreatePresetDialog, setShowCreatePresetDialog] = useState(false);
+  const [presetToDelete, setPresetToDelete] = useState<any>(null);
+  const [showDeletePresetDialog, setShowDeletePresetDialog] = useState(false);
+  const [deletingPreset, setDeletingPreset] = useState(false);
+
+  const fetchPresets = useCallback(async () => {
+    setPresetsLoading(true);
+    try {
+      const res = await fetch('/api/presets');
+      if (res.ok) {
+        const data = await res.json();
+        setPresets(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch presets:', err);
+    } finally {
+      setPresetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'presets') {
+      fetchPresets();
+    }
+  }, [activeTab, fetchPresets]);
+
+  const handleCreatePreset = async () => {
+    const name = newPresetName.trim() || 'New Preset';
+    setCreatingPreset(true);
+    try {
+      const res = await fetch('/api/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ presetName: name }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 403) {
+          toast.error(data.error || 'Preset limit reached');
+        } else {
+          toast.error(data.error || 'Failed to create preset');
+        }
+        return;
+      }
+      const preset = await res.json();
+      toast.success('Preset created! Redirecting to editor...');
+      setShowCreatePresetDialog(false);
+      setNewPresetName('');
+      router.push(`/app/boq/${preset.id}`);
+    } catch (err) {
+      toast.error('Failed to create preset');
+    } finally {
+      setCreatingPreset(false);
+    }
+  };
+
+  const handleDeletePreset = async () => {
+    if (!presetToDelete) return;
+    setDeletingPreset(true);
+    try {
+      const res = await fetch(`/api/presets/${presetToDelete.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPresets((prev) => prev.filter((p) => p.id !== presetToDelete.id));
+        toast.success('Preset deleted');
+      } else {
+        toast.error('Failed to delete preset');
+      }
+    } catch (err) {
+      toast.error('Failed to delete preset');
+    } finally {
+      setDeletingPreset(false);
+      setShowDeletePresetDialog(false);
+      setPresetToDelete(null);
+    }
+  };
+
+  const handleCreateBoqFromPreset = async (presetId: string, presetName: string) => {
+    try {
+      const res = await fetch('/api/presets/create-boq-from-preset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ presetId, projectName: `BOQ from ${presetName}` }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to create BOQ');
+        return;
+      }
+      const boq = await res.json();
+      toast.success('BOQ created from preset!');
+      router.push(`/app/boq/${boq.id}`);
+    } catch (err) {
+      toast.error('Failed to create BOQ from preset');
+    }
+  };
 
   const boqTemplatesLimit = billingStatus.boqTemplatesLimit ?? null;
   const coverTemplatesLimit = billingStatus.coverTemplatesLimit ?? null;
@@ -242,14 +349,18 @@ export function TemplatesClient({
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="boq" className="flex items-center gap-2">
               <Palette className="w-4 h-4" />
-              BOQ Themes
+              <span className="hidden sm:inline">BOQ</span> Themes
+            </TabsTrigger>
+            <TabsTrigger value="presets" className="flex items-center gap-2">
+              <Layers className="w-4 h-4" />
+              <span className="hidden sm:inline">BOQ</span> Presets
             </TabsTrigger>
             <TabsTrigger value="cover" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Cover Pages
+              <span className="hidden sm:inline">Cover</span> Pages
             </TabsTrigger>
           </TabsList>
 

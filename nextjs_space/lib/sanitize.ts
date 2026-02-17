@@ -137,6 +137,11 @@ export function validateOrigin(request: Request): boolean {
  * Returns null if OK, or a Response object if blocked.
  */
 export function botProtection(request: Request): Response | null {
+  // Skip bot protection in test mode
+  if (process.env.__NEXT_TEST_MODE === '1') {
+    return null;
+  }
+
   // Check bot patterns
   const botCheck = detectBot(request);
   if (botCheck.isBot) {

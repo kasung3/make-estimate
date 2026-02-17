@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { getCompanyBillingStatus } from '@/lib/billing';
-import { startOfMonth } from 'date-fns';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -22,21 +22,11 @@ export async function POST(request: NextRequest) {
 
     // Check BOQ creation limit
     const billing = await getCompanyBillingStatus(companyId);
-    if (billing.boqLimitPerPeriod !== null) {
-      const periodStart = startOfMonth(new Date());
-      const boqsThisPeriod = await prisma.boq.count({
-        where: {
-          companyId: companyId,
-          isPreset: false,
-          createdAt: { gte: periodStart },
-        },
-      });
-      if (boqsThisPeriod >= billing.boqLimitPerPeriod) {
-        return NextResponse.json(
-          { error: `Monthly BOQ limit reached (${billing.boqLimitPerPeriod}). Upgrade your plan.` },
-          { status: 403 }
-        );
-      }
+    if (!billing.canCreateBoq) {
+      return NextResponse.json(
+        { error: `Monthly BOQ limit reached (${billing.boqLimit}). Upgrade your plan.` },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

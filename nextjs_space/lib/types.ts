@@ -91,6 +91,8 @@ export interface BoqWithRelations {
   coverTemplateId: string | null;
   pdfThemeId: string | null;
   projectName: string;
+  isPreset: boolean;
+  presetName: string | null;
   dateMode: DateMode;
   preparationDate: Date | string | null;
   discountEnabled: boolean;

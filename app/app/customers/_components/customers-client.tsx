@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Plus, Search, Users, Mail, Phone, Trash2, Loader2, MapPin, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Users, Mail, Phone, Trash2, Loader2, MapPin, AlertTriangle, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CustomerType } from '@/lib/types';
 
@@ -48,13 +48,20 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
   const [customers, setCustomers] = useState(initialCustomers ?? []);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<CustomerType | null>(null);
+  const [customerToEdit, setCustomerToEdit] = useState<CustomerType | null>(null);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newAddress, setNewAddress] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -123,6 +130,55 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
       toast.error('An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditClick = (customer: CustomerType) => {
+    setCustomerToEdit(customer);
+    setEditName(customer.name || '');
+    setEditEmail(customer.email || '');
+    setEditPhone(customer.phone || '');
+    setEditAddress(customer.address || '');
+    setShowEditDialog(true);
+  };
+
+  const handleEditConfirm = async () => {
+    if (!customerToEdit) return;
+    if (!editName?.trim()) {
+      toast.error('Please enter a customer name');
+      return;
+    }
+
+    setEditing(true);
+    try {
+      const response = await fetch(`/api/customers/${customerToEdit.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail || null,
+          phone: editPhone || null,
+          address: editAddress || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.error || 'Failed to update customer');
+        return;
+      }
+
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customerToEdit.id ? data : c))
+      );
+      toast.success('Customer updated');
+      setShowEditDialog(false);
+      setCustomerToEdit(null);
+    } catch (error) {
+      toast.error('An error occurred');
+    } finally {
+      setEditing(false);
     }
   };
 
@@ -228,14 +284,24 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500"
-                      onClick={() => handleDeleteClick(customer)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-purple-500"
+                        onClick={() => handleEditClick(customer)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500"
+                        onClick={() => handleDeleteClick(customer)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -296,6 +362,63 @@ export function CustomersClient({ customers: initialCustomers }: CustomersClient
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Add Customer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Customer Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Customer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="editName">Name *</Label>
+                <Input
+                  id="editName"
+                  placeholder="Customer name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editEmail">Email</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editPhone">Phone</Label>
+                <Input
+                  id="editPhone"
+                  placeholder="Phone number"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editAddress">Address</Label>
+                <Input
+                  id="editAddress"
+                  placeholder="Address"
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={editing}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditConfirm} disabled={editing}>
+                {editing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>

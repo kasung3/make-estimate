@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
   const [boqs, customers, company] = await Promise.all([
     prisma.boq.findMany({
-      where: { companyId },
+      where: { companyId, isPreset: false },
       include: {
         customer: true,
         categories: {

@@ -3,10 +3,10 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 # Force NODE_ENV=development so devDependencies (tailwindcss, typescript, etc.) are installed
 ENV NODE_ENV=development
-RUN yarn install --ignore-engines
+RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build
 FROM node:20-alpine AS builder
@@ -35,7 +35,7 @@ ENV DATABASE_URL=$DATABASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXT_OUTPUT_MODE=standalone
-RUN yarn build
+RUN npm run build
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner

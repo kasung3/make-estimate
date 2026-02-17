@@ -1,18 +1,20 @@
 (self["webpackChunk_N_E"] = self["webpackChunk_N_E"] || []).push([["app/layout"],{
 
-/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!":
-/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false! ***!
-  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fgoogle-analytics.tsx%22%2C%22ids%22%3A%5B%22GoogleAnalytics%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&server=false!":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fgoogle-analytics.tsx%22%2C%22ids%22%3A%5B%22GoogleAnalytics%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&server=false! ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ (function(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
 
+Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./app/globals.css */ "(app-pages-browser)/./app/globals.css"));
+;
 Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./components/auth-provider.tsx */ "(app-pages-browser)/./components/auth-provider.tsx"));
+;
+Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./components/google-analytics.tsx */ "(app-pages-browser)/./components/google-analytics.tsx"));
 ;
 Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./components/meta-pixel-provider.tsx */ "(app-pages-browser)/./components/meta-pixel-provider.tsx"));
 ;
 Promise.resolve(/*! import() eager */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{"path":"app/layout.tsx","import":"Inter","arguments":[{"subsets":["latin"]}],"variableName":"inter"} */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/font/google/target.css?{\"path\":\"app/layout.tsx\",\"import\":\"Inter\",\"arguments\":[{\"subsets\":[\"latin\"]}],\"variableName\":\"inter\"}", 23));
-;
-Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__webpack_require__, /*! ./app/globals.css */ "(app-pages-browser)/./app/globals.css"));
 
 
 /***/ }),
@@ -1218,7 +1220,7 @@ var __dirname = "/";
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("7772d367d736");
+/* harmony default export */ __webpack_exports__["default"] = ("2bbc8e9b78b8");
 if (true) { module.hot.accept() }
 
 
@@ -1331,6 +1333,169 @@ $RefreshReg$(_c, "AuthProvider");
 
 /***/ }),
 
+/***/ "(app-pages-browser)/./components/google-analytics.tsx":
+/*!*****************************************!*\
+  !*** ./components/google-analytics.tsx ***!
+  \*****************************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   GoogleAnalytics: function() { return /* binding */ GoogleAnalytics; },
+/* harmony export */   gtagEvent: function() { return /* binding */ gtagEvent; },
+/* harmony export */   gtagPageview: function() { return /* binding */ gtagPageview; }
+/* harmony export */ });
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/jsx-dev-runtime.js");
+/* harmony import */ var next_script__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! next/script */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/script.js");
+/* harmony import */ var next_navigation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! next/navigation */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/navigation.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
+/* __next_internal_client_entry_do_not_use__ gtagPageview,gtagEvent,GoogleAnalytics auto */ 
+var _s = $RefreshSig$();
+
+
+
+const GA_MEASUREMENT_ID = "G-9221YGJ2PR";
+// Send pageview to GA4
+function gtagPageview(url) {
+    if ( true && GA_MEASUREMENT_ID && window.gtag) {
+        window.gtag("config", GA_MEASUREMENT_ID, {
+            page_path: url
+        });
+    }
+}
+// Send custom event to GA4
+function gtagEvent(action, params) {
+    if ( true && GA_MEASUREMENT_ID && window.gtag) {
+        window.gtag("event", action, params);
+    }
+}
+function GoogleAnalytics() {
+    _s();
+    const pathname = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname)();
+    const searchParams = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams)();
+    // Track page views on route changes
+    (0,react__WEBPACK_IMPORTED_MODULE_3__.useEffect)(()=>{
+        if (!GA_MEASUREMENT_ID) return;
+        const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
+        gtagPageview(url);
+    }, [
+        pathname,
+        searchParams
+    ]);
+    if (!GA_MEASUREMENT_ID) {
+        return null;
+    }
+    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.Fragment, {
+        children: [
+            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_script__WEBPACK_IMPORTED_MODULE_1__["default"], {
+                src: `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`,
+                strategy: "afterInteractive"
+            }, void 0, false, {
+                fileName: "/home/ubuntu/make_estimate/nextjs_space/components/google-analytics.tsx",
+                lineNumber: 42,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_script__WEBPACK_IMPORTED_MODULE_1__["default"], {
+                id: "google-analytics",
+                strategy: "afterInteractive",
+                dangerouslySetInnerHTML: {
+                    __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}', {
+              page_path: window.location.pathname,
+              send_page_view: true,
+            });
+          `
+                }
+            }, void 0, false, {
+                fileName: "/home/ubuntu/make_estimate/nextjs_space/components/google-analytics.tsx",
+                lineNumber: 46,
+                columnNumber: 7
+            }, this)
+        ]
+    }, void 0, true);
+}
+_s(GoogleAnalytics, "h6p6PpCFmP4Mu5bIMduBzSZThBE=", false, function() {
+    return [
+        next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname,
+        next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams
+    ];
+});
+_c = GoogleAnalytics;
+var _c;
+$RefreshReg$(_c, "GoogleAnalytics");
+
+
+;
+    // Wrapped in an IIFE to avoid polluting the global scope
+    ;
+    (function () {
+        var _a, _b;
+        // Legacy CSS implementations will `eval` browser code in a Node.js context
+        // to extract CSS. For backwards compatibility, we need to check we're in a
+        // browser context before continuing.
+        if (typeof self !== 'undefined' &&
+            // AMP / No-JS mode does not inject these helpers:
+            '$RefreshHelpers$' in self) {
+            // @ts-ignore __webpack_module__ is global
+            var currentExports = module.exports;
+            // @ts-ignore __webpack_module__ is global
+            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;
+            // This cannot happen in MainTemplate because the exports mismatch between
+            // templating and execution.
+            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);
+            // A module can be accepted automatically based on its exports, e.g. when
+            // it is a Refresh Boundary.
+            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {
+                // Save the previous exports signature on update so we can compare the boundary
+                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)
+                module.hot.dispose(function (data) {
+                    data.prevSignature =
+                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);
+                });
+                // Unconditionally accept an update to this module, we'll check if it's
+                // still a Refresh Boundary later.
+                // @ts-ignore importMeta is replaced in the loader
+                module.hot.accept();
+                // This field is set when the previous version of this module was a
+                // Refresh Boundary, letting us know we need to check for invalidation or
+                // enqueue an update.
+                if (prevSignature !== null) {
+                    // A boundary can become ineligible if its exports are incompatible
+                    // with the previous exports.
+                    //
+                    // For example, if you add/remove/change exports, we'll want to
+                    // re-execute the importing modules, and force those components to
+                    // re-render. Similarly, if you convert a class component to a
+                    // function, we want to invalidate the boundary.
+                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {
+                        module.hot.invalidate();
+                    }
+                    else {
+                        self.$RefreshHelpers$.scheduleUpdate();
+                    }
+                }
+            }
+            else {
+                // Since we just executed the code for the module, it's possible that the
+                // new exports made it ineligible for being a boundary.
+                // We only care about the case when we were _previously_ a boundary,
+                // because we already accepted this update (accidental side effect).
+                var isNoLongerABoundary = prevSignature !== null;
+                if (isNoLongerABoundary) {
+                    module.hot.invalidate();
+                }
+            }
+        }
+    })();
+
+
+/***/ }),
+
 /***/ "(app-pages-browser)/./components/meta-pixel-provider.tsx":
 /*!********************************************!*\
   !*** ./components/meta-pixel-provider.tsx ***!
@@ -1362,8 +1527,8 @@ const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
  * 
  * Loads the Meta (Facebook) Pixel script and handles:
  * - Initial pixel initialization
- * - PageView tracking on initial load
- * - PageView tracking on SPA route changes
+ * - PageView tracking on initial load (via inline script)
+ * - PageView tracking on SPA route changes only
  * 
  * Place this component in the root layout.
  * 
@@ -1374,38 +1539,30 @@ const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
     _s();
     const pathname = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname)();
     const searchParams = (0,next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams)();
-    const isInitialized = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)(false);
     const lastTrackedPath = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)(null);
-    const [mounted, setMounted] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(false);
-    // Set mounted state after hydration
-    (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(()=>{
-        setMounted(true);
-    }, []);
-    // Track page views on route changes (SPA navigation)
+    const isFirstRender = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)(true);
+    // Track page views ONLY on SPA route changes (not initial load)
     (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(()=>{
         if (!PIXEL_ENABLED || !PIXEL_ID) return;
-        if (!mounted) return;
         if (false) {}
         if (typeof window.fbq !== "function") return;
         // Build current path including search params
         const searchString = searchParams?.toString() || "";
         const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
-        // Prevent duplicate tracking on initial render
-        // The initial PageView is fired by the script's inline code
-        if (!isInitialized.current) {
-            isInitialized.current = true;
+        // Skip first render - the inline script handles initial PageView
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
             lastTrackedPath.current = currentPath;
             return;
         }
-        // Only track if path actually changed
+        // Only track if path actually changed (SPA navigation)
         if (currentPath !== lastTrackedPath.current) {
             lastTrackedPath.current = currentPath;
             (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.metaTrackPageView)();
         }
     }, [
         pathname,
-        searchParams,
-        mounted
+        searchParams
     ]);
     // Always render children consistently (avoids hydration mismatch)
     // Script is added conditionally but doesn't affect children rendering
@@ -1432,7 +1589,7 @@ const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
                         }
                     }, void 0, false, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
-                        lineNumber: 71,
+                        lineNumber: 63,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("noscript", {
@@ -1446,12 +1603,12 @@ const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
                             alt: ""
                         }, void 0, false, {
                             fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
-                            lineNumber: 90,
+                            lineNumber: 82,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/meta-pixel-provider.tsx",
-                        lineNumber: 89,
+                        lineNumber: 81,
                         columnNumber: 11
                     }, this)
                 ]
@@ -1460,7 +1617,7 @@ const PIXEL_ID = (0,_lib_meta_pixel__WEBPACK_IMPORTED_MODULE_4__.getPixelId)();
         ]
     }, void 0, true);
 }
-_s(MetaPixelProvider, "AlOmnQcSmHOpcKoHPXG6gH2tjuw=", false, function() {
+_s(MetaPixelProvider, "SxrIOoSt/JYnuEOGj55fI+mr9L0=", false, function() {
     return [
         next_navigation__WEBPACK_IMPORTED_MODULE_2__.usePathname,
         next_navigation__WEBPACK_IMPORTED_MODULE_2__.useSearchParams
@@ -2459,7 +2616,7 @@ $RefreshReg$(_c, "Script");
 // extracted by mini-css-extract-plugin
 module.exports = {"style":{"fontFamily":"'__Inter_f367f3', '__Inter_Fallback_f367f3'","fontStyle":"normal"},"className":"__className_f367f3"};
     if(true) {
-      // 1770674220979
+      // 1771274411112
       var cssReload = __webpack_require__(/*! ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/mini-css-extract-plugin/hmr/hotModuleReplacement.js */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/mini-css-extract-plugin/hmr/hotModuleReplacement.js")(module.id, {"publicPath":"/_next/","esModule":false,"locals":true});
       module.hot.dispose(cssReload);
       
@@ -5181,7 +5338,7 @@ var _t = n;
 },
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ var __webpack_exec__ = function(moduleId) { return __webpack_require__(__webpack_require__.s = moduleId); }
-/******/ __webpack_require__.O(0, ["main-app"], function() { return __webpack_exec__("(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&server=false!"); });
+/******/ __webpack_require__.O(0, ["main-app"], function() { return __webpack_exec__("(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp%2Fglobals.css%22%2C%22ids%22%3A%5B%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fauth-provider.tsx%22%2C%22ids%22%3A%5B%22AuthProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fgoogle-analytics.tsx%22%2C%22ids%22%3A%5B%22GoogleAnalytics%22%5D%7D&modules=%7B%22request%22%3A%22%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fcomponents%2Fmeta-pixel-provider.tsx%22%2C%22ids%22%3A%5B%22MetaPixelProvider%22%5D%7D&modules=%7B%22request%22%3A%22%2Fopt%2Fhostedapp%2Fnode%2Froot%2Fapp%2Fnode_modules%2Fnext%2Ffont%2Fgoogle%2Ftarget.css%3F%7B%5C%22path%5C%22%3A%5C%22app%2Flayout.tsx%5C%22%2C%5C%22import%5C%22%3A%5C%22Inter%5C%22%2C%5C%22arguments%5C%22%3A%5B%7B%5C%22subsets%5C%22%3A%5B%5C%22latin%5C%22%5D%7D%5D%2C%5C%22variableName%5C%22%3A%5C%22inter%5C%22%7D%22%2C%22ids%22%3A%5B%5D%7D&server=false!"); });
 /******/ var __webpack_exports__ = __webpack_require__.O();
 /******/ _N_E = __webpack_exports__;
 /******/ }

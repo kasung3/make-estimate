@@ -3903,20 +3903,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/jsx-dev-runtime.js");
 /* harmony import */ var next_link__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! next/link */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/api/link.js");
-/* harmony import */ var _barrel_optimize_names_FileText_lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! __barrel_optimize__?names=FileText!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-text.js");
+/* harmony import */ var _barrel_optimize_names_FileText_lucide_react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! __barrel_optimize__?names=FileText!=!lucide-react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/lucide-react/dist/esm/icons/file-text.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/compiled/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var next_auth_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! next-auth/react */ "(app-pages-browser)/../../../../opt/hostedapp/node/root/app/node_modules/next-auth/react/index.js");
+/* harmony import */ var next_auth_react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(next_auth_react__WEBPACK_IMPORTED_MODULE_3__);
 /* __next_internal_client_entry_do_not_use__ MarketingFooter auto */ 
 var _s = $RefreshSig$();
+
 
 
 
 function MarketingFooter() {
     _s();
     const [year, setYear] = (0,react__WEBPACK_IMPORTED_MODULE_2__.useState)(2026);
+    const { data: session, status } = (0,next_auth_react__WEBPACK_IMPORTED_MODULE_3__.useSession)() || {};
     (0,react__WEBPACK_IMPORTED_MODULE_2__.useEffect)(()=>{
         setYear(new Date().getFullYear());
     }, []);
+    const handleLogout = ()=>{
+        (0,next_auth_react__WEBPACK_IMPORTED_MODULE_3__.signOut)({
+            callbackUrl: "/"
+        });
+    };
     return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("footer", {
         className: "bg-gradient-to-b from-white to-purple-50/50 border-t border-purple-100/50",
         children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3933,16 +3942,16 @@ function MarketingFooter() {
                                 children: [
                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
                                         className: "w-8 h-8 bg-gradient-to-br from-purple-500 to-lavender-500 rounded-lg flex items-center justify-center shadow-sm",
-                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_FileText_lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], {
+                                        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_barrel_optimize_names_FileText_lucide_react__WEBPACK_IMPORTED_MODULE_4__["default"], {
                                             className: "w-4 h-4 text-white"
                                         }, void 0, false, {
                                             fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                            lineNumber: 22,
+                                            lineNumber: 28,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                        lineNumber: 21,
+                                        lineNumber: 27,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("span", {
@@ -3950,13 +3959,13 @@ function MarketingFooter() {
                                         children: "MakeEstimate"
                                     }, void 0, false, {
                                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                        lineNumber: 24,
+                                        lineNumber: 30,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                lineNumber: 20,
+                                lineNumber: 26,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("p", {
@@ -3968,13 +3977,13 @@ function MarketingFooter() {
                                 ]
                             }, void 0, true, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                lineNumber: 28,
+                                lineNumber: 34,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                        lineNumber: 19,
+                        lineNumber: 25,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("div", {
@@ -3986,17 +3995,25 @@ function MarketingFooter() {
                                 children: "Pricing"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                lineNumber: 35,
+                                lineNumber: 41,
                                 columnNumber: 13
                             }, this),
-                            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
+                            session ? /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)("button", {
+                                onClick: handleLogout,
+                                className: "text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200",
+                                children: "Logout"
+                            }, void 0, false, {
+                                fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
+                                lineNumber: 48,
+                                columnNumber: 15
+                            }, this) : /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
                                 href: "/login",
                                 className: "text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200",
                                 children: "Login"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                lineNumber: 41,
-                                columnNumber: 13
+                                lineNumber: 55,
+                                columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(next_link__WEBPACK_IMPORTED_MODULE_1__["default"], {
                                 href: "/register",
@@ -4004,33 +4021,37 @@ function MarketingFooter() {
                                 children: "Register"
                             }, void 0, false, {
                                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                                lineNumber: 47,
+                                lineNumber: 62,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                        lineNumber: 34,
+                        lineNumber: 40,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-                lineNumber: 17,
+                lineNumber: 23,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-            lineNumber: 16,
+            lineNumber: 22,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "/home/ubuntu/make_estimate/nextjs_space/components/marketing/footer.tsx",
-        lineNumber: 15,
+        lineNumber: 21,
         columnNumber: 5
     }, this);
 }
-_s(MarketingFooter, "oqpMxef6FoGkD2FCHZgPSaQinMg=");
+_s(MarketingFooter, "eO3UtBvLg05+S2vQQD1InZnjt+Q=", false, function() {
+    return [
+        next_auth_react__WEBPACK_IMPORTED_MODULE_3__.useSession
+    ];
+});
 _c = MarketingFooter;
 var _c;
 $RefreshReg$(_c, "MarketingFooter");

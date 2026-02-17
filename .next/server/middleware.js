@@ -70,32 +70,61 @@ function nHandler(opts) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   config: () => (/* binding */ config),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */   "default": () => (/* binding */ middleware)
 /* harmony export */ });
 /* harmony import */ var next_auth_middleware__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! next-auth/middleware */ "(middleware)/../../../../opt/hostedapp/node/root/app/node_modules/next-auth/middleware.js");
 /* harmony import */ var next_auth_middleware__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(next_auth_middleware__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var next_server__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! next/server */ "(middleware)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/esm/api/server.js");
 
 
+// Security headers applied to all responses
+const SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    "Content-Security-Policy": [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect.facebook.net https://apps.abacus.ai https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com https://www.facebook.com https://www.google-analytics.com https://www.googletagmanager.com",
+        "font-src 'self' data:",
+        "connect-src 'self' https://*.supabase.co https://api.stripe.com https://www.facebook.com https://connect.facebook.net https://www.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com https://*.g.doubleclick.net",
+        "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.facebook.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self' https://*.abacus.ai https://*.abacusai.com"
+    ].join("; ")
+};
+function applySecurityHeaders(response) {
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)){
+        response.headers.set(key, value);
+    }
+    // Remove X-Powered-By
+    response.headers.delete("X-Powered-By");
+    return response;
+}
 // Check if email is a platform admin
 function isPlatformAdminEmail(email) {
     if (!email) return false;
     const adminEmails = process.env.PLATFORM_ADMIN_EMAILS?.split(",").map((e)=>e.trim().toLowerCase()) ?? [];
     return adminEmails.includes(email.toLowerCase());
 }
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,next_auth_middleware__WEBPACK_IMPORTED_MODULE_0__.withAuth)(function middleware(req) {
+// Auth-protected middleware for /app/* routes
+const authMiddleware = (0,next_auth_middleware__WEBPACK_IMPORTED_MODULE_0__.withAuth)(function middleware(req) {
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
-    // Platform admin route protection (using /app/glorand as the secret URL)
+    // Platform admin route protection
     if (pathname.startsWith("/app/glorand")) {
         if (!isPlatformAdminEmail(token?.email)) {
-            return next_server__WEBPACK_IMPORTED_MODULE_1__.NextResponse.redirect(new URL("/app/dashboard", req.url));
+            const response = next_server__WEBPACK_IMPORTED_MODULE_1__.NextResponse.redirect(new URL("/app/dashboard", req.url));
+            return applySecurityHeaders(response);
         }
     }
-    // Check for user blocked status (token should have isBlocked from session)
-    // The actual blocking check is done in the callback below
-    // Additional blocking logic is handled in API routes and page components
-    return next_server__WEBPACK_IMPORTED_MODULE_1__.NextResponse.next();
+    const response = next_server__WEBPACK_IMPORTED_MODULE_1__.NextResponse.next();
+    return applySecurityHeaders(response);
 }, {
     callbacks: {
         authorized: ({ token })=>!!token
@@ -103,11 +132,23 @@ function isPlatformAdminEmail(email) {
     pages: {
         signIn: "/login"
     }
-}));
-// Protect all routes under /app/*
+});
+// Main middleware: applies security headers to ALL routes,
+// and auth protection to /app/* routes
+function middleware(req) {
+    const pathname = req.nextUrl.pathname;
+    // For /app/* routes, use auth middleware (which also applies security headers)
+    if (pathname.startsWith("/app/")) {
+        return authMiddleware(req);
+    }
+    // For all other routes, just apply security headers
+    const response = next_server__WEBPACK_IMPORTED_MODULE_1__.NextResponse.next();
+    return applySecurityHeaders(response);
+}
 const config = {
     matcher: [
-        "/app/:path*"
+        // Match all routes except static files and _next
+        "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$).*)"
     ]
 };
 

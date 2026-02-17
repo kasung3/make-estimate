@@ -165,10 +165,10 @@ module.exports = require("zlib");
 
 /***/ }),
 
-/***/ "(rsc)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!":
-/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D! ***!
-  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "(rsc)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=standalone&preferredRegion=&middlewareConfig=e30%3D!":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=standalone&preferredRegion=&middlewareConfig=e30%3D! ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -192,7 +192,7 @@ __webpack_require__.r(__webpack_exports__);
 
 // We inject the nextConfigOutput here so that we can use them in the route
 // module.
-const nextConfigOutput = ""
+const nextConfigOutput = "standalone"
 const routeModule = new next_dist_server_future_route_modules_app_route_module_compiled__WEBPACK_IMPORTED_MODULE_0__.AppRouteRouteModule({
     definition: {
         kind: next_dist_server_future_route_kind__WEBPACK_IMPORTED_MODULE_1__.RouteKind.APP_ROUTE,
@@ -258,9 +258,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var bcryptjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! bcryptjs */ "(rsc)/../../../../opt/hostedapp/node/root/app/node_modules/bcryptjs/index.js");
 /* harmony import */ var bcryptjs__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(bcryptjs__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _db__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./db */ "(rsc)/./lib/db.ts");
+/* harmony import */ var _rate_limiter__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rate-limiter */ "(rsc)/./lib/rate-limiter.ts");
 
 
 
+
+// Login rate limits
+const LOGIN_RATE_PER_EMAIL = {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+    blockDurationMs: 5 * 60 * 1000
+};
+const LOGIN_RATE_PER_IP = {
+    windowMs: 60 * 1000,
+    maxRequests: 20,
+    blockDurationMs: 5 * 60 * 1000
+};
 const authOptions = {
     providers: [
         (0,next_auth_providers_credentials__WEBPACK_IMPORTED_MODULE_0__["default"])({
@@ -275,13 +288,27 @@ const authOptions = {
                     type: "password"
                 }
             },
-            async authorize (credentials) {
+            async authorize (credentials, req) {
                 if (!credentials?.email || !credentials?.password) {
                     return null;
                 }
+                const email = credentials.email.toLowerCase().trim();
+                // Rate limit by email
+                const emailRate = (0,_rate_limiter__WEBPACK_IMPORTED_MODULE_3__.checkRateLimit)(`login_email:${email}`, LOGIN_RATE_PER_EMAIL);
+                if (!emailRate.allowed) {
+                    console.warn(`[LOGIN_RATE_LIMITED] Email: ${email}`);
+                    throw new Error("Too many login attempts. Please try again in 5 minutes.");
+                }
+                // Rate limit by IP
+                const ip = req?.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || "unknown";
+                const ipRate = (0,_rate_limiter__WEBPACK_IMPORTED_MODULE_3__.checkRateLimit)(`login_ip:${ip}`, LOGIN_RATE_PER_IP);
+                if (!ipRate.allowed) {
+                    console.warn(`[LOGIN_RATE_LIMITED] IP: ${ip}`);
+                    throw new Error("Too many login attempts from this location. Please try again later.");
+                }
                 const user = await _db__WEBPACK_IMPORTED_MODULE_2__.prisma.user.findUnique({
                     where: {
-                        email: credentials.email
+                        email
                     },
                     include: {
                         memberships: {
@@ -291,7 +318,15 @@ const authOptions = {
                         }
                     }
                 });
-                if (!user) return null;
+                if (!user) {
+                    // Constant-time: hash a dummy password to prevent timing attacks
+                    await bcryptjs__WEBPACK_IMPORTED_MODULE_1___default().hash("dummy-password-for-timing", 12);
+                    return null;
+                }
+                // Check if user is blocked
+                if (user.isBlocked) {
+                    throw new Error("Your account has been suspended. Please contact support.");
+                }
                 const isValid = await bcryptjs__WEBPACK_IMPORTED_MODULE_1___default().compare(credentials.password, user.password);
                 if (!isValid) return null;
                 // Update lastLoginAt timestamp
@@ -339,7 +374,9 @@ const authOptions = {
         signIn: "/login"
     },
     session: {
-        strategy: "jwt"
+        strategy: "jwt",
+        maxAge: 24 * 60 * 60,
+        updateAge: 60 * 60
     },
     secret: process.env.NEXTAUTH_SECRET
 };
@@ -572,6 +609,178 @@ const slowQueryBuffer = [];
 }
 
 
+/***/ }),
+
+/***/ "(rsc)/./lib/rate-limiter.ts":
+/*!*****************************!*\
+  !*** ./lib/rate-limiter.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   RATE_LIMITS: () => (/* binding */ RATE_LIMITS),
+/* harmony export */   checkRateLimit: () => (/* binding */ checkRateLimit),
+/* harmony export */   getRateLimitStats: () => (/* binding */ getRateLimitStats),
+/* harmony export */   rateLimitKey: () => (/* binding */ rateLimitKey),
+/* harmony export */   rateLimitResponse: () => (/* binding */ rateLimitResponse)
+/* harmony export */ });
+/**
+ * Rate Limiter - In-Memory Sliding Window
+ * 
+ * Provides rate limiting for API endpoints to prevent abuse.
+ * Uses an in-memory sliding window algorithm.
+ * 
+ * For multi-server deployments, consider using Redis instead.
+ */ // In-memory store for rate limit data
+const rateLimitStore = new Map();
+// Clean up old entries periodically (every 5 minutes)
+let cleanupInterval = null;
+function startCleanup() {
+    if (cleanupInterval) return;
+    cleanupInterval = setInterval(()=>{
+        const now = Date.now();
+        const maxAge = 10 * 60 * 1000; // 10 minutes
+        for (const [key, entry] of rateLimitStore.entries()){
+            // Remove entries that haven't been accessed in 10 minutes
+            const latestTimestamp = entry.timestamps[entry.timestamps.length - 1] || 0;
+            if (now - latestTimestamp > maxAge) {
+                rateLimitStore.delete(key);
+            }
+        }
+    }, 5 * 60 * 1000); // Every 5 minutes
+}
+// Start cleanup on module load
+if (true) {
+    startCleanup();
+}
+/**
+ * Check if a request is rate limited
+ * @param key Unique identifier (e.g., `pdf_export:${companyId}` or `autosave:${userId}`)
+ * @param config Rate limit configuration
+ * @returns { allowed: boolean, remaining: number, resetIn: number }
+ */ function checkRateLimit(key, config) {
+    const now = Date.now();
+    const windowStart = now - config.windowMs;
+    // Get or create entry
+    let entry = rateLimitStore.get(key);
+    if (!entry) {
+        entry = {
+            timestamps: [],
+            blocked: false
+        };
+        rateLimitStore.set(key, entry);
+    }
+    // Check if currently blocked
+    if (entry.blocked && entry.blockedUntil) {
+        if (now < entry.blockedUntil) {
+            const retryAfter = Math.ceil((entry.blockedUntil - now) / 1000);
+            return {
+                allowed: false,
+                remaining: 0,
+                resetIn: entry.blockedUntil - now,
+                retryAfter
+            };
+        } else {
+            // Block expired, reset
+            entry.blocked = false;
+            entry.blockedUntil = undefined;
+            entry.timestamps = [];
+        }
+    }
+    // Filter out old timestamps (outside the window)
+    entry.timestamps = entry.timestamps.filter((ts)=>ts > windowStart);
+    // Check if limit exceeded
+    if (entry.timestamps.length >= config.maxRequests) {
+        // Apply block if configured
+        if (config.blockDurationMs) {
+            entry.blocked = true;
+            entry.blockedUntil = now + config.blockDurationMs;
+        }
+        const oldestInWindow = entry.timestamps[0];
+        const resetIn = oldestInWindow + config.windowMs - now;
+        console.log(`[RATE_LIMIT_EXCEEDED] Key: ${key}, Requests: ${entry.timestamps.length}/${config.maxRequests}`);
+        return {
+            allowed: false,
+            remaining: 0,
+            resetIn,
+            retryAfter: Math.ceil(resetIn / 1000)
+        };
+    }
+    // Allow request and record timestamp
+    entry.timestamps.push(now);
+    return {
+        allowed: true,
+        remaining: config.maxRequests - entry.timestamps.length,
+        resetIn: config.windowMs
+    };
+}
+/**
+ * Pre-configured rate limit profiles
+ */ const RATE_LIMITS = {
+    // PDF Export: 10 per minute per company
+    PDF_EXPORT: {
+        windowMs: 60 * 1000,
+        maxRequests: 10,
+        blockDurationMs: 30 * 1000
+    },
+    // Autosave: 60 per minute per user (1 per second average)
+    AUTOSAVE: {
+        windowMs: 60 * 1000,
+        maxRequests: 60
+    },
+    // Item updates: 120 per minute per user
+    ITEM_UPDATE: {
+        windowMs: 60 * 1000,
+        maxRequests: 120
+    },
+    // BOQ creation: 20 per minute per company
+    BOQ_CREATE: {
+        windowMs: 60 * 1000,
+        maxRequests: 20
+    },
+    // API general: 200 per minute per user
+    API_GENERAL: {
+        windowMs: 60 * 1000,
+        maxRequests: 200
+    }
+};
+/**
+ * Generate a rate limit key
+ */ function rateLimitKey(type, identifier) {
+    return `${type}:${identifier}`;
+}
+/**
+ * Rate limit response helper - creates a 429 response
+ */ function rateLimitResponse(result) {
+    return new Response(JSON.stringify({
+        error: "Too many requests",
+        message: "Rate limit exceeded. Please try again later.",
+        retryAfter: result.retryAfter
+    }), {
+        status: 429,
+        headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(result.retryAfter || 60),
+            "X-RateLimit-Remaining": String(result.remaining),
+            "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+        }
+    });
+}
+/**
+ * Get current rate limit stats for monitoring
+ */ function getRateLimitStats() {
+    const stats = {};
+    for (const [key, entry] of rateLimitStore.entries()){
+        stats[key] = {
+            count: entry.timestamps.length,
+            blocked: entry.blocked
+        };
+    }
+    return stats;
+}
+
+
 /***/ })
 
 };
@@ -581,7 +790,7 @@ const slowQueryBuffer = [];
 var __webpack_require__ = require("../../../../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/next-auth","vendor-chunks/@babel","vendor-chunks/jose","vendor-chunks/openid-client","vendor-chunks/bcryptjs","vendor-chunks/oauth","vendor-chunks/object-hash","vendor-chunks/preact","vendor-chunks/uuid","vendor-chunks/preact-render-to-string","vendor-chunks/oidc-token-hash","vendor-chunks/@panva"], () => (__webpack_exec__("(rsc)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/next-auth","vendor-chunks/@babel","vendor-chunks/jose","vendor-chunks/openid-client","vendor-chunks/uuid","vendor-chunks/oauth","vendor-chunks/@panva","vendor-chunks/preact-render-to-string","vendor-chunks/bcryptjs","vendor-chunks/preact","vendor-chunks/oidc-token-hash","vendor-chunks/object-hash"], () => (__webpack_exec__("(rsc)/../../../../opt/hostedapp/node/root/app/node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fubuntu%2Fmake_estimate%2Fnextjs_space&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=standalone&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { isPixelEnabled, getPixelId, metaTrackPageView } from '@/lib/meta-pixel';
@@ -14,8 +14,8 @@ const PIXEL_ID = getPixelId();
  * 
  * Loads the Meta (Facebook) Pixel script and handles:
  * - Initial pixel initialization
- * - PageView tracking on initial load
- * - PageView tracking on SPA route changes
+ * - PageView tracking on initial load (via inline script)
+ * - PageView tracking on SPA route changes only
  * 
  * Place this component in the root layout.
  * 
@@ -26,19 +26,12 @@ const PIXEL_ID = getPixelId();
 export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isInitialized = useRef(false);
   const lastTrackedPath = useRef<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const isFirstRender = useRef(true);
 
-  // Set mounted state after hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Track page views on route changes (SPA navigation)
+  // Track page views ONLY on SPA route changes (not initial load)
   useEffect(() => {
     if (!PIXEL_ENABLED || !PIXEL_ID) return;
-    if (!mounted) return;
     if (typeof window === 'undefined') return;
     if (typeof window.fbq !== 'function') return;
 
@@ -46,20 +39,19 @@ export function MetaPixelProvider({ children }: { children: React.ReactNode }) {
     const searchString = searchParams?.toString() || '';
     const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
 
-    // Prevent duplicate tracking on initial render
-    // The initial PageView is fired by the script's inline code
-    if (!isInitialized.current) {
-      isInitialized.current = true;
+    // Skip first render - the inline script handles initial PageView
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       lastTrackedPath.current = currentPath;
       return;
     }
 
-    // Only track if path actually changed
+    // Only track if path actually changed (SPA navigation)
     if (currentPath !== lastTrackedPath.current) {
       lastTrackedPath.current = currentPath;
       metaTrackPageView();
     }
-  }, [pathname, searchParams, mounted]);
+  }, [pathname, searchParams]);
 
   // Always render children consistently (avoids hydration mismatch)
   // Script is added conditionally but doesn't affect children rendering

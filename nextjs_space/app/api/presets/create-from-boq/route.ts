@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { getBillingStatus } from '@/lib/billing';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,17 +13,18 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (!user?.companyId) {
+    
+    const companyId = (session.user as any)?.companyId;
+    if (!companyId) {
       return NextResponse.json({ error: 'No company' }, { status: 400 });
     }
 
     // Check preset limit
-    const billing = await getBillingStatus(user.companyId);
+    const billing = await getCompanyBillingStatus(companyId);
     const presetsLimit = billing.boqPresetsLimit;
     if (presetsLimit !== null) {
       const existingCount = await prisma.boq.count({
-        where: { companyId: user.companyId, isPreset: true },
+        where: { companyId: companyId, isPreset: true },
       });
       if (existingCount >= presetsLimit) {
         return NextResponse.json(
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch the source BOQ with categories and items
     const sourceBoq = await prisma.boq.findFirst({
-      where: { id: boqId, companyId: user.companyId, isPreset: false },
+      where: { id: boqId, companyId: companyId, isPreset: false },
       include: {
         categories: {
           include: { items: { orderBy: { sortOrder: 'asc' } } },
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Create the preset BOQ with cloned categories and items
     const preset = await prisma.boq.create({
       data: {
-        companyId: user.companyId,
+        companyId: companyId,
         projectName: name,
         presetName: name,
         isPreset: true,

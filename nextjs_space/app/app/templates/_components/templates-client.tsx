@@ -597,7 +597,151 @@ export function TemplatesClient({
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* BOQ Presets Tab */}
+          <TabsContent value="presets" className="space-y-6">
+            <Card className="shadow-md border-0">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="text-lg">BOQ Presets</CardTitle>
+                    <CardDescription>
+                      Save predefined BOQ structures with descriptions, units, costs, and markup. Start new BOQs from presets by just entering quantities.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => setShowCreatePresetDialog(true)}
+                    className="bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Preset
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {presetsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                  </div>
+                ) : presets.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Layers className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-lg font-medium">No presets yet</p>
+                    <p className="text-sm mt-1">Create a preset to speed up your BOQ creation workflow</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {presets.map((preset: any) => {
+                      const totalItems = preset.categories?.reduce((sum: number, cat: any) => sum + (cat.items?.filter((i: any) => !i.isNote)?.length || 0), 0) || 0;
+                      const totalCategories = preset.categories?.length || 0;
+                      return (
+                        <div
+                          key={preset.id}
+                          className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/30 transition-colors gap-3"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{preset.presetName || preset.projectName}</p>
+                            <p className="text-sm text-gray-500">
+                              {totalCategories} {totalCategories === 1 ? 'category' : 'categories'} · {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                              onClick={() => handleCreateBoqFromPreset(preset.id, preset.presetName || preset.projectName)}
+                            >
+                              <Copy className="w-3.5 h-3.5 mr-1.5" />
+                              Use Preset
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/app/boq/${preset.id}`)}
+                            >
+                              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-500 border-red-200 hover:bg-red-50"
+                              onClick={() => {
+                                setPresetToDelete(preset);
+                                setShowDeletePresetDialog(true);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Create Preset Dialog */}
+        <Dialog open={showCreatePresetDialog} onOpenChange={setShowCreatePresetDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Preset</DialogTitle>
+              <DialogDescription>
+                Give your preset a name. You&apos;ll be redirected to the editor to add items.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="e.g., Residential Painting, Office Renovation"
+                value={newPresetName}
+                onChange={(e) => setNewPresetName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreatePreset()}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreatePresetDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreatePreset}
+                disabled={creatingPreset}
+                className="bg-gradient-to-r from-purple-600 to-purple-500 text-white"
+              >
+                {creatingPreset ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Create Preset
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Preset Dialog */}
+        <Dialog open={showDeletePresetDialog} onOpenChange={setShowDeletePresetDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Preset</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete &quot;{presetToDelete?.presetName || presetToDelete?.projectName}&quot;? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeletePresetDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeletePreset}
+                disabled={deletingPreset}
+              >
+                {deletingPreset ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Limit Exceeded Dialog */}
         <Dialog open={showLimitDialog} onOpenChange={setShowLimitDialog}>

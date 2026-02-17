@@ -21,7 +21,7 @@ export async function GET() {
     const [totalUsers, totalCompanies, totalBoqs, totalCustomers, recentSignups, activeUsers] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.company.count({ where: { deletedAt: null } }),
-      prisma.boq.count(),
+      prisma.boq.count({ where: { isPreset: false } }),
       prisma.customer.count(),
       prisma.user.count({ where: { deletedAt: null, createdAt: { gte: sevenDaysAgo } } }),
       prisma.user.count({ where: { deletedAt: null, lastLoginAt: { gte: thirtyDaysAgo } } }),

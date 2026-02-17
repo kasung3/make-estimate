@@ -15,12 +15,13 @@ export async function DELETE(
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (!user?.companyId) {
+    
+    const companyId = (session.user as any)?.companyId;
+    if (!companyId) {
       return NextResponse.json({ error: 'No company' }, { status: 400 });
     }
     const preset = await prisma.boq.findFirst({
-      where: { id: params.id, companyId: user.companyId, isPreset: true },
+      where: { id: params.id, companyId: companyId, isPreset: true },
     });
     if (!preset) {
       return NextResponse.json({ error: 'Preset not found' }, { status: 404 });
@@ -43,13 +44,14 @@ export async function PUT(
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (!user?.companyId) {
+    
+    const companyId = (session.user as any)?.companyId;
+    if (!companyId) {
       return NextResponse.json({ error: 'No company' }, { status: 400 });
     }
     const body = await request.json();
     const preset = await prisma.boq.findFirst({
-      where: { id: params.id, companyId: user.companyId, isPreset: true },
+      where: { id: params.id, companyId: companyId, isPreset: true },
     });
     if (!preset) {
       return NextResponse.json({ error: 'Preset not found' }, { status: 404 });

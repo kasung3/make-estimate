@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { getBillingStatus } from '@/lib/billing';
+import { getCompanyBillingStatus } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +13,13 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (!user?.companyId) {
+    
+    const companyId = (session.user as any)?.companyId;
+    if (!companyId) {
       return NextResponse.json({ error: 'No company' }, { status: 400 });
     }
     const presets = await prisma.boq.findMany({
-      where: { companyId: user.companyId, isPreset: true },
+      where: { companyId: companyId, isPreset: true },
       include: {
         categories: {
           include: { items: { orderBy: { sortOrder: 'asc' } } },
@@ -41,17 +42,18 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (!user?.companyId) {
+    
+    const companyId = (session.user as any)?.companyId;
+    if (!companyId) {
       return NextResponse.json({ error: 'No company' }, { status: 400 });
     }
 
     // Check preset limit
-    const billing = await getBillingStatus(user.companyId);
+    const billing = await getCompanyBillingStatus(companyId);
     const presetsLimit = billing.boqPresetsLimit;
     if (presetsLimit !== null) {
       const existingCount = await prisma.boq.count({
-        where: { companyId: user.companyId, isPreset: true },
+        where: { companyId: companyId, isPreset: true },
       });
       if (existingCount >= presetsLimit) {
         return NextResponse.json(
@@ -66,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const preset = await prisma.boq.create({
       data: {
-        companyId: user.companyId,
+        companyId: companyId,
         projectName: presetName,
         presetName: presetName,
         isPreset: true,

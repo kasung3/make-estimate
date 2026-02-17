@@ -56,6 +56,7 @@ import {
   Palette,
   Calendar,
   Info,
+  Layers,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrackCustom } from '@/lib/meta-pixel';
@@ -1963,6 +1964,29 @@ export function BoqEditorClient({
                 </div>
               </div>
             </TooltipProvider>
+            {!boq?.isPreset && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/presets/create-from-boq', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ boqId: boq?.id, presetName: `Preset - ${boq?.projectName}`, includeQuantities: false }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      toast.error(data.error || 'Failed to save as preset');
+                      return;
+                    }
+                    toast.success('Saved as preset! Find it in Templates → BOQ Presets');
+                  } catch { toast.error('Failed to save as preset'); }
+                }}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Save as Preset
+              </Button>
+            )}
             <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
               {exportingPdf ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

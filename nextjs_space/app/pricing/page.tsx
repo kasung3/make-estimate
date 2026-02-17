@@ -351,7 +351,7 @@ function PricingContent() {
                     {/* Plan Description */}
                     <p className="mt-4 text-sm text-muted-foreground">
                       {plan.boqLimitPerPeriod 
-                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per period`
+                        ? `Up to ${plan.boqLimitPerPeriod} BOQ creations per month`
                         : 'Unlimited BOQ creations'}
                       {plan.seatModel === 'per_seat' && (
                         <span className="block mt-1 text-purple-600 font-medium">

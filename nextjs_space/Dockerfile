@@ -37,6 +37,9 @@ ENV NODE_ENV=production
 ENV NEXT_OUTPUT_MODE=standalone
 RUN npm run build
 
+# Verify standalone output exists
+RUN ls -la .next/standalone/ && test -f .next/standalone/server.js
+
 # Stage 3: Production runner
 FROM node:20-alpine AS runner
 RUN apk add --no-cache libc6-compat openssl

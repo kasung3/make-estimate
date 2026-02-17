@@ -33,13 +33,21 @@ const PLANS: Record<string, PlanInfo> = {
     boqLimit: 10,
     description: '10 BOQ creations per month',
   },
-  business: {
-    key: 'business',
-    name: 'Business',
+  advance: {
+    key: 'advance',
+    name: 'Advance',
     priceId: '',
     price: 39,
     boqLimit: null,
     description: 'Unlimited BOQ creations',
+  },
+  business: {
+    key: 'business',
+    name: 'Business',
+    priceId: '',
+    price: 49,
+    boqLimit: null,
+    description: 'Unlimited BOQ creations, team features',
   },
 };
 
@@ -351,21 +359,21 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
                 )}
               </div>
 
-              {/* Business Plan */}
+              {/* Advance Plan */}
               <div
                 className={`relative rounded-xl border-2 p-6 transition-all ${
-                  currentPlan?.key === 'business'
+                  currentPlan?.key === 'advance'
                     ? 'border-emerald-400 bg-emerald-50'
                     : 'border-primary bg-gradient-to-br from-primary/5 to-primary/10'
                 }`}
               >
-                {currentPlan?.key === 'business' && (
+                {currentPlan?.key === 'advance' && (
                   <Badge className="absolute -top-3 left-4 bg-emerald-500">Current Plan</Badge>
                 )}
-                {currentPlan?.key !== 'business' && (
+                {currentPlan?.key !== 'advance' && (
                   <Badge className="absolute -top-3 left-4 bg-primary">Recommended</Badge>
                 )}
-                <h3 className="text-xl font-bold">Business</h3>
+                <h3 className="text-xl font-bold">Advance</h3>
                 <div className="mt-2">
                   <span className="text-3xl font-bold">$39</span>
                   <span className="text-gray-500">/month</span>
@@ -377,31 +385,31 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-emerald-500" />
-                    PDF export with themes
+                    10 BOQ themes
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-emerald-500" />
-                    Custom cover pages
+                    Unlimited BOQ presets
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-emerald-500" />
-                    Customer management
+                    10 cover page templates
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-emerald-500" />
                     Priority support
                   </li>
                 </ul>
-                {currentPlan?.key !== 'business' && isAdmin && (
+                {currentPlan?.key !== 'advance' && isAdmin && (
                   <Button
                     className="w-full mt-6"
-                    onClick={() => handleCheckout('business')}
-                    disabled={checkoutLoading === 'business'}
+                    onClick={() => handleCheckout('advance')}
+                    disabled={checkoutLoading === 'advance'}
                   >
-                    {checkoutLoading === 'business' ? (
+                    {checkoutLoading === 'advance' ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : null}
-                    {currentPlan?.key === 'starter' ? 'Upgrade to Business' : 'Get Business'}
+                    Upgrade to Advance
                   </Button>
                 )}
               </div>

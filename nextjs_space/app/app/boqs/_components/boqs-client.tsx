@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   Calendar,
   User,
+  Layers,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BillingStatus, BoqWithRelations, CustomerType } from '@/lib/types';
@@ -100,6 +101,8 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
   const [newProjectName, setNewProjectName] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [customers, setCustomers] = useState<CustomerType[]>([]);
+  const [presets, setPresets] = useState<any[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -108,11 +111,16 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  // Fetch customers for the new BOQ dialog
+  // Fetch customers and presets for the new BOQ dialog
   useEffect(() => {
     fetch('/api/customers')
       .then(res => res.json())
       .then(data => setCustomers(data ?? []))
+      .catch(() => {});
+    
+    fetch('/api/presets')
+      .then(res => res.json())
+      .then(data => setPresets(data ?? []))
       .catch(() => {});
   }, []);
 
@@ -162,16 +170,32 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
 
     setLoading(true);
     try {
-      const response = await fetch('/api/boqs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectName: newProjectName,
-          customerId: selectedCustomerId || null,
-        }),
-      });
+      let response;
+      let data;
 
-      const data = await response.json();
+      // If a preset is selected, use the create-boq-from-preset endpoint
+      if (selectedPresetId) {
+        response = await fetch('/api/presets/create-boq-from-preset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            presetId: selectedPresetId,
+            projectName: newProjectName,
+            customerId: selectedCustomerId || null,
+          }),
+        });
+      } else {
+        response = await fetch('/api/boqs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectName: newProjectName,
+            customerId: selectedCustomerId || null,
+          }),
+        });
+      }
+
+      data = await response.json();
 
       if (!response.ok) {
         if (response.status === 403 && data.code === 'LIMIT_EXCEEDED') {
@@ -187,10 +211,11 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
         return;
       }
 
-      toast.success('BOQ created!');
+      toast.success(selectedPresetId ? 'BOQ created from preset!' : 'BOQ created!');
       setShowNewBoqDialog(false);
       setNewProjectName('');
       setSelectedCustomerId('');
+      setSelectedPresetId('');
       router.push(`/app/boq/${data.id}`);
     } catch (error) {
       toast.error('An error occurred');
@@ -381,14 +406,38 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
                   onChange={(e) => setNewProjectName(e.target.value)}
                 />
               </div>
+              {presets.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="preset" className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-purple-500" />
+                    Start from Preset (Optional)
+                  </Label>
+                  <Select value={selectedPresetId || 'none'} onValueChange={(v) => setSelectedPresetId(v === 'none' ? '' : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Start from scratch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Start from scratch</SelectItem>
+                      {presets.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id}>
+                          {preset.presetName || preset.projectName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Presets include predefined items, costs, and markup percentages
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="customer">Customer (Optional)</Label>
-                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                <Select value={selectedCustomerId || 'none'} onValueChange={(v) => setSelectedCustomerId(v === 'none' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a customer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No customer</SelectItem>
+                    <SelectItem value="none">No customer</SelectItem>
                     {customers.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
                         {customer.name}

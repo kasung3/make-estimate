@@ -26,9 +26,9 @@ export default async function BoqsPage() {
     redirect('/pricing?subscription=required');
   }
 
-  // Fetch BOQs with customer info
+  // Fetch BOQs with customer info (exclude presets)
   const boqs = await prisma.boq.findMany({
-    where: { companyId },
+    where: { companyId, isPreset: false },
     include: {
       customer: true,
       categories: {

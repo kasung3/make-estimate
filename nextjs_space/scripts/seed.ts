@@ -100,7 +100,7 @@ async function main() {
       watermarkText: null,
       maxActiveMembers: 1,
       features: [
-        '5 BOQ creations per month',
+        '10 BOQ creations per month',
         'Single user',
         '2 BOQ themes',
         '5 BOQ presets',
@@ -130,7 +130,7 @@ async function main() {
       watermarkText: null,
       maxActiveMembers: 1,
       features: [
-        '5 BOQ creations per month',
+        '10 BOQ creations per month',
         'Single user',
         '2 BOQ themes',
         '5 BOQ presets',

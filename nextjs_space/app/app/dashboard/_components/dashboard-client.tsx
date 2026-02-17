@@ -35,6 +35,7 @@ import {
   Trash2,
   CreditCard,
   AlertTriangle,
+  Layers,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
@@ -59,6 +60,8 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [presets, setPresets] = useState<any[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [billingLoading, setBillingLoading] = useState(true);
@@ -93,6 +96,14 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
     } finally {
       setBillingLoading(false);
     }
+  }, []);
+
+  // Fetch presets on mount
+  useEffect(() => {
+    fetch('/api/presets')
+      .then(res => res.json())
+      .then(data => setPresets(data ?? []))
+      .catch(() => {});
   }, []);
 
   // Fetch billing status on mount and when page becomes visible (returning from navigation)
@@ -195,16 +206,32 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
 
     setLoading(true);
     try {
-      const response = await fetch('/api/boqs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectName: newProjectName,
-          customerId: selectedCustomerId || null,
-        }),
-      });
+      let response;
+      let data;
 
-      const data = await response.json();
+      // If a preset is selected, use the create-boq-from-preset endpoint
+      if (selectedPresetId) {
+        response = await fetch('/api/presets/create-boq-from-preset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            presetId: selectedPresetId,
+            projectName: newProjectName,
+            customerId: selectedCustomerId || null,
+          }),
+        });
+      } else {
+        response = await fetch('/api/boqs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectName: newProjectName,
+            customerId: selectedCustomerId || null,
+          }),
+        });
+      }
+
+      data = await response.json();
 
       if (!response.ok) {
         // Handle quota exceeded with detailed error
@@ -225,7 +252,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       }
 
       // Track CreateBOQ event
-      metaTrackCustom('CreateBOQ', { source: 'dashboard' });
+      metaTrackCustom('CreateBOQ', { source: 'dashboard', fromPreset: !!selectedPresetId });
 
       // Refresh billing status from server to get accurate usage count
       await fetchBillingStatus();
@@ -233,6 +260,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       setShowNewBoqDialog(false);
       setNewProjectName('');
       setSelectedCustomerId('');
+      setSelectedPresetId('');
       router.push(`/app/boq/${data?.id}`);
     } catch (error) {
       toast.error('An error occurred');
@@ -526,7 +554,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="projectName">Project Name</Label>
+                <Label htmlFor="projectName">Project Name *</Label>
                 <Input
                   id="projectName"
                   placeholder="Enter project name"
@@ -534,17 +562,42 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
                   onChange={(e) => setNewProjectName(e.target.value)}
                 />
               </div>
+              {presets.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-purple-500" />
+                    Start from Preset (Optional)
+                  </Label>
+                  <Select value={selectedPresetId || 'none'} onValueChange={(v) => setSelectedPresetId(v === 'none' ? '' : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Start from scratch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Start from scratch</SelectItem>
+                      {presets.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id}>
+                          {preset.presetName || preset.projectName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Presets include predefined items, costs, and markup percentages
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Customer (Optional)</Label>
                 <div className="flex space-x-2">
                   <Select
-                    value={selectedCustomerId}
-                    onValueChange={setSelectedCustomerId}
+                    value={selectedCustomerId || 'none'}
+                    onValueChange={(v) => setSelectedCustomerId(v === 'none' ? '' : v)}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select customer" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">No customer</SelectItem>
                       {(customers ?? []).map((customer) => (
                         <SelectItem key={customer?.id} value={customer?.id ?? ''}>
                           {customer?.name}

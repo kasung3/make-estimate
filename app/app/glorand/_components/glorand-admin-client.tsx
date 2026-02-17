@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,10 +66,36 @@ import {
   Pencil,
   GripVertical,
   Globe,
+  Download,
+  BarChart3,
+  TrendingUp,
+  Activity,
+  FileText,
+  Skull,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
+
+interface DashboardData {
+  overview: {
+    totalUsers: number;
+    totalCompanies: number;
+    totalBoqs: number;
+    totalCustomers: number;
+    totalRevenue: number;
+    recentSignups: number;
+    activeUsers: number;
+  };
+  planDistribution: Record<string, number>;
+  monthlyRevenue: { month: string; revenue: number }[];
+  userGrowth: { month: string; users: number }[];
+  boqTrend: { month: string; boqs: number }[];
+}
 
 interface UserData {
   id: string;
@@ -216,7 +243,11 @@ interface BillingPlan {
 }
 
 export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
-  const [activeTab, setActiveTab] = useState('users');
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams?.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const [users, setUsers] = useState<UserData[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -308,6 +339,13 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   });
   const [creating, setCreating] = useState(false);
 
+  // Sync tab from URL param
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
   // Debounce user search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -323,6 +361,13 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [companySearchQuery]);
+
+  // Fetch dashboard
+  useEffect(() => {
+    if (activeTab === 'dashboard') {
+      fetchDashboard();
+    }
+  }, [activeTab]);
 
   // Fetch users when filters change
   useEffect(() => {
@@ -346,6 +391,67 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       fetchCompanies();
     }
   }, [activeTab, debouncedCompanyQuery, companyPagination.page]);
+
+  const fetchDashboard = async () => {
+    setDashboardLoading(true);
+    try {
+      const res = await fetch('/api/admin/dashboard');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setDashboardData(data);
+    } catch (err) {
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const downloadCsv = async (type: 'users' | 'companies') => {
+    try {
+      const res = await fetch(`/api/admin/${type}/export`);
+      if (!res.ok) throw new Error('Failed to export');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success(`${type === 'users' ? 'Users' : 'Companies'} CSV downloaded!`);
+    } catch (err) {
+      toast.error(`Failed to export ${type}`);
+    }
+  };
+
+  const permanentDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`⚠️ PERMANENTLY DELETE user "${email}"?\n\nThis will remove the user and all their memberships from the database forever. This cannot be undone!`)) return;
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/permanent-delete`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+      toast.success(data.message || 'User permanently deleted');
+      setShowUserDrawer(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user');
+    }
+  };
+
+  const permanentDeleteCompany = async (companyId: string, companyName: string) => {
+    if (!confirm(`⚠️ PERMANENTLY DELETE company "${companyName}"?\n\nThis will remove the company, ALL its BOQs, customers, billing data, and orphaned users from the database forever. This cannot be undone!`)) return;
+    try {
+      const res = await fetch(`/api/admin/companies/${companyId}/permanent-delete`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+      toast.success(data.message || 'Company permanently deleted');
+      setShowCompanyDrawer(false);
+      fetchCompanies();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete company');
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -938,7 +1044,10 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
+            <TabsTrigger value="dashboard" className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Dashboard
+            </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" /> Users
             </TabsTrigger>
@@ -953,12 +1062,147 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
             </TabsTrigger>
           </TabsList>
 
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            {dashboardLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : dashboardData ? (
+              <div className="space-y-6">
+                {/* Overview Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Total Users', value: dashboardData.overview.totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Total Companies', value: dashboardData.overview.totalCompanies, icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { label: 'Total BOQs', value: dashboardData.overview.totalBoqs, icon: FileText, color: 'text-green-600', bg: 'bg-green-50' },
+                    { label: 'Total Revenue', value: `$${dashboardData.overview.totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Recent Signups (7d)', value: dashboardData.overview.recentSignups, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: 'Active Users (30d)', value: dashboardData.overview.activeUsers, icon: Activity, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                    { label: 'Total Customers', value: dashboardData.overview.totalCustomers, icon: Users, color: 'text-pink-600', bg: 'bg-pink-50' },
+                  ].map((stat) => (
+                    <Card key={stat.label} className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${stat.bg}`}>
+                          <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">{stat.label}</p>
+                          <p className="text-xl font-bold">{stat.value}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Charts Row 1 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Monthly Revenue */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Monthly Revenue</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={dashboardData.monthlyRevenue}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                          <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']} />
+                          <Bar dataKey="revenue" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Plan Distribution */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Plan Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Free', value: dashboardData.planDistribution.free || 0 },
+                              { name: 'Starter', value: dashboardData.planDistribution.starter || 0 },
+                              { name: 'Advance', value: dashboardData.planDistribution.advance || 0 },
+                              { name: 'Business', value: dashboardData.planDistribution.business || 0 },
+                            ].filter(d => d.value > 0)}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={({ name, value }) => `${name}: ${value}`}
+                            dataKey="value"
+                          >
+                            {['#94a3b8', '#7c3aed', '#2563eb', '#f59e0b'].map((color, i) => (
+                              <Cell key={i} fill={color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Charts Row 2 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* User Growth */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">User Growth (12 months)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={dashboardData.userGrowth}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="users" stroke="#7c3aed" strokeWidth={2} dot={{ fill: '#7c3aed', r: 4 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* BOQ Creation Trend */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">BOQ Creations (12 months)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={dashboardData.boqTrend}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Bar dataKey="boqs" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-16">Failed to load dashboard</p>
+            )}
+          </TabsContent>
+
           {/* Users Tab */}
           <TabsContent value="users">
             <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>Search and manage all platform users</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>User Management</CardTitle>
+                  <CardDescription>Search and manage all platform users</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => downloadCsv('users')}>
+                  <Download className="h-4 w-4 mr-2" /> Export CSV
+                </Button>
               </CardHeader>
               <CardContent>
                 {/* Search and Filters */}
@@ -1120,8 +1364,13 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Companies</span>
-                  <div className="text-sm font-normal text-muted-foreground">
-                    {companyPagination.totalCount} total
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {companyPagination.totalCount} total
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => downloadCsv('companies')}>
+                      <Download className="h-4 w-4 mr-2" /> Export CSV
+                    </Button>
                   </div>
                 </CardTitle>
                 <CardDescription>Manage company accounts, billing, and access</CardDescription>
@@ -1828,18 +2077,29 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                       </>
                     )}
                   </div>
-                  {/* Delete User - Danger Zone */}
+{/* Delete User - Danger Zone */}
                   <div className="pt-4 mt-4 border-t border-red-200">
                     <p className="text-xs text-muted-foreground mb-2">Danger Zone</p>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={openDeleteUserDialog}
-                      disabled={!!userDetail.user.deletedAt}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {userDetail.user.deletedAt ? 'User Deleted' : 'Delete User'}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={openDeleteUserDialog}
+                        disabled={!!userDetail.user.deletedAt}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {userDetail.user.deletedAt ? 'User Deleted' : 'Soft Delete'}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="bg-red-900 hover:bg-red-950"
+                        onClick={() => permanentDeleteUser(userDetail.user.id, userDetail.user.email)}
+                      >
+                        <Skull className="h-4 w-4 mr-2" />
+                        Permanent Delete
+                      </Button>
+                    </div>
                     {userDetail.user.deletedAt && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Deleted on {format(new Date(userDetail.user.deletedAt), 'MMM d, yyyy')}
@@ -2087,9 +2347,17 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                         size="sm"
                         onClick={() => openDeleteCompanyDialog(selectedCompany!)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete Company
+                        <Trash2 className="h-4 w-4 mr-2" /> Soft Delete
                       </Button>
                     )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-900 hover:bg-red-950"
+                      onClick={() => permanentDeleteCompany(selectedCompany!.id, selectedCompany!.name)}
+                    >
+                      <Skull className="h-4 w-4 mr-2" /> Permanent Delete
+                    </Button>
                   </div>
                 </div>
               </div>

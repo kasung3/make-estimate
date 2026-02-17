@@ -173,6 +173,8 @@ model Boq {
   coverTemplateId String?
   pdfThemeId      String?
   projectName     String
+  isPreset        Boolean           @default(false)
+  presetName      String?
   dateMode        DateMode          @default(export_date)
   preparationDate DateTime?
   discountEnabled Boolean           @default(false)
@@ -193,6 +195,7 @@ model Boq {
   @@index([companyId, updatedAt(sort: Desc)])  // Recent BOQs list (most common query)
   @@index([companyId, projectName])            // BOQ search by project name
   @@index([customerId])                        // BOQs for a specific customer
+  @@index([companyId, isPreset])               // Preset BOQs list
 }
 
 model BoqCategory {
@@ -252,6 +255,7 @@ model BillingPlan {
   boqLimitPerPeriod      Int?                   // null = unlimited
   boqItemsLimit          Int?                   // null = unlimited, max items per BOQ
   boqTemplatesLimit      Int?                   // null = unlimited
+  boqPresetsLimit        Int?                   // null = unlimited
   coverTemplatesLimit    Int?                   // null = unlimited
   logoUploadAllowed      Boolean                @default(false)
   sharingAllowed         Boolean                @default(false) // Only Business

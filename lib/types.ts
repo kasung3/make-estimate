@@ -29,6 +29,7 @@ export interface BillingStatus {
   blockReason?: string | null;
   // Template limits
   boqTemplatesLimit?: number | null;
+  boqPresetsLimit?: number | null;
   coverTemplatesLimit?: number | null;
   logoUploadAllowed?: boolean;
   sharingAllowed?: boolean;
@@ -48,6 +49,7 @@ export interface BillingPlanInfo {
   boqLimitPerPeriod: number | null;
   boqItemsLimit: number | null;        // Max items per BOQ (null = unlimited)
   boqTemplatesLimit: number | null;
+  boqPresetsLimit?: number | null;
   coverTemplatesLimit: number | null;
   logoUploadAllowed: boolean;
   sharingAllowed: boolean;
@@ -89,6 +91,8 @@ export interface BoqWithRelations {
   coverTemplateId: string | null;
   pdfThemeId: string | null;
   projectName: string;
+  isPreset: boolean;
+  presetName: string | null;
   dateMode: DateMode;
   preparationDate: Date | string | null;
   discountEnabled: boolean;

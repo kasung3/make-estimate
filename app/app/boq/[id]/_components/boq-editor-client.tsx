@@ -56,6 +56,7 @@ import {
   Palette,
   Calendar,
   Info,
+  Layers,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrackCustom } from '@/lib/meta-pixel';
@@ -100,7 +101,11 @@ interface EditItemDialogData {
 // =============================================================================
 // Helper function to generate the grid template string
 function getGridTemplateColumns(columnWidths: Record<string, number>): string {
-  return `${columnWidths.grip}px ${columnWidths.number}px minmax(200px, 1fr) ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
+  return `${columnWidths.grip}px ${columnWidths.number}px ${columnWidths.description}px ${columnWidths.unit}px ${columnWidths.unitCost}px ${columnWidths.markup}px ${columnWidths.unitPrice}px ${columnWidths.qty}px ${columnWidths.amount}px ${columnWidths.actions}px`;
+}
+
+function getTotalColumnsWidth(columnWidths: Record<string, number>): number {
+  return Object.values(columnWidths).reduce((sum, w) => sum + w, 0);
 }
 
 interface SortableItemRowProps {
@@ -564,7 +569,7 @@ function SortableCategory({
                     onClick={(e) => e.stopPropagation()}
                     className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent flex-1 min-w-0"
                   />
-                  <span className="text-sm text-gray-500 flex-shrink-0">
+                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:inline">
                     ({(category?.items ?? []).filter((i) => !i?.isNote).length} items)
                   </span>
                 </div>
@@ -606,7 +611,7 @@ function SortableCategory({
                   <div 
                     className="text-sm flex flex-col" 
                     role="table"
-                    style={{ minWidth: '900px' }}
+                    style={{ minWidth: `${getTotalColumnsWidth(columnWidths)}px` }}
                   >
                     {/* Header row */}
                     <div 
@@ -793,7 +798,7 @@ export function BoqEditorClient({
   const DEFAULT_COLUMN_WIDTHS = {
     grip: 32,
     number: 52,
-    description: 280, // wider for description content, also uses minmax in grid
+    description: 280, // wider for description content, uses fixed px width
     unit: 80,
     unitCost: 100,
     markup: 80,
@@ -1066,10 +1071,13 @@ export function BoqEditorClient({
   }, []);
 
   // Column resize handlers
+    const resizingColumnRef = useRef<string | null>(null);
+
   const handleResizeStart = useCallback(
     (e: React.MouseEvent, columnKey: string) => {
       e.preventDefault();
       e.stopPropagation();
+      resizingColumnRef.current = columnKey;
       setResizingColumn(columnKey);
       resizeStartXRef.current = e.clientX;
       resizeStartWidthRef.current = columnWidths[columnKey];
@@ -1079,20 +1087,19 @@ export function BoqEditorClient({
 
   const handleResizeMove = useCallback(
     (e: MouseEvent) => {
-      if (!resizingColumn) return;
+      const col = resizingColumnRef.current;
+      if (!col) return;
       const diff = e.clientX - resizeStartXRef.current;
       const newWidth = Math.max(40, resizeStartWidthRef.current + diff);
-      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
+      setColumnWidths((prev) => ({ ...prev, [col]: newWidth }));
     },
-    [resizingColumn]
+    []
   );
 
   const handleResizeEnd = useCallback(() => {
-    if (resizingColumn) {
-      saveColumnWidths(columnWidths);
-    }
+    resizingColumnRef.current = null;
     setResizingColumn(null);
-  }, [resizingColumn, columnWidths, saveColumnWidths]);
+  }, []);
 
   useEffect(() => {
     if (resizingColumn) {
@@ -1957,6 +1964,29 @@ export function BoqEditorClient({
                 </div>
               </div>
             </TooltipProvider>
+            {!boq?.isPreset && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/presets/create-from-boq', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ boqId: boq?.id, presetName: `Preset - ${boq?.projectName}`, includeQuantities: false }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      toast.error(data.error || 'Failed to save as preset');
+                      return;
+                    }
+                    toast.success('Saved as preset! Find it in Templates → BOQ Presets');
+                  } catch { toast.error('Failed to save as preset'); }
+                }}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Save as Preset
+              </Button>
+            )}
             <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
               {exportingPdf ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

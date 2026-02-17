@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from './sidebar';
+import { MobileBottomNav } from './mobile-bottom-nav';
 import { Loader2 } from 'lucide-react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -127,8 +128,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
+      <main className="flex-1 overflow-auto pb-20 lg:pb-0">{children}</main>
+      <MobileBottomNav />
     </div>
   );
 }

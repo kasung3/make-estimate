@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MakeEstimate — Fast BOQs, Professional PDFs',
     description: 'Create professional Bills of Quantities in minutes. No Excel, no spreadsheets — just fast estimation with clean PDF exports.',
-    images: ['/og-image.png'],
+    images: ['https://makeestimate.com/og-image.png'],
   },
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
 };

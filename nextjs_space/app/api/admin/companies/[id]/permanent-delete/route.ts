@@ -31,11 +31,11 @@ export async function DELETE(
     }
 
     // Hard delete company and all related data in a transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Delete PDF export jobs for company BOQs
       await tx.pdfExportJob.deleteMany({ where: { companyId } });
       // Delete BOQ items for all BOQs
-      const boqIds = (await tx.boq.findMany({ where: { companyId }, select: { id: true } })).map(b => b.id);
+      const boqIds = (await tx.boq.findMany({ where: { companyId }, select: { id: true } })).map((b: any) => b.id);
       if (boqIds.length > 0) {
         await tx.boqItem.deleteMany({ where: { category: { boqId: { in: boqIds } } } });
         await tx.boqCategory.deleteMany({ where: { boqId: { in: boqIds } } });

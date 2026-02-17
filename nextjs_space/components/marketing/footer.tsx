@@ -3,13 +3,19 @@
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 export function MarketingFooter() {
   const [year, setYear] = useState<number>(2026);
+  const { data: session, status } = useSession() || {};
   
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: '/' });
+  };
 
   return (
     <footer className="bg-gradient-to-b from-white to-purple-50/50 border-t border-purple-100/50">
@@ -38,12 +44,21 @@ export function MarketingFooter() {
             >
               Pricing
             </Link>
-            <Link
-              href="/login"
-              className="text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
-            >
-              Login
-            </Link>
+            {session ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+              >
+                Login
+              </Link>
+            )}
             <Link
               href="/register"
               className="text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"

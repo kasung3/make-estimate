@@ -19,8 +19,9 @@ COPY . .
 # Fix Prisma schema output path for Docker build
 RUN sed -i 's|output = "/home/ubuntu/make_estimate/nextjs_space/node_modules/.prisma/client"|output = "../node_modules/.prisma/client"|g' prisma/schema.prisma
 
-# Fix next.config.js to use standalone output
+# Fix next.config.js to use standalone output and remove outputFileTracingRoot
 RUN sed -i "s|output: process.env.NEXT_OUTPUT_MODE,|output: 'standalone',|g" next.config.js
+RUN sed -i "/outputFileTracingRoot/d" next.config.js
 
 # Generate Prisma client
 RUN npx prisma generate

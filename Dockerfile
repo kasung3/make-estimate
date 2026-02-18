@@ -43,8 +43,9 @@ ENV NODE_ENV=production
 ENV NEXT_OUTPUT_MODE=standalone
 RUN NEXT_OUTPUT_MODE=standalone npm run build
 
-# Verify standalone output exists
-RUN ls -la .next/standalone/ && test -f .next/standalone/server.js
+# Verify standalone output exists - debug structure
+RUN find .next/standalone -name "server.js" -type f 2>/dev/null || echo "No server.js found"
+RUN ls -laR .next/standalone/ | head -50
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner

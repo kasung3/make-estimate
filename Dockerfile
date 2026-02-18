@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Fix Prisma schema output path for Docker build
+RUN sed -i 's|output = "/home/ubuntu/make_estimate/nextjs_space/node_modules/.prisma/client"|output = "../node_modules/.prisma/client"|g' prisma/schema.prisma
+
 # Generate Prisma client
 RUN npx prisma generate
 

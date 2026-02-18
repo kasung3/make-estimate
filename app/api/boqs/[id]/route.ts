@@ -53,7 +53,14 @@ export const PUT = instrumentRoute(
     // Build update data - only include fields that are explicitly provided, sanitized
     const updateData: Record<string, any> = {};
     
-    if (body?.projectName !== undefined) updateData.projectName = sanitizeText(body.projectName, 200);
+    if (body?.projectName !== undefined) {
+      updateData.projectName = sanitizeText(body.projectName, 200);
+      // For presets, also update presetName to keep them in sync
+      if (body?.isPreset) {
+        updateData.presetName = sanitizeText(body.projectName, 200);
+      }
+    }
+    if (body?.presetName !== undefined) updateData.presetName = sanitizeText(body.presetName, 200);
     if (body?.customerId !== undefined) {
       if (body.customerId && !isValidId(body.customerId)) {
         return NextResponse.json({ error: 'Invalid customer ID' }, { status: 400 });

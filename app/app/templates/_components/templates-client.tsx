@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -72,9 +72,11 @@ export function TemplatesClient({
   billingStatus,
   companyName,
 }: TemplatesClientProps) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab');
   const [boqTemplates, setBoqTemplates] = useState(initialBoqTemplates);
   const [coverTemplates, setCoverTemplates] = useState(initialCoverTemplates);
-  const [activeTab, setActiveTab] = useState('boq');
+  const [activeTab, setActiveTab] = useState(tabParam === 'presets' ? 'presets' : tabParam === 'cover' ? 'cover' : 'boq');
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [limitType, setLimitType] = useState<'boq_templates' | 'cover_templates'>('boq_templates');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -122,6 +124,17 @@ export function TemplatesClient({
     }
   }, []);
 
+  // Sync activeTab with URL tab param (for back navigation)
+  useEffect(() => {
+    if (tabParam === 'presets' && activeTab !== 'presets') {
+      setActiveTab('presets');
+    } else if (tabParam === 'cover' && activeTab !== 'cover') {
+      setActiveTab('cover');
+    } else if (tabParam === 'boq' && activeTab !== 'boq') {
+      setActiveTab('boq');
+    }
+  }, [tabParam, activeTab]);
+
   useEffect(() => {
     if (activeTab === 'presets') {
       fetchPresets();
@@ -147,13 +160,22 @@ export function TemplatesClient({
       }
     };
     
+    // Listen for company settings changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'companySettingsUpdated') {
+        router.refresh(); // Refresh to get updated company settings
+      }
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [activeTab, fetchPresets]);
+  }, [activeTab, fetchPresets, router]);
 
   const handleCreatePreset = async () => {
     const name = newPresetName.trim() || 'New Preset';
@@ -177,7 +199,7 @@ export function TemplatesClient({
       toast.success('Preset created! Redirecting to editor...');
       setShowCreatePresetDialog(false);
       setNewPresetName('');
-      router.push(`/app/boq/${preset.id}`);
+      router.push(`/app/boq/${preset.id}?from=presets`);
     } catch (err) {
       toast.error('Failed to create preset');
     } finally {
@@ -777,7 +799,7 @@ export function TemplatesClient({
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => router.push(`/app/boq/${preset.id}`)}
+                              onClick={() => router.push(`/app/boq/${preset.id}?from=presets`)}
                             >
                               <Pencil className="w-3.5 h-3.5 mr-1.5" />
                               Edit

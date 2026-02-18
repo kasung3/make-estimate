@@ -57,6 +57,9 @@ export function SettingsClient({ company: initialCompany, isAdmin }: SettingsCli
         throw new Error('Failed to save');
       }
 
+      // Notify other pages/tabs that company settings have changed
+      localStorage.setItem('companySettingsUpdated', Date.now().toString());
+      
       toast.success('Settings saved successfully');
     } catch (error) {
       toast.error('Failed to save settings');

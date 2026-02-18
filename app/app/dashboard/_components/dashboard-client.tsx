@@ -139,13 +139,22 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       refetchBoqs();
     };
     
+    // Listen for company settings changes (from Settings page)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'companySettingsUpdated') {
+        router.refresh(); // Refresh to get updated company settings
+      }
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [fetchBillingStatus, refetchBoqs]);
+  }, [fetchBillingStatus, refetchBoqs, router]);
 
   // Prefetch top BOQs on mount for faster navigation
   useEffect(() => {

@@ -143,8 +143,11 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
       .catch(() => {});
   }, []);
 
-  // Refetch BOQs when page becomes visible or focused (user navigates back)
+  // Refetch BOQs on mount and when page becomes visible or focused
   useEffect(() => {
+    // Refetch on initial mount to get fresh data
+    refetchBoqs();
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refetchBoqs();
@@ -155,13 +158,22 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
       refetchBoqs();
     };
     
+    // Listen for company settings changes (from Settings page)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'companySettingsUpdated') {
+        router.refresh(); // Refresh to get updated company settings
+      }
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [refetchBoqs]);
+  }, [refetchBoqs, router]);
 
   // Prefetch BOQ pages on mount
   useEffect(() => {

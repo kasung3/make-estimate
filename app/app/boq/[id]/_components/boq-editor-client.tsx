@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -843,6 +843,8 @@ export function BoqEditorClient({
   pdfThemes: initialPdfThemes,
 }: BoqEditorClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams?.get('from');
   const [boq, setBoq] = useState<BoqWithRelations>(initialBoq);
   const [customers, setCustomers] = useState(initialCustomers ?? []);
   const [coverTemplates, setCoverTemplates] = useState<PdfCoverTemplateType[]>(initialCoverTemplates ?? []);
@@ -1170,6 +1172,18 @@ export function BoqEditorClient({
     fetchBillingStatus();
   }, []);
 
+  // Listen for company settings changes (currency, etc.)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'companySettingsUpdated') {
+        router.refresh(); // Refresh to get updated company settings
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [router]);
+
   // Compute current item count (non-note items only)
   const currentItemCount = useMemo(() => {
     if (!boq?.categories) return 0;
@@ -1368,7 +1382,8 @@ export function BoqEditorClient({
       clearTimeout(inputSaveTimeoutRef.current['projectName']);
     }
     const saveCallback = async () => {
-      updateBoq({ projectName: value });
+      // Include isPreset flag so the API can sync presetName for presets
+      updateBoq({ projectName: value, isPreset: boq?.isPreset });
       delete pendingSaveCallbacksRef.current['projectName'];
       setPendingSavesCount(Object.keys(pendingSaveCallbacksRef.current).length);
     };
@@ -2038,7 +2053,14 @@ export function BoqEditorClient({
               className="flex-shrink-0"
               onClick={async () => {
                 await flushPendingAutosave();
-                router.back(); // Go back to previous page
+                // Navigate based on where user came from
+                if (fromParam === 'presets') {
+                  router.push('/app/templates?tab=presets');
+                } else if (fromParam === 'themes') {
+                  router.push('/app/templates?tab=boq');
+                } else {
+                  router.back(); // Default: go back to previous page
+                }
               }}
             >
               <ArrowLeft className="w-5 h-5" />
@@ -2131,7 +2153,7 @@ export function BoqEditorClient({
                       <SelectValue placeholder="Cover Template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Company Default</SelectItem>
+                      <SelectItem value="default">Default Cover Page</SelectItem>
                       {coverTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name} {template.isDefault && '★'}

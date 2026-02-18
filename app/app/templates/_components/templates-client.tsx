@@ -210,7 +210,8 @@ export function TemplatesClient({
       }
 
       setBoqTemplates([...boqTemplates, data]);
-      toast.success('BOQ theme created');
+      toast.success('BOQ theme created! Redirecting to editor...');
+      router.push(`/app/templates/theme/${data.id}`);
     } catch (error) {
       toast.error('An error occurred');
     } finally {
@@ -246,7 +247,8 @@ export function TemplatesClient({
       }
 
       setCoverTemplates([...coverTemplates, data]);
-      toast.success('Cover template created');
+      toast.success('Cover template created! Redirecting to editor...');
+      router.push(`/app/templates/cover/${data.id}`);
     } catch (error) {
       toast.error('An error occurred');
     } finally {
@@ -299,7 +301,7 @@ export function TemplatesClient({
         : `/api/cover-templates/${id}`;
 
       const response = await fetch(endpoint, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isDefault: true }),
       });
@@ -457,7 +459,7 @@ export function TemplatesClient({
                               Set Default
                             </Button>
                           )}
-                          <Link href={`/app/settings?tab=pdf`}>
+                          <Link href={`/app/templates/theme/${template.id}`}>
                             <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -574,7 +576,7 @@ export function TemplatesClient({
                               Set Default
                             </Button>
                           )}
-                          <Link href={`/app/settings?tab=pdf`}>
+                          <Link href={`/app/templates/cover/${template.id}`}>
                             <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
                               <Pencil className="w-4 h-4" />
                             </Button>

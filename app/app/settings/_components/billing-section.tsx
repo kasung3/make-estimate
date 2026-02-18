@@ -254,7 +254,7 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
       )}
 
       {/* Plan Selection - Show if no active subscription OR for upgrades */}
-      {(!hasActiveSubscription || (currentPlan?.key === 'starter')) && (
+      {(!hasActiveSubscription || (currentPlan?.key === 'starter') || (currentPlan?.key === 'advance')) && (
         <Card className="shadow-md border-0">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -309,7 +309,7 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
             </div>
 
             {/* Plan Cards */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               {/* Starter Plan */}
               <div
                 className={`relative rounded-xl border-2 p-6 transition-all ${
@@ -370,7 +370,7 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
                 {currentPlan?.key === 'advance' && (
                   <Badge className="absolute -top-3 left-4 bg-emerald-500">Current Plan</Badge>
                 )}
-                {currentPlan?.key !== 'advance' && (
+                {currentPlan?.key !== 'advance' && currentPlan?.key !== 'business' && (
                   <Badge className="absolute -top-3 left-4 bg-primary">Recommended</Badge>
                 )}
                 <h3 className="text-xl font-bold">Advance</h3>
@@ -410,6 +410,62 @@ export function BillingSection({ isAdmin }: BillingSectionProps) {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : null}
                     Upgrade to Advance
+                  </Button>
+                )}
+              </div>
+
+              {/* Business Plan */}
+              <div
+                className={`relative rounded-xl border-2 p-6 transition-all ${
+                  currentPlan?.key === 'business'
+                    ? 'border-emerald-400 bg-emerald-50'
+                    : 'border-gray-200 hover:border-primary/50'
+                }`}
+              >
+                {currentPlan?.key === 'business' && (
+                  <Badge className="absolute -top-3 left-4 bg-emerald-500">Current Plan</Badge>
+                )}
+                <h3 className="text-xl font-bold">Business</h3>
+                <div className="mt-2">
+                  <span className="text-3xl font-bold">$49</span>
+                  <span className="text-gray-500">/month</span>
+                </div>
+                <ul className="mt-4 space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <strong>Unlimited</strong> BOQ creations
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    Unlimited BOQ themes
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    Unlimited BOQ presets
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    Unlimited cover templates
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    Team collaboration
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    Priority support
+                  </li>
+                </ul>
+                {currentPlan?.key !== 'business' && isAdmin && (
+                  <Button
+                    className="w-full mt-6"
+                    onClick={() => handleCheckout('business')}
+                    disabled={checkoutLoading === 'business'}
+                  >
+                    {checkoutLoading === 'business' ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Upgrade to Business
                   </Button>
                 )}
               </div>

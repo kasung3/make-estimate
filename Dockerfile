@@ -38,7 +38,7 @@ ENV DATABASE_URL=$DATABASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXT_OUTPUT_MODE=standalone
-RUN npm run build
+RUN NEXT_OUTPUT_MODE=standalone npm run build
 
 # Verify standalone output exists
 RUN ls -la .next/standalone/ && test -f .next/standalone/server.js

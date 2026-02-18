@@ -87,6 +87,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Record BOQ creation event for quota tracking
+    await prisma.boqCreationEvent.create({
+      data: {
+        companyId,
+        boqId: newBoq.id,
+      },
+    });
+
     return NextResponse.json(newBoq, { status: 201 });
   } catch (error: any) {
     console.error('Error creating BOQ from preset:', error);

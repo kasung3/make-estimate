@@ -110,11 +110,25 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
 
   const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Refetch BOQs from API
+  const refetchBoqs = useCallback(async () => {
+    try {
+      const response = await fetch('/api/boqs', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setBoqs(data ?? []);
+      }
+    } catch (error) {
+      console.error('Failed to refetch BOQs:', error);
+    }
+  }, []);
 
   // Fetch customers and presets for the new BOQ dialog
   useEffect(() => {
@@ -128,6 +142,26 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
       .then(data => setPresets(data ?? []))
       .catch(() => {});
   }, []);
+
+  // Refetch BOQs when page becomes visible or focused (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchBoqs();
+      }
+    };
+    
+    const handleFocus = () => {
+      refetchBoqs();
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refetchBoqs]);
 
   // Prefetch BOQ pages on mount
   useEffect(() => {
@@ -278,6 +312,7 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
           name: newCustomerName,
           email: newCustomerEmail || null,
           phone: newCustomerPhone || null,
+          address: newCustomerAddress || null,
         }),
       });
 
@@ -294,6 +329,7 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
       setNewCustomerName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setNewCustomerAddress('');
       toast.success('Customer created');
     } catch (error) {
       toast.error('An error occurred');
@@ -572,6 +608,15 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
                   placeholder="Phone number"
                   value={newCustomerPhone}
                   onChange={(e) => setNewCustomerPhone(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customerAddress">Address (Optional)</Label>
+                <Input
+                  id="customerAddress"
+                  placeholder="Customer address"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
                 />
               </div>
             </div>

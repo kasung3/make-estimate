@@ -2038,8 +2038,7 @@ export function BoqEditorClient({
               className="flex-shrink-0"
               onClick={async () => {
                 await flushPendingAutosave();
-                router.refresh(); // Clear Next.js client cache
-                router.push('/app/dashboard');
+                router.back(); // Go back to previous page
               }}
             >
               <ArrowLeft className="w-5 h-5" />

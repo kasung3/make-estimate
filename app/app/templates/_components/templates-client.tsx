@@ -104,6 +104,7 @@ export function TemplatesClient({
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const fetchPresets = useCallback(async () => {
@@ -130,6 +131,28 @@ export function TemplatesClient({
         .then(data => setCustomers(data ?? []))
         .catch(() => {});
     }
+  }, [activeTab, fetchPresets]);
+
+  // Refetch presets when page becomes visible or focused (user navigates back from editing)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && activeTab === 'presets') {
+        fetchPresets();
+      }
+    };
+    
+    const handleFocus = () => {
+      if (activeTab === 'presets') {
+        fetchPresets();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [activeTab, fetchPresets]);
 
   const handleCreatePreset = async () => {
@@ -244,6 +267,7 @@ export function TemplatesClient({
           name: newCustomerName,
           email: newCustomerEmail || null,
           phone: newCustomerPhone || null,
+          address: newCustomerAddress || null,
         }),
       });
 
@@ -260,6 +284,7 @@ export function TemplatesClient({
       setNewCustomerName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setNewCustomerAddress('');
       toast.success('Customer created');
     } catch (error) {
       toast.error('An error occurred');
@@ -997,6 +1022,15 @@ export function TemplatesClient({
                   placeholder="Phone number"
                   value={newCustomerPhone}
                   onChange={(e) => setNewCustomerPhone(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newCustomerAddressPreset">Address (Optional)</Label>
+                <Input
+                  id="newCustomerAddressPreset"
+                  placeholder="Customer address"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
                 />
               </div>
             </div>

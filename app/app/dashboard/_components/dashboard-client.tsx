@@ -60,6 +60,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [presets, setPresets] = useState<any[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -309,6 +310,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
           name: newCustomerName,
           email: newCustomerEmail || null,
           phone: newCustomerPhone || null,
+          address: newCustomerAddress || null,
         }),
       });
 
@@ -325,6 +327,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       setNewCustomerName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setNewCustomerAddress('');
       toast.success('Customer created');
     } catch (error) {
       toast.error('An error occurred');
@@ -686,6 +689,15 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
                   placeholder="Phone number"
                   value={newCustomerPhone}
                   onChange={(e) => setNewCustomerPhone(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customerAddress">Address (Optional)</Label>
+                <Input
+                  id="customerAddress"
+                  placeholder="Customer address"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
                 />
               </div>
             </div>

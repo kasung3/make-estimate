@@ -852,6 +852,7 @@ export function BoqEditorClient({
   );
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [pendingSavesCount, setPendingSavesCount] = useState(0);
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
@@ -900,6 +901,8 @@ export function BoqEditorClient({
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputSaveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  // Store pending save callbacks so they can be flushed on navigation
+  const pendingSaveCallbacksRef = useRef<Record<string, () => Promise<void>>>({});
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
@@ -1083,6 +1086,7 @@ export function BoqEditorClient({
   }, [autosave]);
 
   const flushPendingAutosave = useCallback(async () => {
+    // Clear and flush BOQ metadata autosave
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
@@ -1090,6 +1094,30 @@ export function BoqEditorClient({
     if (autosavePromiseRef.current) {
       await autosavePromiseRef.current;
     }
+    
+    // Flush all pending item/category/projectName saves
+    const pendingCallbacks = Object.entries(pendingSaveCallbacksRef.current);
+    if (pendingCallbacks.length > 0) {
+      // Clear all timeouts first
+      Object.keys(inputSaveTimeoutRef.current).forEach(key => {
+        clearTimeout(inputSaveTimeoutRef.current[key]);
+        delete inputSaveTimeoutRef.current[key];
+      });
+      
+      // Execute all pending save callbacks
+      await Promise.all(pendingCallbacks.map(async ([key, callback]) => {
+        try {
+          await callback();
+        } catch (error) {
+          console.error(`Failed to flush save for ${key}:`, error);
+        }
+      }));
+      
+      // Clear the callbacks ref
+      pendingSaveCallbacksRef.current = {};
+      setPendingSavesCount(0);
+    }
+    
     await autosave();
   }, [autosave]);
 
@@ -1101,6 +1129,20 @@ export function BoqEditorClient({
       Object.values(inputSaveTimeoutRef.current).forEach(clearTimeout);
     };
   }, []);
+
+  // Warn user about unsaved changes when closing tab
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pendingSavesCount > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [pendingSavesCount]);
 
   // Fetch billing status to check item limits
   useEffect(() => {
@@ -1225,9 +1267,16 @@ export function BoqEditorClient({
     if (inputSaveTimeoutRef.current['projectName']) {
       clearTimeout(inputSaveTimeoutRef.current['projectName']);
     }
-    inputSaveTimeoutRef.current['projectName'] = setTimeout(() => {
+    const saveCallback = async () => {
       updateBoq({ projectName: value });
-    }, 500);
+      delete pendingSaveCallbacksRef.current['projectName'];
+      setPendingSavesCount(Object.keys(pendingSaveCallbacksRef.current).length);
+    };
+    if (!pendingSaveCallbacksRef.current['projectName']) {
+      setPendingSavesCount(prev => prev + 1);
+    }
+    pendingSaveCallbacksRef.current['projectName'] = saveCallback;
+    inputSaveTimeoutRef.current['projectName'] = setTimeout(saveCallback, 500);
   };
 
   const handleAddCategory = async () => {
@@ -1255,11 +1304,12 @@ export function BoqEditorClient({
 
   const handleUpdateCategory = async (categoryId: string, name: string) => {
     setLocalCategoryNames((prev) => ({ ...prev, [categoryId]: name }));
+    const timeoutKey = `cat_${categoryId}`;
 
-    if (inputSaveTimeoutRef.current[`cat_${categoryId}`]) {
-      clearTimeout(inputSaveTimeoutRef.current[`cat_${categoryId}`]);
+    if (inputSaveTimeoutRef.current[timeoutKey]) {
+      clearTimeout(inputSaveTimeoutRef.current[timeoutKey]);
     }
-    inputSaveTimeoutRef.current[`cat_${categoryId}`] = setTimeout(async () => {
+    const saveCallback = async () => {
       try {
         await fetch(`/api/categories/${categoryId}`, {
           method: 'PUT',
@@ -1276,7 +1326,14 @@ export function BoqEditorClient({
       } catch (error) {
         toast.error('Failed to update category');
       }
-    }, 500);
+      delete pendingSaveCallbacksRef.current[timeoutKey];
+      setPendingSavesCount(Object.keys(pendingSaveCallbacksRef.current).length);
+    };
+    if (!pendingSaveCallbacksRef.current[timeoutKey]) {
+      setPendingSavesCount(prev => prev + 1);
+    }
+    pendingSaveCallbacksRef.current[timeoutKey] = saveCallback;
+    inputSaveTimeoutRef.current[timeoutKey] = setTimeout(saveCallback, 500);
   };
 
   const getCategoryName = useCallback(
@@ -1395,11 +1452,17 @@ export function BoqEditorClient({
         } catch (error) {
           console.error('Failed to update item:', error);
         }
+        delete pendingSaveCallbacksRef.current[timeoutKey];
+        setPendingSavesCount(Object.keys(pendingSaveCallbacksRef.current).length);
       };
 
       if (immediate) {
         saveToApi();
       } else {
+        if (!pendingSaveCallbacksRef.current[timeoutKey]) {
+          setPendingSavesCount(prev => prev + 1);
+        }
+        pendingSaveCallbacksRef.current[timeoutKey] = saveToApi;
         inputSaveTimeoutRef.current[timeoutKey] = setTimeout(saveToApi, 500);
       }
     },
@@ -1916,6 +1979,11 @@ export function BoqEditorClient({
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-1" />
                   Saving...
+                </>
+              ) : pendingSavesCount > 0 ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1 text-amber-500" />
+                  <span className="text-amber-600">Saving...</span>
                 </>
               ) : lastSaved ? (
                 <>

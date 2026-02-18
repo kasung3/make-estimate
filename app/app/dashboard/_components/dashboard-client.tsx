@@ -106,20 +106,45 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       .catch(() => {});
   }, []);
 
+  // Refetch BOQs and customers from API
+  const refetchBoqs = useCallback(async () => {
+    try {
+      const response = await fetch('/api/boqs', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setBoqs(data ?? []);
+      }
+    } catch (error) {
+      console.error('Failed to refetch BOQs:', error);
+    }
+  }, []);
+
   // Fetch billing status on mount and when page becomes visible (returning from navigation)
   useEffect(() => {
     fetchBillingStatus();
+    refetchBoqs(); // Refetch on mount to get latest data
     
-    // Also refresh when page becomes visible (user returns to dashboard)
+    // Refresh when page becomes visible (user returns to dashboard)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchBillingStatus();
+        refetchBoqs();
       }
     };
     
+    // Also refresh on window focus (catches browser back button)
+    const handleFocus = () => {
+      fetchBillingStatus();
+      refetchBoqs();
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [fetchBillingStatus]);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchBillingStatus, refetchBoqs]);
 
   // Prefetch top BOQs on mount for faster navigation
   useEffect(() => {

@@ -1044,28 +1044,37 @@ export function BoqEditorClient({
 
   const totals = calculateTotals();
 
-  // Autosave
+  // Autosave - use ref to always get latest boq state
   const autosavePromiseRef = useRef<Promise<void> | null>(null);
+  const boqRef = useRef(boq);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    boqRef.current = boq;
+  }, [boq]);
 
   const autosave = useCallback(async () => {
+    const currentBoq = boqRef.current; // Always use latest value
+    if (!currentBoq?.id) return;
+    
     setSaving(true);
     try {
-      await fetch(`/api/boqs/${boq?.id}`, {
+      await fetch(`/api/boqs/${currentBoq.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectName: boq?.projectName,
-          customerId: boq?.customerId,
-          coverTemplateId: boq?.coverTemplateId,
-          pdfThemeId: boq?.pdfThemeId,
-          dateMode: boq?.dateMode,
-          preparationDate: boq?.preparationDate,
-          discountEnabled: boq?.discountEnabled,
-          discountType: boq?.discountType,
-          discountValue: boq?.discountValue,
-          vatEnabled: boq?.vatEnabled,
-          vatPercent: boq?.vatPercent,
-          status: boq?.status,
+          projectName: currentBoq.projectName,
+          customerId: currentBoq.customerId,
+          coverTemplateId: currentBoq.coverTemplateId,
+          pdfThemeId: currentBoq.pdfThemeId,
+          dateMode: currentBoq.dateMode,
+          preparationDate: currentBoq.preparationDate,
+          discountEnabled: currentBoq.discountEnabled,
+          discountType: currentBoq.discountType,
+          discountValue: currentBoq.discountValue,
+          vatEnabled: currentBoq.vatEnabled,
+          vatPercent: currentBoq.vatPercent,
+          status: currentBoq.status,
         }),
       });
       setLastSaved(new Date());
@@ -1074,7 +1083,7 @@ export function BoqEditorClient({
     } finally {
       setSaving(false);
     }
-  }, [boq]);
+  }, []);
 
   const triggerAutosave = useCallback(() => {
     if (saveTimeoutRef.current) {
@@ -1938,6 +1947,7 @@ export function BoqEditorClient({
               className="flex-shrink-0"
               onClick={async () => {
                 await flushPendingAutosave();
+                router.refresh(); // Clear Next.js client cache
                 router.push('/app/dashboard');
               }}
             >

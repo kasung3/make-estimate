@@ -1182,6 +1182,49 @@ export function BoqEditorClient({
   // Check if at item limit
   const isAtItemLimit = itemLimit !== null && currentItemCount >= itemLimit;
 
+  // Refetch BOQ data on mount to ensure fresh data
+  useEffect(() => {
+    const refetchBoq = async () => {
+      if (!initialBoq?.id) return;
+      try {
+        const response = await fetch(`/api/boqs/${initialBoq.id}`, { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data) {
+            setBoq(data);
+            boqRef.current = data;
+            setLocalProjectName(data.projectName ?? '');
+            // Reset local category names
+            const catNames: Record<string, string> = {};
+            (data.categories ?? []).forEach((cat: any) => {
+              if (cat?.id && cat?.name) catNames[cat.id] = cat.name;
+            });
+            setLocalCategoryNames(catNames);
+            // Reset local item values
+            const itemVals: Record<string, Partial<BoqItemType>> = {};
+            (data.categories ?? []).forEach((cat: any) => {
+              (cat?.items ?? []).forEach((item: any) => {
+                if (item?.id) {
+                  itemVals[item.id] = {
+                    description: item.description,
+                    unit: item.unit,
+                    unitCost: item.unitCost,
+                    markupPct: item.markupPct,
+                    quantity: item.quantity,
+                  };
+                }
+              });
+            });
+            setLocalItemValues(itemVals);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to refetch BOQ:', error);
+      }
+    };
+    refetchBoq();
+  }, [initialBoq?.id]);
+
   useEffect(() => {
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
@@ -1267,7 +1310,12 @@ export function BoqEditorClient({
   }, []);
 
   const updateBoq = (updates: Partial<BoqWithRelations>) => {
-    setBoq((prev) => ({ ...(prev ?? {}), ...updates } as BoqWithRelations));
+    setBoq((prev) => {
+      const newBoq = { ...(prev ?? {}), ...updates } as BoqWithRelations;
+      // Update ref synchronously so autosave gets the latest value
+      boqRef.current = newBoq;
+      return newBoq;
+    });
     triggerAutosave();
   };
 
@@ -1960,27 +2008,34 @@ export function BoqEditorClient({
                 className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent w-full"
                 placeholder="Project Name"
               />
-              <div className="flex items-center space-x-2 mt-1">
-                <Select
-                  value={boq?.customerId ?? 'none'}
-                  onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
-                >
-                  <SelectTrigger className="h-8 text-sm w-[200px]">
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No customer</SelectItem>
-                    {(customers ?? []).map((customer) => (
-                      <SelectItem key={customer?.id} value={customer?.id ?? ''}>
-                        {customer?.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
+              {!boq?.isPreset && (
+                <div className="flex items-center space-x-2 mt-1">
+                  <Select
+                    value={boq?.customerId ?? 'none'}
+                    onValueChange={(value) => updateBoq({ customerId: value === 'none' ? null : value })}
+                  >
+                    <SelectTrigger className="h-8 text-sm w-[200px]">
+                      <SelectValue placeholder="Select customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No customer</SelectItem>
+                      {(customers ?? []).map((customer) => (
+                        <SelectItem key={customer?.id} value={customer?.id ?? ''}>
+                          {customer?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setShowNewCustomerDialog(true)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              {boq?.isPreset && (
+                <div className="text-sm text-muted-foreground mt-1">
+                  Preset Template
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3 flex-shrink-0">

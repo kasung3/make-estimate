@@ -112,6 +112,10 @@ async function main() {
       isMostPopular: false,
       sortOrder: 1,
       active: true,
+      // Live Stripe IDs
+      stripeProductId: 'prod_TzsLhnYDtRz0DY',
+      stripePriceIdMonthly: 'price_1T1sb9AYEuDHpMaBXJZIeTix',
+      stripePriceIdAnnual: 'price_1T1sbAAYEuDHpMaBybo9u4Kz',
     },
     create: {
       planKey: 'starter',
@@ -142,6 +146,9 @@ async function main() {
       isMostPopular: false,
       sortOrder: 1,
       active: true,
+      stripeProductId: 'prod_TzsLhnYDtRz0DY',
+      stripePriceIdMonthly: 'price_1T1sb9AYEuDHpMaBXJZIeTix',
+      stripePriceIdAnnual: 'price_1T1sbAAYEuDHpMaBybo9u4Kz',
     },
   });
   console.log(`  Created/updated Starter plan: ${starterPlan.id}`);
@@ -178,6 +185,10 @@ async function main() {
       isMostPopular: true,
       sortOrder: 2,
       active: true,
+      // Live Stripe IDs
+      stripeProductId: 'prod_TzsM1e75vBTlkF',
+      stripePriceIdMonthly: 'price_1T1sbIAYEuDHpMaBNrJQL4Kt',
+      stripePriceIdAnnual: 'price_1T1sbJAYEuDHpMaB9dcTNkfB',
     },
     create: {
       planKey: 'advance',
@@ -209,6 +220,9 @@ async function main() {
       isMostPopular: true,
       sortOrder: 2,
       active: true,
+      stripeProductId: 'prod_TzsM1e75vBTlkF',
+      stripePriceIdMonthly: 'price_1T1sbIAYEuDHpMaBNrJQL4Kt',
+      stripePriceIdAnnual: 'price_1T1sbJAYEuDHpMaB9dcTNkfB',
     },
   });
   console.log(`  Created/updated Advance plan: ${advancePlan.id}`);
@@ -246,6 +260,10 @@ async function main() {
       isMostPopular: false,
       sortOrder: 3,
       active: true,
+      // Live Stripe IDs
+      stripeProductId: 'prod_TzsMuG2rteBYwz',
+      stripePriceIdMonthly: 'price_1T1sbSAYEuDHpMaBTRLRYwTX',
+      stripePriceIdAnnual: 'price_1T1sbSAYEuDHpMaBTQevSABy',
     },
     create: {
       planKey: 'business',
@@ -278,6 +296,9 @@ async function main() {
       isMostPopular: false,
       sortOrder: 3,
       active: true,
+      stripeProductId: 'prod_TzsMuG2rteBYwz',
+      stripePriceIdMonthly: 'price_1T1sbSAYEuDHpMaBTRLRYwTX',
+      stripePriceIdAnnual: 'price_1T1sbSAYEuDHpMaBTQevSABy',
     },
   });
   console.log(`  Created/updated Business plan: ${businessPlan.id}`);

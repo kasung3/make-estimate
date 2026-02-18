@@ -97,6 +97,72 @@ interface EditItemDialogData {
 }
 
 // =============================================================================
+// ARROW KEY NAVIGATION HELPER
+// =============================================================================
+function handleCellKeyDown(e: React.KeyboardEvent<HTMLInputElement>, itemId: string, colIndex: number) {
+  if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  
+  // Only navigate on arrow keys when cursor is at start/end of input
+  const input = e.currentTarget;
+  const cursorAtStart = input.selectionStart === 0;
+  const cursorAtEnd = input.selectionStart === input.value.length;
+  
+  // For left/right arrows, only navigate if at boundary
+  if (e.key === 'ArrowLeft' && !cursorAtStart) return;
+  if (e.key === 'ArrowRight' && !cursorAtEnd) return;
+  
+  e.preventDefault();
+  
+  // Find all navigable inputs in the BOQ grid
+  const gridContainer = input.closest('[data-boq-grid]');
+  if (!gridContainer) return;
+  
+  const allInputs = Array.from(gridContainer.querySelectorAll<HTMLInputElement>('[data-cell]'));
+  if (allInputs.length === 0) return;
+  
+  // Get current position
+  const currentIdx = allInputs.findIndex(el => el === input);
+  if (currentIdx === -1) return;
+  
+  // Parse positions to build a map
+  const positions = allInputs.map((el, idx) => ({
+    idx,
+    row: el.dataset.row || '',
+    col: parseInt(el.dataset.col || '0', 10),
+  }));
+  
+  const currentPos = positions[currentIdx];
+  let targetInput: HTMLInputElement | null = null;
+  
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    // Find all inputs in the same column, sorted by row
+    const sameColInputs = positions.filter(p => p.col === currentPos.col);
+    const currentRowIdx = sameColInputs.findIndex(p => p.row === currentPos.row);
+    
+    if (e.key === 'ArrowUp' && currentRowIdx > 0) {
+      targetInput = allInputs[sameColInputs[currentRowIdx - 1].idx];
+    } else if (e.key === 'ArrowDown' && currentRowIdx < sameColInputs.length - 1) {
+      targetInput = allInputs[sameColInputs[currentRowIdx + 1].idx];
+    }
+  } else {
+    // ArrowLeft / ArrowRight - find adjacent column in same row
+    const sameRowInputs = positions.filter(p => p.row === currentPos.row).sort((a, b) => a.col - b.col);
+    const currentColIdx = sameRowInputs.findIndex(p => p.col === currentPos.col);
+    
+    if (e.key === 'ArrowLeft' && currentColIdx > 0) {
+      targetInput = allInputs[sameRowInputs[currentColIdx - 1].idx];
+    } else if (e.key === 'ArrowRight' && currentColIdx < sameRowInputs.length - 1) {
+      targetInput = allInputs[sameRowInputs[currentColIdx + 1].idx];
+    }
+  }
+  
+  if (targetInput) {
+    targetInput.focus();
+    targetInput.select();
+  }
+}
+
+// =============================================================================
 // SORTABLE ITEM COMPONENT - Hooks at top level (fixes React rules of hooks)
 // =============================================================================
 // Helper function to generate the grid template string
@@ -348,6 +414,10 @@ function SortableItemRow({
           <Input
             value={getItemValue(item.id, 'description', item?.description) ?? ''}
             onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
+            onKeyDown={(e) => handleCellKeyDown(e, item.id, 0)}
+            data-cell
+            data-row={item.id}
+            data-col="0"
             className="h-8 text-sm w-full"
             placeholder="Description"
           />
@@ -367,6 +437,10 @@ function SortableItemRow({
         <Input
           value={getItemValue(item.id, 'unit', item?.unit) ?? ''}
           onChange={(e) => handleUpdateItem(item?.id, { unit: e.target.value })}
+          onKeyDown={(e) => handleCellKeyDown(e, item.id, 1)}
+          data-cell
+          data-row={item.id}
+          data-col="1"
           className="h-8 text-sm w-full"
           placeholder="Unit"
         />
@@ -382,6 +456,10 @@ function SortableItemRow({
               unitCost: parseFloat(e.target.value) || 0,
             })
           }
+          onKeyDown={(e) => handleCellKeyDown(e, item.id, 2)}
+          data-cell
+          data-row={item.id}
+          data-col="2"
           className="h-8 text-sm text-right w-full"
         />
       </div>
@@ -396,6 +474,10 @@ function SortableItemRow({
               markupPct: parseFloat(e.target.value) || 0,
             })
           }
+          onKeyDown={(e) => handleCellKeyDown(e, item.id, 3)}
+          data-cell
+          data-row={item.id}
+          data-col="3"
           className="h-8 text-sm text-right w-full"
         />
       </div>
@@ -412,6 +494,10 @@ function SortableItemRow({
               quantity: parseFloat(e.target.value) || 0,
             })
           }
+          onKeyDown={(e) => handleCellKeyDown(e, item.id, 4)}
+          data-cell
+          data-row={item.id}
+          data-col="4"
           className="h-8 text-sm text-right w-full"
         />
       </div>
@@ -611,6 +697,7 @@ function SortableCategory({
                   <div 
                     className="text-sm flex flex-col" 
                     role="table"
+                    data-boq-grid
                     style={{ minWidth: `${getTotalColumnsWidth(columnWidths)}px` }}
                   >
                     {/* Header row */}
@@ -625,56 +712,56 @@ function SortableCategory({
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         #
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'number')}
                         />
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Description
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'description')}
                         />
                       </div>
                       <div className="py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unit')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Cost
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unitCost')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Markup %
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'markup')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Unit Price
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'unitPrice')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Qty
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'qty')}
                         />
                       </div>
                       <div className="text-right py-2 px-2 font-medium text-gray-500 relative border-b border-gray-200" role="columnheader">
                         Amount
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-cyan-300 transition-colors"
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-gray-200 hover:bg-cyan-400 transition-colors"
                           onMouseDown={(e) => handleResizeStart(e, 'amount')}
                         />
                       </div>

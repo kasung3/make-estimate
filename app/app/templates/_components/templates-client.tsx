@@ -17,6 +17,14 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Plus,
   Palette,
@@ -84,6 +92,19 @@ export function TemplatesClient({
   const [presetToDelete, setPresetToDelete] = useState<any>(null);
   const [showDeletePresetDialog, setShowDeletePresetDialog] = useState(false);
   const [deletingPreset, setDeletingPreset] = useState(false);
+  // Use Preset dialog state
+  const [showUsePresetDialog, setShowUsePresetDialog] = useState(false);
+  const [selectedPresetForUse, setSelectedPresetForUse] = useState<any>(null);
+  const [usePresetProjectName, setUsePresetProjectName] = useState('');
+  const [usePresetCustomerId, setUsePresetCustomerId] = useState<string>('');
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [creatingFromPreset, setCreatingFromPreset] = useState(false);
+  // New customer dialog state within Use Preset flow
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const fetchPresets = useCallback(async () => {
     setPresetsLoading(true);
@@ -103,6 +124,11 @@ export function TemplatesClient({
   useEffect(() => {
     if (activeTab === 'presets') {
       fetchPresets();
+      // Fetch customers for Use Preset dialog
+      fetch('/api/customers')
+        .then(res => res.json())
+        .then(data => setCustomers(data ?? []))
+        .catch(() => {});
     }
   }, [activeTab, fetchPresets]);
 
@@ -156,12 +182,32 @@ export function TemplatesClient({
     }
   };
 
-  const handleCreateBoqFromPreset = async (presetId: string, presetName: string) => {
+  // Opens dialog to configure BOQ from preset
+  const handleUsePresetClick = (preset: any) => {
+    setSelectedPresetForUse(preset);
+    setUsePresetProjectName(`BOQ from ${preset.presetName || preset.projectName}`);
+    setUsePresetCustomerId('');
+    setShowUsePresetDialog(true);
+  };
+
+  // Actually creates the BOQ from preset with user-provided name/customer
+  const handleConfirmCreateBoqFromPreset = async () => {
+    if (!usePresetProjectName?.trim?.()) {
+      toast.error('Please enter a project name');
+      return;
+    }
+    if (!selectedPresetForUse) return;
+
+    setCreatingFromPreset(true);
     try {
       const res = await fetch('/api/presets/create-boq-from-preset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ presetId, projectName: `BOQ from ${presetName}` }),
+        body: JSON.stringify({ 
+          presetId: selectedPresetForUse.id, 
+          projectName: usePresetProjectName,
+          customerId: usePresetCustomerId || null,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -170,9 +216,55 @@ export function TemplatesClient({
       }
       const boq = await res.json();
       toast.success('BOQ created from preset!');
+      setShowUsePresetDialog(false);
+      setSelectedPresetForUse(null);
+      setUsePresetProjectName('');
+      setUsePresetCustomerId('');
       router.push(`/app/boq/${boq.id}`);
     } catch (err) {
       toast.error('Failed to create BOQ from preset');
+    } finally {
+      setCreatingFromPreset(false);
+    }
+  };
+
+  // Create new customer within Use Preset flow
+  const handleCreateCustomerForPreset = async () => {
+    if (!newCustomerName?.trim?.()) {
+      toast.error('Please enter a customer name');
+      return;
+    }
+
+    setCreatingCustomer(true);
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCustomerName,
+          email: newCustomerEmail || null,
+          phone: newCustomerPhone || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.error || 'Failed to create customer');
+        return;
+      }
+
+      setCustomers([...(customers ?? []), data]);
+      setUsePresetCustomerId(data?.id);
+      setShowNewCustomerDialog(false);
+      setNewCustomerName('');
+      setNewCustomerEmail('');
+      setNewCustomerPhone('');
+      toast.success('Customer created');
+    } catch (error) {
+      toast.error('An error occurred');
+    } finally {
+      setCreatingCustomer(false);
     }
   };
 
@@ -652,7 +744,7 @@ export function TemplatesClient({
                               size="sm"
                               variant="outline"
                               className="text-purple-600 border-purple-200 hover:bg-purple-50"
-                              onClick={() => handleCreateBoqFromPreset(preset.id, preset.presetName || preset.projectName)}
+                              onClick={() => handleUsePresetClick(preset)}
                             >
                               <Copy className="w-3.5 h-3.5 mr-1.5" />
                               Use Preset
@@ -804,6 +896,117 @@ export function TemplatesClient({
               <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
                 {deleting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Use Preset Dialog */}
+        <Dialog open={showUsePresetDialog} onOpenChange={setShowUsePresetDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create BOQ from Preset</DialogTitle>
+              <DialogDescription>
+                Start a new BOQ using "{selectedPresetForUse?.presetName || selectedPresetForUse?.projectName}" as a template.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="usePresetProjectName">Project Name *</Label>
+                <Input
+                  id="usePresetProjectName"
+                  placeholder="Enter project name"
+                  value={usePresetProjectName}
+                  onChange={(e) => setUsePresetProjectName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Customer (Optional)</Label>
+                <div className="flex space-x-2">
+                  <Select 
+                    value={usePresetCustomerId || 'none'} 
+                    onValueChange={(v) => setUsePresetCustomerId(v === 'none' ? '' : v)}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No customer</SelectItem>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNewCustomerDialog(true)}
+                    type="button"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowUsePresetDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmCreateBoqFromPreset} disabled={creatingFromPreset}>
+                {creatingFromPreset && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Create BOQ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* New Customer Dialog (within Use Preset flow) */}
+        <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogDescription>
+                Create a new customer to associate with your BOQ.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="newCustomerNamePreset">Name *</Label>
+                <Input
+                  id="newCustomerNamePreset"
+                  placeholder="Customer name"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newCustomerEmailPreset">Email (Optional)</Label>
+                <Input
+                  id="newCustomerEmailPreset"
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={newCustomerEmail}
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newCustomerPhonePreset">Phone (Optional)</Label>
+                <Input
+                  id="newCustomerPhonePreset"
+                  placeholder="Phone number"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewCustomerDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateCustomerForPreset} disabled={creatingCustomer}>
+                {creatingCustomer && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Add Customer
               </Button>
             </DialogFooter>
           </DialogContent>

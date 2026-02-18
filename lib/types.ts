@@ -101,6 +101,7 @@ export interface BoqWithRelations {
   vatEnabled: boolean;
   vatPercent: number;
   status: string;
+  columnWidths?: Record<string, number> | null;
   createdAt: Date;
   updatedAt: Date;
   customer: {

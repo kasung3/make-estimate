@@ -105,6 +105,11 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // New customer dialog state
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
@@ -257,6 +262,45 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
   const handleBoqHover = useCallback((boqId: string) => {
     router.prefetch(`/app/boq/${boqId}`);
   }, [router]);
+
+  const handleCreateCustomer = async () => {
+    if (!newCustomerName?.trim?.()) {
+      toast.error('Please enter a customer name');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCustomerName,
+          email: newCustomerEmail || null,
+          phone: newCustomerPhone || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.error || 'Failed to create customer');
+        return;
+      }
+
+      setCustomers([...(customers ?? []), data]);
+      setSelectedCustomerId(data?.id);
+      setShowNewCustomerDialog(false);
+      setNewCustomerName('');
+      setNewCustomerEmail('');
+      setNewCustomerPhone('');
+      toast.success('Customer created');
+    } catch (error) {
+      toast.error('An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -432,19 +476,28 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
               )}
               <div className="space-y-2">
                 <Label htmlFor="customer">Customer (Optional)</Label>
-                <Select value={selectedCustomerId || 'none'} onValueChange={(v) => setSelectedCustomerId(v === 'none' ? '' : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No customer</SelectItem>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex space-x-2">
+                  <Select value={selectedCustomerId || 'none'} onValueChange={(v) => setSelectedCustomerId(v === 'none' ? '' : v)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No customer</SelectItem>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNewCustomerDialog(true)}
+                    type="button"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -478,6 +531,57 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
               <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
                 {deleting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* New Customer Dialog */}
+        <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogDescription>
+                Create a new customer to associate with your BOQs.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Name *</Label>
+                <Input
+                  id="customerName"
+                  placeholder="Customer name"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customerEmail">Email (Optional)</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={newCustomerEmail}
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customerPhone">Phone (Optional)</Label>
+                <Input
+                  id="customerPhone"
+                  placeholder="Phone number"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewCustomerDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateCustomer} disabled={loading}>
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Add Customer
               </Button>
             </DialogFooter>
           </DialogContent>

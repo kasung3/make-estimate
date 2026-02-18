@@ -1229,26 +1229,52 @@ export function BoqEditorClient({
     setLocalProjectName(boq?.projectName ?? '');
   }, [boq?.projectName]);
 
-  // Load column widths from localStorage
+  // Load column widths from database (BOQ.columnWidths) or fallback to localStorage
   useEffect(() => {
     try {
-      const savedWidths = localStorage.getItem('boq_column_widths');
-      if (savedWidths) {
-        const parsed = JSON.parse(savedWidths);
-        setColumnWidths((prev) => ({ ...prev, ...parsed }));
+      // Priority: database > localStorage > defaults
+      if (boq?.columnWidths && typeof boq.columnWidths === 'object') {
+        setColumnWidths((prev) => ({ ...prev, ...(boq.columnWidths as Record<string, number>) }));
+      } else {
+        const savedWidths = localStorage.getItem('boq_column_widths');
+        if (savedWidths) {
+          const parsed = JSON.parse(savedWidths);
+          setColumnWidths((prev) => ({ ...prev, ...parsed }));
+        }
       }
     } catch (e) {
       // Ignore
     }
-  }, []);
+  }, [boq?.id]); // Only run once when boq loads, not on every columnWidths change
+
+  // Ref for column width save timeout
+  const columnWidthSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const saveColumnWidths = useCallback((widths: Record<string, number>) => {
+    // Save to localStorage as backup
     try {
       localStorage.setItem('boq_column_widths', JSON.stringify(widths));
     } catch (e) {
       // Ignore
     }
-  }, []);
+    
+    // Debounce save to database
+    if (columnWidthSaveTimeoutRef.current) {
+      clearTimeout(columnWidthSaveTimeoutRef.current);
+    }
+    columnWidthSaveTimeoutRef.current = setTimeout(async () => {
+      if (!boq?.id) return;
+      try {
+        await fetch(`/api/boqs/${boq.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ columnWidths: widths }),
+        });
+      } catch (error) {
+        console.error('Failed to save column widths:', error);
+      }
+    }, 1000);
+  }, [boq?.id]);
 
   // Column resize handlers
     const resizingColumnRef = useRef<string | null>(null);
@@ -1279,7 +1305,12 @@ export function BoqEditorClient({
   const handleResizeEnd = useCallback(() => {
     resizingColumnRef.current = null;
     setResizingColumn(null);
-  }, []);
+    // Save column widths after resize ends
+    setColumnWidths((currentWidths) => {
+      saveColumnWidths(currentWidths);
+      return currentWidths;
+    });
+  }, [saveColumnWidths]);
 
   useEffect(() => {
     if (resizingColumn) {
@@ -1299,15 +1330,27 @@ export function BoqEditorClient({
     };
   }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 
-  const resetColumnWidths = useCallback(() => {
+  const resetColumnWidths = useCallback(async () => {
     setColumnWidths(DEFAULT_COLUMN_WIDTHS);
     try {
       localStorage.removeItem('boq_column_widths');
     } catch (e) {
       // Ignore
     }
+    // Clear column widths in database
+    if (boq?.id) {
+      try {
+        await fetch(`/api/boqs/${boq.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ columnWidths: null }),
+        });
+      } catch (error) {
+        console.error('Failed to clear column widths:', error);
+      }
+    }
     toast.success('Column widths reset to default');
-  }, []);
+  }, [boq?.id]);
 
   const updateBoq = (updates: Partial<BoqWithRelations>) => {
     setBoq((prev) => {

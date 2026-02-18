@@ -63,8 +63,8 @@ export const PUT = instrumentRoute(
     if (body?.coverTemplateId !== undefined) updateData.coverTemplateId = body.coverTemplateId || null;
     if (body?.pdfThemeId !== undefined) updateData.pdfThemeId = body.pdfThemeId || null;
     if (body?.dateMode !== undefined) {
-      const validDateModes = ['auto', 'manual', 'none'];
-      updateData.dateMode = validDateModes.includes(body.dateMode) ? body.dateMode : 'auto';
+      const validDateModes = ['export_date', 'preparation_date'];
+      updateData.dateMode = validDateModes.includes(body.dateMode) ? body.dateMode : 'export_date';
     }
     if (body?.preparationDate !== undefined) {
       if (body.preparationDate) {
@@ -76,15 +76,19 @@ export const PUT = instrumentRoute(
     }
     if (body?.discountEnabled !== undefined) updateData.discountEnabled = body.discountEnabled === true;
     if (body?.discountType !== undefined) {
-      const validTypes = ['percentage', 'fixed'];
-      updateData.discountType = validTypes.includes(body.discountType) ? body.discountType : 'percentage';
+      const validTypes = ['percent', 'fixed'];
+      updateData.discountType = validTypes.includes(body.discountType) ? body.discountType : 'percent';
     }
     if (body?.discountValue !== undefined) updateData.discountValue = sanitizeNumber(body.discountValue, 0, 0, 999999999);
     if (body?.vatEnabled !== undefined) updateData.vatEnabled = body.vatEnabled === true;
     if (body?.vatPercent !== undefined) updateData.vatPercent = sanitizeNumber(body.vatPercent, 0, 0, 100);
     if (body?.status !== undefined) {
-      const validStatuses = ['DRAFT', 'SENT', 'APPROVED', 'REJECTED'];
-      updateData.status = validStatuses.includes(body.status) ? body.status : 'DRAFT';
+      const validStatuses = ['draft', 'sent', 'approved', 'rejected'];
+      updateData.status = validStatuses.includes(body.status?.toLowerCase?.()) ? body.status : 'draft';
+    }
+    // Save column widths if provided
+    if (body?.columnWidths !== undefined) {
+      updateData.columnWidths = body.columnWidths;
     }
 
     const boq = await timedOperation('boq.update', () =>

@@ -183,6 +183,7 @@ model Boq {
   vatEnabled      Boolean           @default(false)
   vatPercent      Float             @default(18)
   status          String            @default("draft")
+  columnWidths    Json?             // Store column widths as JSON { grip: 32, number: 40, ... }
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)

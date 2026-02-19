@@ -76,6 +76,7 @@ model User {
   memberships         CompanyMembership[]
   adminGrants         CompanyAccessGrant[] @relation("AdminGrants") // Grants created by this admin
   feedbacks           Feedback[]
+  roadmapItems        RoadmapItem[]
   
   @@index([email])
   @@index([phone])
@@ -484,4 +485,33 @@ model Feedback {
   @@index([userId])
   @@index([companyId])
   @@index([createdAt(sort: Desc)])
+}
+
+// ============== ADMIN ROADMAP ==============
+
+enum RoadmapStatus {
+  planned
+  in_progress
+  completed
+  cancelled
+}
+
+model RoadmapItem {
+  id            String         @id @default(cuid())
+  title         String
+  description   String         @db.Text
+  status        RoadmapStatus  @default(planned)
+  sortOrder     Int            @default(0)
+  isPublic      Boolean        @default(true)
+  
+  // Admin who created/last updated
+  createdById   String
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  @@index([status])
+  @@index([isPublic])
+  @@index([sortOrder])
 }

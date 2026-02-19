@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { Feedback } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
-// GET - Public roadmap (planned and in_progress items)
+// GET - Public roadmap (from admin-created roadmap items)
 export async function GET() {
   try {
-    const feedback = await prisma.feedback.findMany({
+    const roadmapItems = await prisma.roadmapItem.findMany({
       where: {
         isPublic: true,
         status: {
@@ -16,25 +15,23 @@ export async function GET() {
       },
       select: {
         id: true,
-        type: true,
         title: true,
         description: true,
         status: true,
-        votes: true,
+        sortOrder: true,
         createdAt: true,
       },
       orderBy: [
-        { status: 'asc' },
-        { votes: 'desc' },
+        { sortOrder: 'asc' },
         { createdAt: 'desc' },
       ],
     });
 
     // Group by status
     const roadmap = {
-      in_progress: feedback.filter(f => f.status === 'in_progress'),
-      planned: feedback.filter(f => f.status === 'planned'),
-      completed: feedback.filter(f => f.status === 'completed').slice(0, 10), // Last 10 completed
+      in_progress: roadmapItems.filter(item => item.status === 'in_progress'),
+      planned: roadmapItems.filter(item => item.status === 'planned'),
+      completed: roadmapItems.filter(item => item.status === 'completed').slice(0, 10), // Last 10 completed
     };
 
     return NextResponse.json(roadmap);

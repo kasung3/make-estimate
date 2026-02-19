@@ -24,11 +24,10 @@ import Link from 'next/link';
 
 interface RoadmapItem {
   id: string;
-  type: string;
   title: string;
   description: string;
   status: string;
-  votes: number;
+  sortOrder?: number;
   createdAt: string;
 }
 
@@ -109,11 +108,7 @@ export function RoadmapPopup({ open, onOpenChange }: RoadmapPopupProps) {
                     <Card key={item.id} className="border-l-4 border-l-amber-500">
                       <CardContent className="p-3">
                         <div className="flex items-start gap-2">
-                          {item.type === 'bug_report' ? (
-                            <Bug className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <Lightbulb className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                          )}
+                          <Rocket className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm">{item.title}</h4>
                             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
@@ -141,11 +136,7 @@ export function RoadmapPopup({ open, onOpenChange }: RoadmapPopupProps) {
                     <Card key={item.id} className="border-l-4 border-l-purple-500">
                       <CardContent className="p-3">
                         <div className="flex items-start gap-2">
-                          {item.type === 'bug_report' ? (
-                            <Bug className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <Lightbulb className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                          )}
+                          <Lightbulb className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm">{item.title}</h4>
                             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>

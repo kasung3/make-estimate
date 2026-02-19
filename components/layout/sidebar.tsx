@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +20,8 @@ import {
   ClipboardList,
   Layers,
   MessageSquarePlus,
+  Rocket,
+  CreditCard,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -35,14 +37,20 @@ const userNavigation = [
   { name: 'Feedback', href: '/app/feedback', icon: MessageSquarePlus },
 ];
 
-// Admin-only navigation (platform management)
-// Single entry - all detailed navigation is via horizontal tabs on the page
+// Admin-only navigation (platform management) - separate pages
 const adminNavigation = [
-  { name: 'Admin Panel', href: '/app/glorand', icon: Shield },
+  { name: 'Overview', href: '/app/glorand', icon: BarChart3, tab: null },
+  { name: 'Users', href: '/app/glorand?tab=users', icon: Users, tab: 'users' },
+  { name: 'Companies', href: '/app/glorand?tab=companies', icon: Building2, tab: 'companies' },
+  { name: 'Coupons', href: '/app/glorand?tab=coupons', icon: Ticket, tab: 'coupons' },
+  { name: 'Plans', href: '/app/glorand?tab=plans', icon: CreditCard, tab: 'plans' },
+  { name: 'Feedback', href: '/app/glorand?tab=feedback', icon: MessageSquarePlus, tab: 'feedback' },
+  { name: 'Roadmap', href: '/app/glorand/roadmap', icon: Rocket, tab: null },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession() || {};
   const [collapsed, setCollapsed] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
@@ -58,6 +66,9 @@ export function Sidebar() {
   // Determine which navigation to show
   const isOnAdminPage = pathname?.startsWith('/app/glorand');
   const navigation = isPlatformAdmin && isOnAdminPage ? adminNavigation : userNavigation;
+  
+  // Get the current admin tab from query params
+  const currentTab = searchParams?.get('tab');
 
   return (
     <div
@@ -109,9 +120,26 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
-          // Simple active state: check if current path matches or starts with href
-          const isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/') ||
-            (item.href === '/app/glorand' && pathname === '/app/glorand');
+          // Determine active state based on path and query params
+          let isActive = false;
+          const itemWithTab = item as typeof item & { tab?: string | null };
+          
+          if (isOnAdminPage && isPlatformAdmin) {
+            // For admin navigation, check both direct paths and tab params
+            if (itemWithTab.tab === null && item.href === '/app/glorand') {
+              // Overview is active when on /app/glorand with no tab or tab=dashboard
+              isActive = pathname === '/app/glorand' && (!currentTab || currentTab === 'dashboard');
+            } else if (itemWithTab.tab === null && item.href.includes('/glorand/')) {
+              // Check direct subpages (like /glorand/roadmap)
+              isActive = pathname?.startsWith(item.href.split('?')[0]) || false;
+            } else if (itemWithTab.tab) {
+              // For tab-based navigation
+              isActive = currentTab === itemWithTab.tab;
+            }
+          } else {
+            // Regular user navigation
+            isActive = pathname === item.href || (pathname?.startsWith?.(item.href + '/') ?? false);
+          }
           
           const isAdminStyle = isPlatformAdmin && isOnAdminPage;
           

@@ -36,10 +36,14 @@ import {
   CreditCard,
   AlertTriangle,
   Layers,
+  Rocket,
+  Bug,
+  Lightbulb,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BoqWithRelations, CustomerType, CompanySettings, BillingStatus } from '@/lib/types';
 import { metaTrackCustom } from '@/lib/meta-pixel';
+import { RoadmapPopup } from '@/components/roadmap-popup';
 
 interface DashboardClientProps {
   boqs: BoqWithRelations[];
@@ -66,6 +70,7 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
   const [loading, setLoading] = useState(false);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [billingLoading, setBillingLoading] = useState(true);
+  const [showRoadmap, setShowRoadmap] = useState(false);
 
   const currencySymbol = company?.currencySymbol ?? 'Rs.';
   const currencyPosition = company?.currencyPosition ?? 'left';
@@ -458,6 +463,40 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
           </Card>
         )}
 
+        {/* Quick Actions Bar */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowRoadmap(true)}
+            className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+          >
+            <Rocket className="h-4 w-4" />
+            <span className="hidden sm:inline">Upcoming Features</span>
+            <span className="sm:hidden">Roadmap</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => router.push('/app/feedback')}
+            className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+          >
+            <Lightbulb className="h-4 w-4" />
+            <span className="hidden sm:inline">Request Feature</span>
+            <span className="sm:hidden">Suggest</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => router.push('/app/feedback?type=bug')}
+            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+          >
+            <Bug className="h-4 w-4" />
+            <span className="hidden sm:inline">Report Bug</span>
+            <span className="sm:hidden">Bug</span>
+          </Button>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-0 shadow-md overflow-hidden">
@@ -742,6 +781,9 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Roadmap Popup */}
+        <RoadmapPopup open={showRoadmap} onOpenChange={setShowRoadmap} />
       </div>
     </AppLayout>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,11 +52,10 @@ interface FeedbackItem {
 
 interface RoadmapItem {
   id: string;
-  type: string;
   title: string;
   description: string;
   status: string;
-  votes: number;
+  sortOrder?: number;
   createdAt: string;
 }
 
@@ -66,6 +66,7 @@ interface Roadmap {
 }
 
 export function FeedbackClient() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('submit');
   const [myFeedback, setMyFeedback] = useState<FeedbackItem[]>([]);
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
@@ -78,6 +79,21 @@ export function FeedbackClient() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Handle type query param to auto-open dialog
+  useEffect(() => {
+    const type = searchParams?.get('type');
+    if (type === 'bug') {
+      setFeedbackType('bug_report');
+      setShowNewDialog(true);
+      // Clear the URL param
+      window.history.replaceState({}, '', '/app/feedback');
+    } else if (type === 'feature') {
+      setFeedbackType('feature_request');
+      setShowNewDialog(true);
+      window.history.replaceState({}, '', '/app/feedback');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (activeTab === 'my-feedback') {
@@ -259,9 +275,7 @@ export function FeedbackClient() {
                         <Card key={item.id} className="border-l-4 border-l-amber-500">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-2">
-                              <Badge variant={item.type === 'bug_report' ? 'destructive' : 'default'} className="text-xs">
-                                {item.type === 'bug_report' ? 'Bug' : 'Feature'}
-                              </Badge>
+                              <Rocket className="h-5 w-5 text-amber-500 flex-shrink-0" />
                               <div className="flex-1">
                                 <h4 className="font-medium">{item.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
@@ -287,9 +301,7 @@ export function FeedbackClient() {
                         <Card key={item.id} className="border-l-4 border-l-purple-500">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-2">
-                              <Badge variant={item.type === 'bug_report' ? 'destructive' : 'default'} className="text-xs">
-                                {item.type === 'bug_report' ? 'Bug' : 'Feature'}
-                              </Badge>
+                              <Lightbulb className="h-5 w-5 text-purple-500 flex-shrink-0" />
                               <div className="flex-1">
                                 <h4 className="font-medium">{item.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
@@ -315,9 +327,7 @@ export function FeedbackClient() {
                         <Card key={item.id} className="border-l-4 border-l-green-500 opacity-75">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-2">
-                              <Badge variant={item.type === 'bug_report' ? 'destructive' : 'default'} className="text-xs">
-                                {item.type === 'bug_report' ? 'Bug' : 'Feature'}
-                              </Badge>
+                              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                               <div className="flex-1">
                                 <h4 className="font-medium">{item.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>

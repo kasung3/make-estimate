@@ -152,6 +152,7 @@ function FormattedNumberInput({
   step = "0.01",
   ...props
 }: FormattedNumberInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [displayValue, setDisplayValue] = useState(formatNumberWithCommas(value));
   const [isFocused, setIsFocused] = useState(false);
 
@@ -178,6 +179,7 @@ function FormattedNumberInput({
 
   return (
     <Input
+      ref={inputRef}
       type="text"
       inputMode="decimal"
       value={isFocused ? displayValue.replace(/,/g, '') : displayValue}
@@ -186,9 +188,11 @@ function FormattedNumberInput({
         setDisplayValue(rawValue);
         onChange(parseFormattedNumber(rawValue));
       }}
-      onFocus={() => {
+      onFocus={(e) => {
         setIsFocused(true);
         setDisplayValue(value.toString());
+        // Select all text when focused (for arrow key navigation)
+        setTimeout(() => e.target.select(), 0);
       }}
       onBlur={() => {
         setIsFocused(false);
@@ -314,6 +318,7 @@ interface SortableItemRowProps {
   saveInlineEdit: (itemId: string) => void;
   cancelInlineEdit: () => void;
   sanitizeHtml: (html: string) => string;
+  htmlToPlainText: (html: string) => string;
   formatNumber: (num: number, decimals?: number) => string;
   formatCurrency: (amount: number) => string;
 }
@@ -338,6 +343,7 @@ function SortableItemRow({
   saveInlineEdit,
   cancelInlineEdit,
   sanitizeHtml,
+  htmlToPlainText,
   formatNumber,
   formatCurrency,
 }: SortableItemRowProps) {
@@ -534,15 +540,17 @@ function SortableItemRow({
       <div className="py-2 px-2 min-w-0" role="cell">
         <div className={`flex ${wrapText ? 'items-start' : 'items-center'} space-x-1`}>
           {wrapText ? (
-            <AutoResizeTextarea
-              value={getItemValue(item.id, 'description', item?.description) ?? ''}
-              onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
-              columnWidth={columnWidths.description}
-              placeholder="Description"
+            <div 
+              className="text-sm w-full min-h-[32px] p-1.5 border rounded-md bg-white prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline cursor-pointer hover:bg-gray-50"
+              onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
+              title="Click to edit with formatting"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(getItemValue(item.id, 'description', item?.description) ?? '') || '<span class="text-gray-400">Description</span>',
+              }}
             />
           ) : (
             <Input
-              value={getItemValue(item.id, 'description', item?.description) ?? ''}
+              value={htmlToPlainText(getItemValue(item.id, 'description', item?.description) ?? '')}
               onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
               onKeyDown={(e) => handleCellKeyDown(e, item.id, 0)}
               data-cell
@@ -676,6 +684,7 @@ interface SortableCategoryProps {
   saveInlineEdit: (itemId: string) => void;
   cancelInlineEdit: () => void;
   sanitizeHtml: (html: string) => string;
+  htmlToPlainText: (html: string) => string;
   formatNumber: (num: number, decimals?: number) => string;
   // Item limit props
   itemLimit: number | null;
@@ -715,6 +724,7 @@ function SortableCategory({
   saveInlineEdit,
   cancelInlineEdit,
   sanitizeHtml,
+  htmlToPlainText,
   formatNumber,
   itemLimit,
   currentItemCount,
@@ -916,6 +926,7 @@ function SortableCategory({
                           saveInlineEdit={saveInlineEdit}
                           cancelInlineEdit={cancelInlineEdit}
                           sanitizeHtml={sanitizeHtml}
+                          htmlToPlainText={htmlToPlainText}
                           formatNumber={formatNumber}
                           formatCurrency={formatCurrency}
                         />
@@ -2543,6 +2554,7 @@ export function BoqEditorClient({
                       saveInlineEdit={saveInlineEdit}
                       cancelInlineEdit={cancelInlineEdit}
                       sanitizeHtml={sanitizeHtml}
+                      htmlToPlainText={htmlToPlainText}
                       formatNumber={formatNumber}
                       itemLimit={itemLimit}
                       currentItemCount={currentItemCount}

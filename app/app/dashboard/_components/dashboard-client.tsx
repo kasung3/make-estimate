@@ -125,11 +125,26 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
     fetchBillingStatus();
     refetchBoqs(); // Refetch on mount to get latest data
     
+    // Check if company settings were updated since last visit
+    const lastSettingsUpdate = localStorage.getItem('companySettingsUpdated');
+    const lastSeenUpdate = sessionStorage.getItem('dashboard_lastSeenSettingsUpdate');
+    if (lastSettingsUpdate && lastSettingsUpdate !== lastSeenUpdate) {
+      sessionStorage.setItem('dashboard_lastSeenSettingsUpdate', lastSettingsUpdate);
+      router.refresh(); // Refresh to get updated company settings
+    }
+    
     // Refresh when page becomes visible (user returns to dashboard)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchBillingStatus();
         refetchBoqs();
+        // Also check for settings updates
+        const settingsUpdate = localStorage.getItem('companySettingsUpdated');
+        const seenUpdate = sessionStorage.getItem('dashboard_lastSeenSettingsUpdate');
+        if (settingsUpdate && settingsUpdate !== seenUpdate) {
+          sessionStorage.setItem('dashboard_lastSeenSettingsUpdate', settingsUpdate);
+          router.refresh();
+        }
       }
     };
     
@@ -139,9 +154,10 @@ export function DashboardClient({ boqs: initialBoqs, customers: initialCustomers
       refetchBoqs();
     };
     
-    // Listen for company settings changes (from Settings page)
+    // Listen for company settings changes (from Settings page in other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'companySettingsUpdated') {
+        sessionStorage.setItem('dashboard_lastSeenSettingsUpdate', e.newValue || '');
         router.refresh(); // Refresh to get updated company settings
       }
     };

@@ -75,6 +75,7 @@ model User {
   updatedAt           DateTime @updatedAt
   memberships         CompanyMembership[]
   adminGrants         CompanyAccessGrant[] @relation("AdminGrants") // Grants created by this admin
+  feedbacks           Feedback[]
   
   @@index([email])
   @@index([phone])
@@ -100,6 +101,7 @@ model Company {
   pdfThemes         PdfTheme[]
   billing           CompanyBilling?
   boqCreationEvents BoqCreationEvent[]
+  feedbacks         Feedback[]
 
   @@index([deletedAt])
 }
@@ -432,4 +434,54 @@ model PdfExportJob {
   @@index([companyId, createdAt(sort: Desc)])
   @@index([boqId])
   @@index([status])
+}
+
+// ============== USER FEEDBACK ==============
+
+enum FeedbackType {
+  feature_request
+  bug_report
+}
+
+enum FeedbackStatus {
+  new
+  under_review
+  planned
+  in_progress
+  completed
+  wont_do
+}
+
+enum FeedbackPriority {
+  low
+  medium
+  high
+  critical
+}
+
+model Feedback {
+  id            String           @id @default(cuid())
+  type          FeedbackType
+  title         String
+  description   String           @db.Text
+  status        FeedbackStatus   @default(new)
+  priority      FeedbackPriority @default(medium)
+  adminNotes    String?          @db.Text
+  isPublic      Boolean          @default(true) // Show in public roadmap
+  votes         Int              @default(0)
+  
+  // Relations
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  @@index([type])
+  @@index([status])
+  @@index([userId])
+  @@index([companyId])
+  @@index([createdAt(sort: Desc)])
 }

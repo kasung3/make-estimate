@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const planFilter = searchParams.get('plan') || '';
     const statusFilter = searchParams.get('status') || '';
     const blockedFilter = searchParams.get('blocked') || '';
-    const hasCouponFilter = searchParams.get('hasCoupon') || '';
+    const couponFilter = searchParams.get('coupon') || ''; // with_coupon, trial_days, free_forever, no_coupon
     const sortBy = searchParams.get('sortBy') || 'newest';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
@@ -114,10 +114,16 @@ export async function GET(request: Request) {
       prisma.user.count({ where }),
     ]);
 
+    // Get all coupon codes and their types for filtering
+    const allCoupons = couponFilter ? await prisma.platformCoupon.findMany({
+      select: { code: true, type: true }
+    }) : [];
+    const couponTypeMap = new Map(allCoupons.map((c: { code: string; type: string }) => [c.code, c.type]));
+
     // Post-process for plan/status/coupon filters (need to filter after include)
     let filteredUsers = users;
 
-    if (planFilter || statusFilter || hasCouponFilter) {
+    if (planFilter || statusFilter || couponFilter) {
       filteredUsers = users.filter(user => {
         const company = user.memberships[0]?.company;
         const billing = company?.billing;
@@ -134,8 +140,16 @@ export async function GET(request: Request) {
           if (statusFilter !== 'none' && billing?.status !== statusFilter) return false;
         }
 
-        if (hasCouponFilter === 'yes' && !billing?.currentCouponCode) return false;
-        if (hasCouponFilter === 'no' && billing?.currentCouponCode) return false;
+        // Coupon filter
+        if (couponFilter) {
+          const couponCode = billing?.currentCouponCode;
+          const couponType = couponCode ? couponTypeMap.get(couponCode) : null;
+          
+          if (couponFilter === 'with_coupon' && !couponCode) return false;
+          if (couponFilter === 'no_coupon' && couponCode) return false;
+          if (couponFilter === 'trial_days' && couponType !== 'trial_days') return false;
+          if (couponFilter === 'free_forever' && couponType !== 'free_forever') return false;
+        }
 
         return true;
       });

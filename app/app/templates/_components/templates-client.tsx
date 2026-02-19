@@ -124,16 +124,14 @@ export function TemplatesClient({
     }
   }, []);
 
-  // Sync activeTab with URL tab param (for back navigation)
-  useEffect(() => {
-    if (tabParam === 'presets' && activeTab !== 'presets') {
-      setActiveTab('presets');
-    } else if (tabParam === 'cover' && activeTab !== 'cover') {
-      setActiveTab('cover');
-    } else if (tabParam === 'boq' && activeTab !== 'boq') {
-      setActiveTab('boq');
-    }
-  }, [tabParam, activeTab]);
+  // Handle tab change - update both state and URL
+  const handleTabChange = useCallback((newTab: string) => {
+    setActiveTab(newTab);
+    // Update URL without triggering a navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', newTab);
+    window.history.replaceState({}, '', url.toString());
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'presets') {
@@ -146,11 +144,28 @@ export function TemplatesClient({
     }
   }, [activeTab, fetchPresets]);
 
-  // Refetch presets when page becomes visible or focused (user navigates back from editing)
+  // Check for settings updates and refetch on visibility/focus
   useEffect(() => {
+    // Check if company settings were updated since last visit
+    const lastSettingsUpdate = localStorage.getItem('companySettingsUpdated');
+    const lastSeenUpdate = sessionStorage.getItem('templates_lastSeenSettingsUpdate');
+    if (lastSettingsUpdate && lastSettingsUpdate !== lastSeenUpdate) {
+      sessionStorage.setItem('templates_lastSeenSettingsUpdate', lastSettingsUpdate);
+      router.refresh();
+    }
+    
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && activeTab === 'presets') {
-        fetchPresets();
+      if (document.visibilityState === 'visible') {
+        if (activeTab === 'presets') {
+          fetchPresets();
+        }
+        // Also check for settings updates
+        const settingsUpdate = localStorage.getItem('companySettingsUpdated');
+        const seenUpdate = sessionStorage.getItem('templates_lastSeenSettingsUpdate');
+        if (settingsUpdate && settingsUpdate !== seenUpdate) {
+          sessionStorage.setItem('templates_lastSeenSettingsUpdate', settingsUpdate);
+          router.refresh();
+        }
       }
     };
     
@@ -160,10 +175,11 @@ export function TemplatesClient({
       }
     };
     
-    // Listen for company settings changes
+    // Listen for company settings changes (from Settings page in other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'companySettingsUpdated') {
-        router.refresh(); // Refresh to get updated company settings
+        sessionStorage.setItem('templates_lastSeenSettingsUpdate', e.newValue || '');
+        router.refresh();
       }
     };
     
@@ -489,7 +505,7 @@ export function TemplatesClient({
           <p className="text-gray-500 mt-1">Manage your BOQ themes and cover page templates</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="boq" className="flex items-center gap-2">
               <Palette className="w-4 h-4" />

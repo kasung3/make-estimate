@@ -1077,6 +1077,7 @@ export function BoqEditorClient({
           vatEnabled: currentBoq.vatEnabled,
           vatPercent: currentBoq.vatPercent,
           status: currentBoq.status,
+          isPreset: currentBoq.isPreset, // Include isPreset so API can sync presetName
         }),
       });
       setLastSaved(new Date());
@@ -1172,11 +1173,20 @@ export function BoqEditorClient({
     fetchBillingStatus();
   }, []);
 
-  // Listen for company settings changes (currency, etc.)
+  // Check for company settings changes (currency, etc.)
   useEffect(() => {
+    // Check if company settings were updated since last visit
+    const lastSettingsUpdate = localStorage.getItem('companySettingsUpdated');
+    const lastSeenUpdate = sessionStorage.getItem('boq_editor_lastSeenSettingsUpdate');
+    if (lastSettingsUpdate && lastSettingsUpdate !== lastSeenUpdate) {
+      sessionStorage.setItem('boq_editor_lastSeenSettingsUpdate', lastSettingsUpdate);
+      router.refresh();
+    }
+    
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'companySettingsUpdated') {
-        router.refresh(); // Refresh to get updated company settings
+        sessionStorage.setItem('boq_editor_lastSeenSettingsUpdate', e.newValue || '');
+        router.refresh();
       }
     };
     

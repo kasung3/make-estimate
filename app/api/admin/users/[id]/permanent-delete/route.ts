@@ -33,12 +33,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete platform admin accounts' }, { status: 400 });
     }
 
-    // Delete memberships first, then the user
+    // Delete user - memberships cascade automatically via onDelete: Cascade
+    // AdminGrants will be set to null via onDelete: SetNull
     await prisma.$transaction(async (tx: any) => {
-      // Delete all memberships
+      // Manually delete memberships (in case cascade doesn't work in transaction)
       await tx.companyMembership.deleteMany({ where: { userId } });
-      // Delete admin grants
-      await tx.companyAccessGrant.deleteMany({ where: { grantedById: userId } });
+      // Set admin grants createdByAdminUserId to null (field name correction)
+      await tx.companyAccessGrant.updateMany({ 
+        where: { createdByAdminUserId: userId },
+        data: { createdByAdminUserId: null }
+      });
       // Delete the user
       await tx.user.delete({ where: { id: userId } });
     });

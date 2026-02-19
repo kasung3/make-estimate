@@ -148,9 +148,24 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
     // Refetch on initial mount to get fresh data
     refetchBoqs();
     
+    // Check if company settings were updated since last visit
+    const lastSettingsUpdate = localStorage.getItem('companySettingsUpdated');
+    const lastSeenUpdate = sessionStorage.getItem('boqs_lastSeenSettingsUpdate');
+    if (lastSettingsUpdate && lastSettingsUpdate !== lastSeenUpdate) {
+      sessionStorage.setItem('boqs_lastSeenSettingsUpdate', lastSettingsUpdate);
+      router.refresh();
+    }
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refetchBoqs();
+        // Also check for settings updates
+        const settingsUpdate = localStorage.getItem('companySettingsUpdated');
+        const seenUpdate = sessionStorage.getItem('boqs_lastSeenSettingsUpdate');
+        if (settingsUpdate && settingsUpdate !== seenUpdate) {
+          sessionStorage.setItem('boqs_lastSeenSettingsUpdate', settingsUpdate);
+          router.refresh();
+        }
       }
     };
     
@@ -158,10 +173,11 @@ export function BoqsClient({ initialBoqs, billingStatus, company }: BoqsClientPr
       refetchBoqs();
     };
     
-    // Listen for company settings changes (from Settings page)
+    // Listen for company settings changes (from Settings page in other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'companySettingsUpdated') {
-        router.refresh(); // Refresh to get updated company settings
+        sessionStorage.setItem('boqs_lastSeenSettingsUpdate', e.newValue || '');
+        router.refresh();
       }
     };
     

@@ -19,6 +19,7 @@ import {
   UserCog,
   ClipboardList,
   Layers,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -31,12 +32,13 @@ const userNavigation = [
   { name: 'Customers', href: '/app/customers', icon: Users },
   { name: 'Team', href: '/app/team', icon: UserCog },
   { name: 'Settings', href: '/app/settings', icon: Settings },
+  { name: 'Feedback', href: '/app/feedback', icon: MessageSquarePlus },
 ];
 
 // Admin-only navigation (platform management)
+// Single entry - all detailed navigation is via horizontal tabs on the page
 const adminNavigation = [
-  { name: 'Dashboard', href: '/app/glorand?tab=dashboard', icon: BarChart3 },
-  { name: 'Overview', href: '/app/glorand', icon: LayoutDashboard },
+  { name: 'Admin Panel', href: '/app/glorand', icon: Shield },
 ];
 
 export function Sidebar() {
@@ -107,19 +109,9 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
-          // For admin tabs with query params, check if we're on the right tab
-          const isAdminTabLink = item.href.includes('?tab=');
-          const itemTab = isAdminTabLink ? item.href.split('?tab=')[1] : null;
-          const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
-          
-          let isActive = false;
-          if (isAdminTabLink) {
-            isActive = pathname === '/app/glorand' && currentTab === itemTab;
-          } else if (item.href === '/app/glorand') {
-            isActive = pathname === '/app/glorand' && (!currentTab || currentTab === 'users' || currentTab === 'companies' || currentTab === 'coupons' || currentTab === 'plans');
-          } else {
-            isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/');
-          }
+          // Simple active state: check if current path matches or starts with href
+          const isActive = pathname === item.href || pathname?.startsWith?.(item.href + '/') ||
+            (item.href === '/app/glorand' && pathname === '/app/glorand');
           
           const isAdminStyle = isPlatformAdmin && isOnAdminPage;
           

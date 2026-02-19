@@ -242,6 +242,29 @@ interface BillingPlan {
   priceHistory?: { id: string; stripePriceId: string; amountCents: number; interval: string; isCurrent: boolean; createdAt: string }[];
 }
 
+interface FeedbackItem {
+  id: string;
+  type: 'feature_request' | 'bug_report';
+  title: string;
+  description: string;
+  status: 'new' | 'under_review' | 'planned' | 'in_progress' | 'completed' | 'wont_do';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  adminNotes: string | null;
+  isPublic: boolean;
+  votes: number;
+  userId: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; email: string; name: string | null };
+  company: { id: string; name: string };
+}
+
+interface FeedbackStats {
+  byStatus: Record<string, number>;
+  byType: Record<string, number>;
+}
+
 export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab');
@@ -283,6 +306,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   const [planFilter, setPlanFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [blockedFilter, setBlockedFilter] = useState('');
+  const [couponFilter, setCouponFilter] = useState(''); // Filter by coupon usage
   const [sortBy, setSortBy] = useState('newest');
 
   // User detail drawer
@@ -339,6 +363,18 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
   });
   const [creating, setCreating] = useState(false);
 
+  // Feedback state
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackTypeFilter, setFeedbackTypeFilter] = useState('all');
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState('all');
+  const [feedbackPriorityFilter, setFeedbackPriorityFilter] = useState('all');
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
+  const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false);
+  const [feedbackAdminNotes, setFeedbackAdminNotes] = useState('');
+  const [savingFeedback, setSavingFeedback] = useState(false);
+
   // Sync tab from URL param
   useEffect(() => {
     if (tabFromUrl && tabFromUrl !== activeTab) {
@@ -374,7 +410,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     if (activeTab === 'users') {
       fetchUsers();
     }
-  }, [activeTab, debouncedQuery, planFilter, statusFilter, blockedFilter, sortBy, pagination.page]);
+  }, [activeTab, debouncedQuery, planFilter, statusFilter, blockedFilter, couponFilter, sortBy, pagination.page]);
 
   // Fetch other tabs
   useEffect(() => {
@@ -391,6 +427,13 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       fetchCompanies();
     }
   }, [activeTab, debouncedCompanyQuery, companyPagination.page]);
+
+  // Fetch feedback when tab/filters change
+  useEffect(() => {
+    if (activeTab === 'feedback') {
+      fetchFeedback();
+    }
+  }, [activeTab, feedbackTypeFilter, feedbackStatusFilter, feedbackPriorityFilter]);
 
   const fetchDashboard = async () => {
     setDashboardLoading(true);
@@ -465,6 +508,7 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
       if (planFilter) params.set('plan', planFilter);
       if (statusFilter) params.set('status', statusFilter);
       if (blockedFilter) params.set('blocked', blockedFilter);
+      if (couponFilter) params.set('coupon', couponFilter);
 
       const res = await fetch(`/api/admin/users?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
@@ -774,6 +818,73 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
     setUserDetail(null);
   };
 
+  // Feedback functions
+  const fetchFeedback = async () => {
+    setFeedbackLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (feedbackTypeFilter !== 'all') params.set('type', feedbackTypeFilter);
+      if (feedbackStatusFilter !== 'all') params.set('status', feedbackStatusFilter);
+      if (feedbackPriorityFilter !== 'all') params.set('priority', feedbackPriorityFilter);
+      
+      const res = await fetch(`/api/admin/feedback?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setFeedbackList(data.feedback);
+      setFeedbackStats(data.stats);
+    } catch (err) {
+      toast.error('Failed to load feedback');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
+  const openFeedbackDrawer = (feedback: FeedbackItem) => {
+    setSelectedFeedback(feedback);
+    setFeedbackAdminNotes(feedback.adminNotes || '');
+    setShowFeedbackDrawer(true);
+  };
+
+  const closeFeedbackDrawer = () => {
+    setShowFeedbackDrawer(false);
+    setSelectedFeedback(null);
+    setFeedbackAdminNotes('');
+  };
+
+  const updateFeedback = async (updates: Partial<FeedbackItem>) => {
+    if (!selectedFeedback) return;
+    setSavingFeedback(true);
+    try {
+      const res = await fetch(`/api/admin/feedback/${selectedFeedback.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const updated = await res.json();
+      setSelectedFeedback(updated);
+      setFeedbackList(prev => prev.map(f => f.id === updated.id ? updated : f));
+      toast.success('Feedback updated');
+    } catch (err) {
+      toast.error('Failed to update feedback');
+    } finally {
+      setSavingFeedback(false);
+    }
+  };
+
+  const deleteFeedback = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      setFeedbackList(prev => prev.filter(f => f.id !== id));
+      closeFeedbackDrawer();
+      toast.success('Feedback deleted');
+    } catch (err) {
+      toast.error('Failed to delete feedback');
+    }
+  };
+
   // Block/Unblock handlers
   const openBlockDialog = (type: 'user' | 'company', id: string, name: string, isBlocked: boolean) => {
     setBlockTarget({ type, id, name, isBlocked });
@@ -1060,6 +1171,9 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="h-4 w-4" /> Plans
             </TabsTrigger>
+            <TabsTrigger value="feedback" className="gap-2">
+              <FileText className="h-4 w-4" /> Feedback
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -1253,6 +1367,18 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
                         <SelectItem value="all">All</SelectItem>
                         <SelectItem value="blocked">Blocked</SelectItem>
                         <SelectItem value="unblocked">Unblocked</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={couponFilter} onValueChange={(v) => { setCouponFilter(v); setPagination(p => ({ ...p, page: 1 })); }}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Coupon" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="with_coupon">With Coupon</SelectItem>
+                        <SelectItem value="trial_days">Trial Coupons</SelectItem>
+                        <SelectItem value="free_forever">Forever Free</SelectItem>
+                        <SelectItem value="no_coupon">No Coupon</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -1680,7 +1806,260 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Feedback Tab */}
+          <TabsContent value="feedback">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>User Feedback</CardTitle>
+                    <CardDescription>Feature requests and bug reports from users</CardDescription>
+                  </div>
+                  {feedbackStats && (
+                    <div className="flex gap-2 flex-wrap text-xs">
+                      <Badge variant="outline">New: {feedbackStats.byStatus?.new || 0}</Badge>
+                      <Badge variant="outline" className="bg-blue-50">Review: {feedbackStats.byStatus?.under_review || 0}</Badge>
+                      <Badge variant="outline" className="bg-purple-50">Planned: {feedbackStats.byStatus?.planned || 0}</Badge>
+                      <Badge variant="outline" className="bg-amber-50">In Progress: {feedbackStats.byStatus?.in_progress || 0}</Badge>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Filters */}
+                <div className="flex flex-wrap gap-3 mb-6">
+                  <Select value={feedbackTypeFilter} onValueChange={setFeedbackTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="feature_request">Feature Requests</SelectItem>
+                      <SelectItem value="bug_report">Bug Reports</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={feedbackStatusFilter} onValueChange={setFeedbackStatusFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="wont_do">Won&apos;t Do</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={feedbackPriorityFilter} onValueChange={setFeedbackPriorityFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priority</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {feedbackLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : feedbackList.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No feedback found
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {feedbackList.map((fb) => (
+                      <div
+                        key={fb.id}
+                        className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => openFeedbackDrawer(fb)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant={fb.type === 'bug_report' ? 'destructive' : 'default'} className="text-xs">
+                              {fb.type === 'bug_report' ? 'Bug' : 'Feature'}
+                            </Badge>
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                fb.status === 'new' ? 'bg-gray-50' :
+                                fb.status === 'under_review' ? 'bg-blue-50' :
+                                fb.status === 'planned' ? 'bg-purple-50' :
+                                fb.status === 'in_progress' ? 'bg-amber-50' :
+                                fb.status === 'completed' ? 'bg-green-50' :
+                                'bg-red-50'
+                              }
+                            >
+                              {fb.status.replace('_', ' ')}
+                            </Badge>
+                            <Badge 
+                              variant="outline"
+                              className={
+                                fb.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                                fb.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                fb.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100'
+                              }
+                            >
+                              {fb.priority}
+                            </Badge>
+                          </div>
+                          <h4 className="font-medium truncate">{fb.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{fb.description}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <span>{fb.user.email}</span>
+                            <span>{fb.company.name}</span>
+                            <span>{format(new Date(fb.createdAt), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                        <Eye className="h-4 w-4 text-muted-foreground ml-4 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Feedback Detail Drawer */}
+        <Sheet open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer}>
+          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Feedback Details</SheetTitle>
+              <SheetDescription>
+                View and manage this feedback item
+              </SheetDescription>
+            </SheetHeader>
+            {selectedFeedback && (
+              <div className="mt-6 space-y-6">
+                {/* Type & Status Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant={selectedFeedback.type === 'bug_report' ? 'destructive' : 'default'}>
+                    {selectedFeedback.type === 'bug_report' ? 'Bug Report' : 'Feature Request'}
+                  </Badge>
+                  {!selectedFeedback.isPublic && (
+                    <Badge variant="secondary">Hidden from roadmap</Badge>
+                  )}
+                </div>
+
+                {/* Title & Description */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">{selectedFeedback.title}</h3>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{selectedFeedback.description}</p>
+                </div>
+
+                {/* User Info */}
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm"><span className="font-medium">Submitted by:</span> {selectedFeedback.user.name || selectedFeedback.user.email}</p>
+                  <p className="text-sm"><span className="font-medium">Company:</span> {selectedFeedback.company.name}</p>
+                  <p className="text-sm"><span className="font-medium">Date:</span> {format(new Date(selectedFeedback.createdAt), 'PPpp')}</p>
+                </div>
+
+                {/* Status Control */}
+                <div>
+                  <Label className="mb-2 block">Status</Label>
+                  <Select 
+                    value={selectedFeedback.status} 
+                    onValueChange={(v) => updateFeedback({ status: v as FeedbackItem['status'] })}
+                    disabled={savingFeedback}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="wont_do">Won&apos;t Do</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Priority Control */}
+                <div>
+                  <Label className="mb-2 block">Priority</Label>
+                  <Select 
+                    value={selectedFeedback.priority} 
+                    onValueChange={(v) => updateFeedback({ priority: v as FeedbackItem['priority'] })}
+                    disabled={savingFeedback}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Public Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Show in Public Roadmap</Label>
+                    <p className="text-xs text-muted-foreground">Display on the public features roadmap</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateFeedback({ isPublic: !selectedFeedback.isPublic })}
+                    disabled={savingFeedback}
+                  >
+                    {selectedFeedback.isPublic ? (
+                      <><Eye className="h-4 w-4 mr-1" /> Visible</>
+                    ) : (
+                      <><Shield className="h-4 w-4 mr-1" /> Hidden</>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Admin Notes */}
+                <div>
+                  <Label className="mb-2 block">Admin Notes (Internal)</Label>
+                  <textarea
+                    className="w-full min-h-[100px] p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    value={feedbackAdminNotes}
+                    onChange={(e) => setFeedbackAdminNotes(e.target.value)}
+                    placeholder="Internal notes about this feedback..."
+                  />
+                  <Button
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => updateFeedback({ adminNotes: feedbackAdminNotes })}
+                    disabled={savingFeedback || feedbackAdminNotes === (selectedFeedback.adminNotes || '')}
+                  >
+                    {savingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Notes'}
+                  </Button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteFeedback(selectedFeedback.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" /> Delete
+                  </Button>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
 
         {/* Edit Plan Dialog */}
         <Dialog open={showEditPlanDialog} onOpenChange={setShowEditPlanDialog}>
@@ -2721,52 +3100,40 @@ export function GlorandAdminClient({ adminEmail }: { adminEmail: string }) {
               )}
 
               <div>
-                <Label>Allowed Plans (optional)</Label>
-                <div className="flex gap-4 mt-2">
+                <Label>Grants Access To Plan</Label>
+                <div className="flex flex-col gap-2 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={newCoupon.allowedPlans.includes('starter')}
-                      onCheckedChange={(checked) => {
-                        setNewCoupon(prev => ({
-                          ...prev,
-                          allowedPlans: checked
-                            ? [...prev.allowedPlans, 'starter']
-                            : prev.allowedPlans.filter(p => p !== 'starter'),
-                        }));
-                      }}
+                    <input
+                      type="radio"
+                      name="allowedPlan"
+                      checked={newCoupon.allowedPlans.length === 0}
+                      onChange={() => setNewCoupon(prev => ({ ...prev, allowedPlans: [] }))}
+                      className="w-4 h-4 text-purple-600"
                     />
-                    <span className="text-sm">Starter</span>
+                    <span className="text-sm">No plan access (trial only)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={newCoupon.allowedPlans.includes('advance' as PlanKey)}
-                      onCheckedChange={(checked) => {
-                        setNewCoupon(prev => ({
-                          ...prev,
-                          allowedPlans: checked
-                            ? [...prev.allowedPlans, 'advance' as PlanKey]
-                            : prev.allowedPlans.filter(p => p !== ('advance' as PlanKey)),
-                        }));
-                      }}
+                    <input
+                      type="radio"
+                      name="allowedPlan"
+                      checked={newCoupon.allowedPlans[0] === 'starter'}
+                      onChange={() => setNewCoupon(prev => ({ ...prev, allowedPlans: ['starter'] }))}
+                      className="w-4 h-4 text-purple-600"
                     />
-                    <span className="text-sm">Advance</span>
+                    <span className="text-sm">Starter Plan</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={newCoupon.allowedPlans.includes('business')}
-                      onCheckedChange={(checked) => {
-                        setNewCoupon(prev => ({
-                          ...prev,
-                          allowedPlans: checked
-                            ? [...prev.allowedPlans, 'business']
-                            : prev.allowedPlans.filter(p => p !== 'business'),
-                        }));
-                      }}
+                    <input
+                      type="radio"
+                      name="allowedPlan"
+                      checked={newCoupon.allowedPlans[0] === 'business'}
+                      onChange={() => setNewCoupon(prev => ({ ...prev, allowedPlans: ['business'] }))}
+                      className="w-4 h-4 text-purple-600"
                     />
-                    <span className="text-sm">Business</span>
+                    <span className="text-sm">Business Plan</span>
                   </label>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Leave unchecked for all plans</p>
+                <p className="text-xs text-muted-foreground mt-1">Select which plan users get access to when using this coupon</p>
               </div>
 
               <div>

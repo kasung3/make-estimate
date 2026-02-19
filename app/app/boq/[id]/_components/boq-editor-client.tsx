@@ -56,6 +56,8 @@ import {
   Calendar,
   Info,
   Layers,
+  Settings,
+  WrapText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { metaTrackCustom } from '@/lib/meta-pixel';
@@ -79,6 +81,54 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+
+// =============================================================================
+// AUTO-RESIZE TEXTAREA COMPONENT
+// =============================================================================
+interface AutoResizeTextareaProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  columnWidth: number;
+  placeholder?: string;
+}
+
+function AutoResizeTextarea({ value, onChange, columnWidth, placeholder }: AutoResizeTextareaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize height based on content
+  const adjustHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.max(32, textarea.scrollHeight)}px`;
+    }
+  }, []);
+
+  // Adjust on value change
+  useEffect(() => {
+    adjustHeight();
+  }, [value, adjustHeight]);
+
+  // Adjust when column width changes
+  useEffect(() => {
+    adjustHeight();
+  }, [columnWidth, adjustHeight]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => {
+        onChange(e);
+        adjustHeight();
+      }}
+      className="text-sm w-full resize-none border rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+      placeholder={placeholder}
+      rows={1}
+      style={{ minHeight: '32px', overflow: 'hidden' }}
+    />
+  );
+}
 
 interface BoqEditorClientProps {
   boq: BoqWithRelations;
@@ -179,6 +229,7 @@ interface SortableItemRowProps {
   categoryId: string;
   categoryName: string;
   columnWidths: Record<string, number>;
+  wrapText: boolean;
   getItemValue: (itemId: string, field: keyof BoqItemType, originalValue: any) => any;
   handleUpdateItem: (itemId: string, updates: Partial<BoqItemType>, immediate?: boolean) => void;
   handleDeleteItem: (itemId: string) => void;
@@ -202,6 +253,7 @@ function SortableItemRow({
   categoryId,
   categoryName,
   columnWidths,
+  wrapText,
   getItemValue,
   handleUpdateItem,
   handleDeleteItem,
@@ -409,21 +461,30 @@ function SortableItemRow({
       <div className="py-2 px-2 text-gray-500 text-sm" role="cell">{itemNumber}</div>
       {/* Description */}
       <div className="py-2 px-2 min-w-0" role="cell">
-        <div className="flex items-center space-x-1">
-          <Input
-            value={getItemValue(item.id, 'description', item?.description) ?? ''}
-            onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
-            onKeyDown={(e) => handleCellKeyDown(e, item.id, 0)}
-            data-cell
-            data-row={item.id}
-            data-col="0"
-            className="h-8 text-sm w-full"
-            placeholder="Description"
-          />
+        <div className={`flex ${wrapText ? 'items-start' : 'items-center'} space-x-1`}>
+          {wrapText ? (
+            <AutoResizeTextarea
+              value={getItemValue(item.id, 'description', item?.description) ?? ''}
+              onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
+              columnWidth={columnWidths.description}
+              placeholder="Description"
+            />
+          ) : (
+            <Input
+              value={getItemValue(item.id, 'description', item?.description) ?? ''}
+              onChange={(e) => handleUpdateItem(item?.id, { description: e.target.value })}
+              onKeyDown={(e) => handleCellKeyDown(e, item.id, 0)}
+              data-cell
+              data-row={item.id}
+              data-col="0"
+              className="h-8 text-sm w-full"
+              placeholder="Description"
+            />
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-cyan-600 flex-shrink-0"
+            className={`${wrapText ? 'h-8 w-8 mt-1' : 'h-8 w-8'} text-gray-400 hover:text-cyan-600 flex-shrink-0`}
             onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
             title="Expand to edit"
           >
@@ -532,6 +593,7 @@ interface SortableCategoryProps {
   formatCurrency: (amount: number) => string;
   getCategorySubtotal: (cat: CategoryWithItems) => number;
   columnWidths: Record<string, number>;
+  wrapText: boolean;
   handleResizeStart: (e: React.MouseEvent, columnKey: string) => void;
   sensors: ReturnType<typeof useSensors>;
   getItemNumber: (catIndex: number, items: BoqItemType[], itemIndex: number) => string | null;
@@ -571,6 +633,7 @@ function SortableCategory({
   formatCurrency,
   getCategorySubtotal,
   columnWidths,
+  wrapText,
   handleResizeStart,
   sensors,
   getItemNumber,
@@ -776,6 +839,7 @@ function SortableCategory({
                           categoryId={category.id}
                           categoryName={category.name ?? ''}
                           columnWidths={columnWidths}
+                          wrapText={wrapText}
                           getItemValue={getItemValue}
                           handleUpdateItem={handleUpdateItem}
                           handleDeleteItem={handleDeleteItem}
@@ -898,6 +962,10 @@ export function BoqEditorClient({
   };
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [wrapText, setWrapText] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showPresetDialog, setShowPresetDialog] = useState(false);
+  const [presetNameInput, setPresetNameInput] = useState('');
   const resizeStartXRef = useRef<number>(0);
   const resizeStartWidthRef = useRef<number>(0);
 
@@ -2131,161 +2199,42 @@ export function BoqEditorClient({
                 </>
               ) : null}
             </div>
-            {/* PDF Settings Group */}
+            {/* Wrap Text Toggle */}
             <TooltipProvider>
-              <div className="flex items-center gap-2 border-l pl-3">
-                {/* Cover Template Selector */}
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-xs text-gray-500 font-medium">Cover Page</span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs max-w-48">Controls the cover page elements, layout, and styling</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Select
-                    value={boq?.coverTemplateId || 'default'}
-                    onValueChange={(value) => {
-                      if (value === 'create_new') {
-                        router.push('/app/settings?tab=pdf');
-                        return;
-                      }
-                      const newValue = value === 'default' ? null : value;
-                      updateBoq({ coverTemplateId: newValue });
-                    }}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={wrapText ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setWrapText(!wrapText)}
+                    className={wrapText ? 'bg-cyan-600 hover:bg-cyan-700' : ''}
                   >
-                    <SelectTrigger className="w-40 h-8 text-xs">
-                      <FileText className="w-3 h-3 mr-1 text-gray-400" />
-                      <SelectValue placeholder="Cover Template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default Cover Page</SelectItem>
-                      {coverTemplates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name} {template.isDefault && '★'}
-                        </SelectItem>
-                      ))}
-                      <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-cyan-600">
-                        <Plus className="w-3 h-3 mr-1 inline" />
-                        Create new template...
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* PDF Theme Selector */}
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-xs text-gray-500 font-medium">PDF Theme</span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs max-w-48">Controls colors/shading for BOQ pages (layout unchanged)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Select
-                    value={boq?.pdfThemeId || 'default'}
-                    onValueChange={(value) => {
-                      if (value === 'create_new') {
-                        router.push('/app/settings?tab=pdf');
-                        return;
-                      }
-                      const newValue = value === 'default' ? null : value;
-                      updateBoq({ pdfThemeId: newValue });
-                    }}
-                  >
-                    <SelectTrigger className="w-36 h-8 text-xs">
-                      <Palette className="w-3 h-3 mr-1 text-gray-400" />
-                      <SelectValue placeholder="Color Theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default Theme</SelectItem>
-                      {pdfThemes.map((theme) => (
-                        <SelectItem key={theme.id} value={theme.id}>
-                          {theme.name} {theme.isDefault && '★'}
-                        </SelectItem>
-                      ))}
-                      <div className="border-t my-1" />
-                      <SelectItem value="create_new" className="text-cyan-600">
-                        <Plus className="w-3 h-3 mr-1 inline" />
-                        Create new theme...
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Date Mode Selector */}
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-xs text-gray-500 font-medium">Date</span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs max-w-48">Date shown on PDF cover page</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Select
-                      value={boq?.dateMode || 'export_date'}
-                      onValueChange={(value) => {
-                        updateBoq({ dateMode: value as 'export_date' | 'preparation_date' });
-                      }}
-                    >
-                      <SelectTrigger className="w-32 h-8 text-xs">
-                        <Calendar className="w-3 h-3 mr-1 text-gray-400" />
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="export_date">Export Date</SelectItem>
-                        <SelectItem value="preparation_date">Custom Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {boq?.dateMode === 'preparation_date' && (
-                      <input
-                        type="date"
-                        value={boq?.preparationDate ? new Date(boq.preparationDate).toISOString().split('T')[0] : ''}
-                        onChange={(e) => updateBoq({ preparationDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                        className="h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
+                    <WrapText className="w-4 h-4 mr-2" />
+                    Wrap Text
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Toggle text wrapping in description fields</p>
+                </TooltipContent>
+              </Tooltip>
             </TooltipProvider>
-            {!boq?.isPreset && (
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/presets/create-from-boq', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ boqId: boq?.id, presetName: `Preset - ${boq?.projectName}`, includeQuantities: false }),
-                    });
-                    if (!res.ok) {
-                      const data = await res.json();
-                      toast.error(data.error || 'Failed to save as preset');
-                      return;
-                    }
-                    toast.success('Saved as preset! Find it in Templates → BOQ Presets');
-                  } catch { toast.error('Failed to save as preset'); }
-                }}
-              >
-                <Layers className="w-4 h-4 mr-2" />
-                Save as Preset
-              </Button>
-            )}
+            {/* BOQ Settings Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSettingsDialog(true)}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">BOQ Settings</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
               {exportingPdf ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -2458,6 +2407,7 @@ export function BoqEditorClient({
                       formatCurrency={formatCurrency}
                       getCategorySubtotal={getCategorySubtotal}
                       columnWidths={columnWidths}
+                      wrapText={wrapText}
                       handleResizeStart={handleResizeStart}
                       sensors={sensors}
                       getItemNumber={getItemNumber}
@@ -2497,6 +2447,194 @@ export function BoqEditorClient({
             </div>
           </div>
         </div>
+
+        {/* BOQ Settings Dialog */}
+        <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>BOQ Settings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              {/* Cover Page Template */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <Label className="font-medium">Cover Page Template</Label>
+                </div>
+                <p className="text-xs text-gray-500">Controls the cover page elements, layout, and styling</p>
+                <Select
+                  value={boq?.coverTemplateId || 'default'}
+                  onValueChange={(value) => {
+                    if (value === 'create_new') {
+                      router.push('/app/settings?tab=pdf');
+                      return;
+                    }
+                    const newValue = value === 'default' ? null : value;
+                    updateBoq({ coverTemplateId: newValue });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select cover template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default Cover Page</SelectItem>
+                    {coverTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name} {template.isDefault && '★'}
+                      </SelectItem>
+                    ))}
+                    <div className="border-t my-1" />
+                    <SelectItem value="create_new" className="text-cyan-600">
+                      <Plus className="w-3 h-3 mr-1 inline" />
+                      Create new template...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* PDF Theme */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-gray-500" />
+                  <Label className="font-medium">PDF Theme</Label>
+                </div>
+                <p className="text-xs text-gray-500">Controls colors/shading for BOQ pages (layout unchanged)</p>
+                <Select
+                  value={boq?.pdfThemeId || 'default'}
+                  onValueChange={(value) => {
+                    if (value === 'create_new') {
+                      router.push('/app/settings?tab=pdf');
+                      return;
+                    }
+                    const newValue = value === 'default' ? null : value;
+                    updateBoq({ pdfThemeId: newValue });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default Theme</SelectItem>
+                    {pdfThemes.map((theme) => (
+                      <SelectItem key={theme.id} value={theme.id}>
+                        {theme.name} {theme.isDefault && '★'}
+                      </SelectItem>
+                    ))}
+                    <div className="border-t my-1" />
+                    <SelectItem value="create_new" className="text-cyan-600">
+                      <Plus className="w-3 h-3 mr-1 inline" />
+                      Create new theme...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Mode */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <Label className="font-medium">Date on Cover Page</Label>
+                </div>
+                <p className="text-xs text-gray-500">Choose which date to display on the PDF cover page</p>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={boq?.dateMode || 'export_date'}
+                    onValueChange={(value) => {
+                      updateBoq({ dateMode: value as 'export_date' | 'preparation_date' });
+                    }}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="export_date">Export Date</SelectItem>
+                      <SelectItem value="preparation_date">Custom Date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {boq?.dateMode === 'preparation_date' && (
+                    <input
+                      type="date"
+                      value={boq?.preparationDate ? new Date(boq.preparationDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => updateBoq({ preparationDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                      className="h-10 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Save as Preset */}
+              {!boq?.isPreset && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setPresetNameInput(boq?.projectName || '');
+                      setShowPresetDialog(true);
+                    }}
+                  >
+                    <Layers className="w-4 h-4 mr-2" />
+                    Create a preset from this BOQ
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Preset Dialog */}
+        <Dialog open={showPresetDialog} onOpenChange={setShowPresetDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Preset</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="presetName">Preset Name</Label>
+                <Input
+                  id="presetName"
+                  value={presetNameInput}
+                  onChange={(e) => setPresetNameInput(e.target.value)}
+                  placeholder="Enter preset name"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowPresetDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!presetNameInput.trim()) {
+                    toast.error('Please enter a preset name');
+                    return;
+                  }
+                  try {
+                    const res = await fetch('/api/presets/create-from-boq', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ boqId: boq?.id, presetName: presetNameInput.trim(), includeQuantities: false }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      toast.error(data.error || 'Failed to create preset');
+                      return;
+                    }
+                    toast.success('Preset created! Find it in Templates → BOQ Presets');
+                    setShowPresetDialog(false);
+                    setShowSettingsDialog(false);
+                  } catch { toast.error('Failed to create preset'); }
+                }}
+              >
+                Create Preset
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* New Customer Dialog */}
         <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>

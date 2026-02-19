@@ -130,6 +130,77 @@ function AutoResizeTextarea({ value, onChange, columnWidth, placeholder }: AutoR
   );
 }
 
+// =============================================================================
+// FORMATTED NUMBER INPUT COMPONENT (with thousand separators)
+// =============================================================================
+interface FormattedNumberInputProps {
+  value: number;
+  onChange: (value: number) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  className?: string;
+  step?: string;
+  'data-cell'?: boolean;
+  'data-row'?: string;
+  'data-col'?: string;
+}
+
+function FormattedNumberInput({
+  value,
+  onChange,
+  onKeyDown,
+  className,
+  step = "0.01",
+  ...props
+}: FormattedNumberInputProps) {
+  const [displayValue, setDisplayValue] = useState(formatNumberWithCommas(value));
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Format number with thousand separators
+  function formatNumberWithCommas(num: number): string {
+    if (num === 0) return '0';
+    const parts = num.toString().split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
+
+  // Parse formatted string to number
+  function parseFormattedNumber(str: string): number {
+    const cleaned = str.replace(/,/g, '');
+    return parseFloat(cleaned) || 0;
+  }
+
+  // Update display when value changes externally
+  useEffect(() => {
+    if (!isFocused) {
+      setDisplayValue(formatNumberWithCommas(value));
+    }
+  }, [value, isFocused]);
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      value={isFocused ? displayValue.replace(/,/g, '') : displayValue}
+      onChange={(e) => {
+        const rawValue = e.target.value;
+        setDisplayValue(rawValue);
+        onChange(parseFormattedNumber(rawValue));
+      }}
+      onFocus={() => {
+        setIsFocused(true);
+        setDisplayValue(value.toString());
+      }}
+      onBlur={() => {
+        setIsFocused(false);
+        setDisplayValue(formatNumberWithCommas(value));
+      }}
+      onKeyDown={onKeyDown}
+      className={className}
+      {...props}
+    />
+  );
+}
+
 interface BoqEditorClientProps {
   boq: BoqWithRelations;
   customers: CustomerType[];
@@ -507,14 +578,10 @@ function SortableItemRow({
       </div>
       {/* Unit Cost */}
       <div className="py-2 px-2" role="cell">
-        <Input
-          type="number"
-          step="0.01"
+        <FormattedNumberInput
           value={unitCost}
-          onChange={(e) =>
-            handleUpdateItem(item?.id, {
-              unitCost: parseFloat(e.target.value) || 0,
-            })
+          onChange={(val) =>
+            handleUpdateItem(item?.id, { unitCost: val })
           }
           onKeyDown={(e) => handleCellKeyDown(e, item.id, 2)}
           data-cell
@@ -545,14 +612,10 @@ function SortableItemRow({
       <div className="py-2 px-2 text-right font-medium text-gray-700 text-sm whitespace-nowrap" role="cell">{formatNumber(unitPrice)}</div>
       {/* Qty */}
       <div className="py-2 px-2" role="cell">
-        <Input
-          type="number"
-          step="0.01"
+        <FormattedNumberInput
           value={quantity}
-          onChange={(e) =>
-            handleUpdateItem(item?.id, {
-              quantity: parseFloat(e.target.value) || 0,
-            })
+          onChange={(val) =>
+            handleUpdateItem(item?.id, { quantity: val })
           }
           onKeyDown={(e) => handleCellKeyDown(e, item.id, 4)}
           data-cell
@@ -935,7 +998,9 @@ export function BoqEditorClient({
 
   // Note editor ref for rich text
   const noteEditorRef = useRef<HTMLDivElement>(null);
+  const descriptionEditorRef = useRef<HTMLDivElement>(null);
   const noteEditorInitializedRef = useRef<string | null>(null);
+  const descriptionEditorInitializedRef = useRef<string | null>(null);
 
   // Inline note editing state
   const [inlineEditingNoteId, setInlineEditingNoteId] = useState<string | null>(null);
@@ -1836,6 +1901,7 @@ export function BoqEditorClient({
         latestNoteContent = localNote;
       }
       noteEditorInitializedRef.current = null;
+      descriptionEditorInitializedRef.current = null;
 
       setEditItemDialog({
         item: { ...item, noteContent: latestNoteContent },
@@ -1892,6 +1958,24 @@ export function BoqEditorClient({
     }
   }, [editItemDialog?.item.id, editItemDialog?.item.isNote, editItemValues.noteContent, sanitizeHtml]);
 
+  // Initialize description editor content when dialog opens (for non-note items)
+  useEffect(() => {
+    if (
+      editItemDialog &&
+      !editItemDialog.item.isNote &&
+      editItemDialog.item.id !== descriptionEditorInitializedRef.current
+    ) {
+      const timeoutId = setTimeout(() => {
+        if (descriptionEditorRef.current) {
+          const content = editItemValues.description ?? '';
+          descriptionEditorRef.current.innerHTML = sanitizeHtml(content);
+          descriptionEditorInitializedRef.current = editItemDialog.item.id;
+        }
+      }, 50);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [editItemDialog?.item.id, editItemDialog?.item.isNote, editItemValues.description, sanitizeHtml]);
+
   const saveEditItemDialog = async () => {
     if (!editItemDialog) return;
     await handleUpdateItem(editItemDialog.item.id, editItemValues, true);
@@ -1899,7 +1983,7 @@ export function BoqEditorClient({
     setEditItemValues({});
   };
 
-  // Rich text formatting
+  // Rich text formatting for notes
   const applyTextFormat = useCallback((format: 'bold' | 'italic' | 'underline') => {
     if (noteEditorRef.current) {
       noteEditorRef.current.focus();
@@ -1908,6 +1992,18 @@ export function BoqEditorClient({
     if (noteEditorRef.current) {
       const htmlContent = noteEditorRef.current.innerHTML;
       setEditItemValues((prev) => ({ ...prev, noteContent: htmlContent }));
+    }
+  }, []);
+
+  // Rich text formatting for description
+  const applyDescriptionFormat = useCallback((format: 'bold' | 'italic' | 'underline') => {
+    if (descriptionEditorRef.current) {
+      descriptionEditorRef.current.focus();
+    }
+    document.execCommand(format, false);
+    if (descriptionEditorRef.current) {
+      const htmlContent = descriptionEditorRef.current.innerHTML;
+      setEditItemValues((prev) => ({ ...prev, description: htmlContent }));
     }
   }, []);
 
@@ -1930,6 +2026,27 @@ export function BoqEditorClient({
       }
     },
     [applyTextFormat]
+  );
+
+  const handleDescriptionEditorKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier) {
+        if (e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          applyDescriptionFormat('bold');
+        } else if (e.key === 'i' || e.key === 'I') {
+          e.preventDefault();
+          applyDescriptionFormat('italic');
+        } else if (e.key === 'u' || e.key === 'U') {
+          e.preventDefault();
+          applyDescriptionFormat('underline');
+        }
+      }
+    },
+    [applyDescriptionFormat]
   );
 
   const handleCreateCustomer = async () => {
@@ -2773,16 +2890,64 @@ export function BoqEditorClient({
                 // Regular item editing
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-description">Description</Label>
-                    <Textarea
-                      id="edit-description"
-                      placeholder="Enter item description..."
-                      value={editItemValues.description ?? ''}
-                      onChange={(e) =>
-                        setEditItemValues((prev) => ({ ...prev, description: e.target.value }))
-                      }
-                      className="min-h-[100px]"
-                    />
+                    <Label>Description</Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="flex items-center space-x-1 p-2 border-b bg-gray-50">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 font-bold"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyDescriptionFormat('bold');
+                          }}
+                          title="Bold (Ctrl+B)"
+                        >
+                          <Bold className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyDescriptionFormat('italic');
+                          }}
+                          title="Italic (Ctrl+I)"
+                        >
+                          <Italic className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyDescriptionFormat('underline');
+                          }}
+                          title="Underline (Ctrl+U)"
+                        >
+                          <UnderlineIcon className="w-4 h-4" />
+                        </Button>
+                        <span className="text-xs text-gray-400 ml-2">
+                          Select text and click to format (or use Ctrl+B/I/U)
+                        </span>
+                      </div>
+                      <div
+                        ref={descriptionEditorRef}
+                        contentEditable
+                        suppressContentEditableWarning
+                        className="min-h-[100px] p-3 focus:outline-none text-sm prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline"
+                        onInput={(e) => {
+                          const target = e.currentTarget;
+                          setEditItemValues((prev) => ({ ...prev, description: target.innerHTML }));
+                        }}
+                        onKeyDown={handleDescriptionEditorKeyDown}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

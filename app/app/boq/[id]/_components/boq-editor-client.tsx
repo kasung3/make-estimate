@@ -310,6 +310,7 @@ interface SortableItemRowProps {
   handleDeleteItem: (itemId: string) => void;
   openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
   handleNoteClick: (item: BoqItemType, categoryId: string, categoryName: string, currentHtml: string) => void;
+  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => void;
   inlineEditingNoteId: string | null;
   inlineEditText: string;
   setInlineEditText: (text: string) => void;
@@ -317,6 +318,13 @@ interface SortableItemRowProps {
   handleInlineNoteKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
   saveInlineEdit: (itemId: string) => void;
   cancelInlineEdit: () => void;
+  inlineEditingDescId: string | null;
+  inlineDescText: string;
+  setInlineDescText: (text: string) => void;
+  inlineDescTextareaRef: React.RefObject<HTMLTextAreaElement>;
+  handleInlineDescKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
+  saveInlineDescEdit: (itemId: string) => void;
+  cancelInlineDescEdit: () => void;
   sanitizeHtml: (html: string) => string;
   htmlToPlainText: (html: string) => string;
   formatNumber: (num: number, decimals?: number) => string;
@@ -335,6 +343,7 @@ function SortableItemRow({
   handleDeleteItem,
   openEditItemDialog,
   handleNoteClick,
+  handleDescriptionClick,
   inlineEditingNoteId,
   inlineEditText,
   setInlineEditText,
@@ -342,6 +351,13 @@ function SortableItemRow({
   handleInlineNoteKeyDown,
   saveInlineEdit,
   cancelInlineEdit,
+  inlineEditingDescId,
+  inlineDescText,
+  setInlineDescText,
+  inlineDescTextareaRef,
+  handleInlineDescKeyDown,
+  saveInlineDescEdit,
+  cancelInlineDescEdit,
   sanitizeHtml,
   htmlToPlainText,
   formatNumber,
@@ -540,14 +556,66 @@ function SortableItemRow({
       <div className="py-2 px-2 min-w-0" role="cell">
         <div className={`flex ${wrapText ? 'items-start' : 'items-center'} space-x-1`}>
           {wrapText ? (
-            <div 
-              className="text-sm w-full min-h-[32px] p-1.5 border rounded-md bg-white prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline cursor-pointer hover:bg-gray-50"
-              onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
-              title="Click to edit with formatting"
-              dangerouslySetInnerHTML={{
-                __html: sanitizeHtml(getItemValue(item.id, 'description', item?.description) ?? '') || '<span class="text-gray-400">Description</span>',
-              }}
-            />
+            inlineEditingDescId === item.id ? (
+              <div className="flex-1 space-y-1">
+                <Textarea
+                  ref={inlineDescTextareaRef}
+                  value={inlineDescText}
+                  onChange={(e) => setInlineDescText(e.target.value)}
+                  onBlur={() => saveInlineDescEdit(item.id)}
+                  onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
+                  className="min-h-[60px] text-sm resize-none"
+                  placeholder="Enter description..."
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">
+                    Ctrl+Enter to save, Esc to cancel. Use expand for formatting.
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        cancelInlineDescEdit();
+                      }}
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        saveInlineDescEdit(item.id);
+                      }}
+                    >
+                      <Check className="w-3 h-3 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="text-sm w-full min-h-[32px] p-1.5 border rounded-md bg-white prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline cursor-text hover:border-cyan-400 transition-colors"
+                onClick={() => handleDescriptionClick(item, categoryId, categoryName, itemNumber, getItemValue(item.id, 'description', item?.description) ?? '')}
+                title="Click to edit"
+              >
+                {(getItemValue(item.id, 'description', item?.description) ?? '') ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(getItemValue(item.id, 'description', item?.description) ?? ''),
+                    }}
+                  />
+                ) : (
+                  <span className="text-gray-400">Click to add description...</span>
+                )}
+              </div>
+            )
           ) : (
             <Input
               value={htmlToPlainText(getItemValue(item.id, 'description', item?.description) ?? '')}
@@ -565,7 +633,7 @@ function SortableItemRow({
             size="icon"
             className={`${wrapText ? 'h-8 w-8 mt-1' : 'h-8 w-8'} text-gray-400 hover:text-cyan-600 flex-shrink-0`}
             onClick={() => openEditItemDialog(item, categoryId, categoryName, itemNumber)}
-            title="Expand to edit"
+            title="Expand to edit with formatting"
           >
             <Expand className="w-4 h-4" />
           </Button>
@@ -676,6 +744,7 @@ interface SortableCategoryProps {
   handleDeleteItem: (itemId: string) => void;
   openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
   handleNoteClick: (item: BoqItemType, categoryId: string, categoryName: string, currentHtml: string) => void;
+  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => void;
   inlineEditingNoteId: string | null;
   inlineEditText: string;
   setInlineEditText: (text: string) => void;
@@ -683,6 +752,13 @@ interface SortableCategoryProps {
   handleInlineNoteKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
   saveInlineEdit: (itemId: string) => void;
   cancelInlineEdit: () => void;
+  inlineEditingDescId: string | null;
+  inlineDescText: string;
+  setInlineDescText: (text: string) => void;
+  inlineDescTextareaRef: React.RefObject<HTMLTextAreaElement>;
+  handleInlineDescKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
+  saveInlineDescEdit: (itemId: string) => void;
+  cancelInlineDescEdit: () => void;
   sanitizeHtml: (html: string) => string;
   htmlToPlainText: (html: string) => string;
   formatNumber: (num: number, decimals?: number) => string;
@@ -716,6 +792,7 @@ function SortableCategory({
   handleDeleteItem,
   openEditItemDialog,
   handleNoteClick,
+  handleDescriptionClick,
   inlineEditingNoteId,
   inlineEditText,
   setInlineEditText,
@@ -723,6 +800,13 @@ function SortableCategory({
   handleInlineNoteKeyDown,
   saveInlineEdit,
   cancelInlineEdit,
+  inlineEditingDescId,
+  inlineDescText,
+  setInlineDescText,
+  inlineDescTextareaRef,
+  handleInlineDescKeyDown,
+  saveInlineDescEdit,
+  cancelInlineDescEdit,
   sanitizeHtml,
   htmlToPlainText,
   formatNumber,
@@ -918,6 +1002,7 @@ function SortableCategory({
                           handleDeleteItem={handleDeleteItem}
                           openEditItemDialog={openEditItemDialog}
                           handleNoteClick={handleNoteClick}
+                          handleDescriptionClick={handleDescriptionClick}
                           inlineEditingNoteId={inlineEditingNoteId}
                           inlineEditText={inlineEditText}
                           setInlineEditText={setInlineEditText}
@@ -925,6 +1010,13 @@ function SortableCategory({
                           handleInlineNoteKeyDown={handleInlineNoteKeyDown}
                           saveInlineEdit={saveInlineEdit}
                           cancelInlineEdit={cancelInlineEdit}
+                          inlineEditingDescId={inlineEditingDescId}
+                          inlineDescText={inlineDescText}
+                          setInlineDescText={setInlineDescText}
+                          inlineDescTextareaRef={inlineDescTextareaRef}
+                          handleInlineDescKeyDown={handleInlineDescKeyDown}
+                          saveInlineDescEdit={saveInlineDescEdit}
+                          cancelInlineDescEdit={cancelInlineDescEdit}
                           sanitizeHtml={sanitizeHtml}
                           htmlToPlainText={htmlToPlainText}
                           formatNumber={formatNumber}
@@ -1017,6 +1109,11 @@ export function BoqEditorClient({
   const [inlineEditingNoteId, setInlineEditingNoteId] = useState<string | null>(null);
   const [inlineEditText, setInlineEditText] = useState('');
   const inlineTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Inline description editing state
+  const [inlineEditingDescId, setInlineEditingDescId] = useState<string | null>(null);
+  const [inlineDescText, setInlineDescText] = useState('');
+  const inlineDescTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Local input states to prevent typing lag
   const [localProjectName, setLocalProjectName] = useState(initialBoq?.projectName ?? '');
@@ -1791,6 +1888,41 @@ export function BoqEditorClient({
     [cancelInlineEdit, saveInlineEdit]
   );
 
+  // Inline description editing
+  const cancelInlineDescEdit = useCallback(() => {
+    setInlineEditingDescId(null);
+    setInlineDescText('');
+  }, []);
+
+  const saveInlineDescEdit = useCallback(
+    async (itemId: string) => {
+      const safeHtml = plainTextToSafeHtml(inlineDescText);
+      await handleUpdateItem(itemId, { description: safeHtml }, true);
+      setInlineEditingDescId(null);
+      setInlineDescText('');
+    },
+    [inlineDescText, plainTextToSafeHtml, handleUpdateItem]
+  );
+
+  const handleInlineDescKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelInlineDescEdit();
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier && e.key === 'Enter') {
+        e.preventDefault();
+        saveInlineDescEdit(itemId);
+      }
+    },
+    [cancelInlineDescEdit, saveInlineDescEdit]
+  );
+
   // DnD Kit sensors - smaller distance for easier drag initiation
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1947,6 +2079,25 @@ export function BoqEditorClient({
 
       setTimeout(() => {
         inlineTextareaRef.current?.focus();
+      }, 50);
+    },
+    [noteHasFormatting, openEditItemDialog, htmlToPlainText]
+  );
+
+  // Handler for clicking on description content (with wrap text enabled)
+  const handleDescriptionClick = useCallback(
+    (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => {
+      if (noteHasFormatting(currentHtml)) {
+        openEditItemDialog(item, categoryId, categoryName, itemNumber);
+        return;
+      }
+
+      const plainText = htmlToPlainText(currentHtml);
+      setInlineDescText(plainText);
+      setInlineEditingDescId(item.id);
+
+      setTimeout(() => {
+        inlineDescTextareaRef.current?.focus();
       }, 50);
     },
     [noteHasFormatting, openEditItemDialog, htmlToPlainText]
@@ -2546,6 +2697,7 @@ export function BoqEditorClient({
                       handleDeleteItem={handleDeleteItem}
                       openEditItemDialog={openEditItemDialog}
                       handleNoteClick={handleNoteClick}
+                      handleDescriptionClick={handleDescriptionClick}
                       inlineEditingNoteId={inlineEditingNoteId}
                       inlineEditText={inlineEditText}
                       setInlineEditText={setInlineEditText}
@@ -2553,6 +2705,13 @@ export function BoqEditorClient({
                       handleInlineNoteKeyDown={handleInlineNoteKeyDown}
                       saveInlineEdit={saveInlineEdit}
                       cancelInlineEdit={cancelInlineEdit}
+                      inlineEditingDescId={inlineEditingDescId}
+                      inlineDescText={inlineDescText}
+                      setInlineDescText={setInlineDescText}
+                      inlineDescTextareaRef={inlineDescTextareaRef}
+                      handleInlineDescKeyDown={handleInlineDescKeyDown}
+                      saveInlineDescEdit={saveInlineDescEdit}
+                      cancelInlineDescEdit={cancelInlineDescEdit}
                       sanitizeHtml={sanitizeHtml}
                       htmlToPlainText={htmlToPlainText}
                       formatNumber={formatNumber}

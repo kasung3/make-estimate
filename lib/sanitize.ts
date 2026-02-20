@@ -48,6 +48,44 @@ export function sanitizeMultilineText(input: unknown, maxLength: number = 5000):
     .slice(0, maxLength);
 }
 
+// Sanitize rich text field (preserves safe formatting tags: b, strong, i, em, u, br)
+export function sanitizeRichText(input: unknown, maxLength: number = 5000): string {
+  if (input === null || input === undefined) return '';
+  if (typeof input !== 'string') return String(input).slice(0, maxLength);
+  
+  // Remove dangerous tags
+  let result = input
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/\0/g, '')
+    .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  
+  // Allow only safe tags: b, strong, i, em, u, br, p, div (for structure)
+  const allowedTagsRegex = /<\/?(?:b|strong|i|em|u|br|p|div)(?:\s[^>]*)?>/gi;
+  const allTags = result.match(/<[^>]+>/g) || [];
+  
+  for (const tag of allTags) {
+    if (!allowedTagsRegex.test(tag)) {
+      // Reset regex lastIndex
+      allowedTagsRegex.lastIndex = 0;
+      // Remove disallowed tag
+      result = result.replace(tag, '');
+    }
+    allowedTagsRegex.lastIndex = 0;
+  }
+  
+  // Remove any attributes from allowed tags (except self-closing br)
+  result = result
+    .replace(/<(b|strong|i|em|u|p|div)\s+[^>]*>/gi, '<$1>')
+    .trim()
+    .slice(0, maxLength);
+  
+  return result;
+}
+
 // Sanitize numeric inputs - ensures it's a valid finite number
 export function sanitizeNumber(input: unknown, defaultVal: number = 0, min?: number, max?: number): number {
   if (input === null || input === undefined) return defaultVal;

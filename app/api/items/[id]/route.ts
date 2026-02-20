@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { instrumentRoute, timedOperation } from '@/lib/api-instrumentation';
-import { sanitizeText, sanitizeMultilineText, sanitizeNumber } from '@/lib/sanitize';
+import { sanitizeText, sanitizeMultilineText, sanitizeRichText, sanitizeNumber } from '@/lib/sanitize';
 
 // Rate limited: 120 item updates per minute per user (autosave)
 export const PUT = instrumentRoute(
@@ -26,14 +26,14 @@ export const PUT = instrumentRoute(
 
     // Build update data object only with provided fields, sanitized
     const updateData: any = {};
-    if (body?.description !== undefined) updateData.description = sanitizeText(body.description, 1000);
+    if (body?.description !== undefined) updateData.description = sanitizeRichText(body.description, 5000);
     if (body?.unit !== undefined) updateData.unit = sanitizeText(body.unit, 50);
     if (body?.unitCost !== undefined) updateData.unitCost = sanitizeNumber(body.unitCost, 0, 0, 999999999);
     if (body?.markupPct !== undefined) updateData.markupPct = sanitizeNumber(body.markupPct, 0, -100, 10000);
     if (body?.quantity !== undefined) updateData.quantity = sanitizeNumber(body.quantity, 0, 0, 999999999);
     if (body?.sortOrder !== undefined) updateData.sortOrder = sanitizeNumber(body.sortOrder, 0, 0, 99999);
     if (body?.isNote !== undefined) updateData.isNote = body.isNote === true;
-    if (body?.noteContent !== undefined) updateData.noteContent = sanitizeMultilineText(body.noteContent, 5000);
+    if (body?.noteContent !== undefined) updateData.noteContent = sanitizeRichText(body.noteContent, 5000);
     if (body?.includeInPdf !== undefined) updateData.includeInPdf = body.includeInPdf === true;
 
     const item = await timedOperation('item.update', () =>

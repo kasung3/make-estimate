@@ -536,16 +536,14 @@ function SortableItemRow({
                 value={inlineDescText}
                 onChange={(e) => {
                   setInlineDescText(e.target.value);
-                  // Auto-resize on content change, but never shrink below original height
+                  // Dynamic resize - grow or shrink based on content
                   e.target.style.height = 'auto';
-                  const newHeight = Math.max(e.target.scrollHeight, inlineDescHeightRef.current);
-                  e.target.style.height = `${newHeight}px`;
+                  e.target.style.height = `${Math.max(32, e.target.scrollHeight)}px`;
                 }}
                 onBlur={() => saveInlineDescEdit(item.id)}
                 onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
                 className="flex-1 text-sm resize-none p-1.5 border rounded-md overflow-hidden"
                 placeholder="Enter description..."
-                style={{ height: `${inlineDescHeightRef.current}px` }}
               />
             ) : (
               <div 
@@ -2049,9 +2047,6 @@ export function BoqEditorClient({
         return;
       }
 
-      // Capture the height of the clicked div SYNCHRONOUSLY before switching to textarea
-      inlineDescHeightRef.current = clickedElement.offsetHeight;
-
       const plainText = htmlToPlainText(currentHtml);
       setInlineDescText(plainText);
       setInlineEditingDescId(item.id);
@@ -2059,8 +2054,11 @@ export function BoqEditorClient({
       setTimeout(() => {
         if (inlineDescTextareaRef.current) {
           inlineDescTextareaRef.current.focus();
+          // Set initial height based on content
+          inlineDescTextareaRef.current.style.height = 'auto';
+          inlineDescTextareaRef.current.style.height = `${Math.max(32, inlineDescTextareaRef.current.scrollHeight)}px`;
         }
-      }, 50);
+      }, 10);
     },
     [noteHasFormatting, openEditItemDialog, htmlToPlainText]
   );

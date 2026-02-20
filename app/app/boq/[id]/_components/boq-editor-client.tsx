@@ -416,48 +416,17 @@ function SortableItemRow({
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               {inlineEditingNoteId === item.id ? (
-                <div className="flex-1 space-y-1">
-                  <Textarea
-                    ref={inlineTextareaRef}
-                    value={inlineEditText}
-                    onChange={(e) => setInlineEditText(e.target.value)}
-                    onBlur={() => saveInlineEdit(item.id)}
-                    onKeyDown={(e) => handleInlineNoteKeyDown(e, item.id)}
-                    className="min-h-[60px] text-sm resize-none"
-                    placeholder="Enter note text..."
-                  />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      Basic edit (Ctrl+Enter to save, Esc to cancel). Use expand for formatting.
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          cancelInlineEdit();
-                        }}
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          saveInlineEdit(item.id);
-                        }}
-                      >
-                        <Check className="w-3 h-3 mr-1" />
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <Textarea
+                  ref={inlineTextareaRef}
+                  value={inlineEditText}
+                  onChange={(e) => setInlineEditText(e.target.value)}
+                  onBlur={() => saveInlineEdit(item.id)}
+                  onKeyDown={(e) => handleInlineNoteKeyDown(e, item.id)}
+                  className="flex-1 text-sm resize-none min-h-[32px] px-3 py-1.5 border rounded-lg"
+                  placeholder="Enter note text..."
+                  style={{ height: 'auto', minHeight: '32px' }}
+                  rows={Math.max(1, inlineEditText.split('\n').length)}
+                />
               ) : (
                 <div
                   className="flex-1 min-h-[32px] px-3 py-1.5 bg-white border rounded-lg text-sm cursor-text hover:border-cyan-400 transition-colors"
@@ -557,48 +526,17 @@ function SortableItemRow({
         <div className={`flex ${wrapText ? 'items-start' : 'items-center'} space-x-1`}>
           {wrapText ? (
             inlineEditingDescId === item.id ? (
-              <div className="flex-1 space-y-1">
-                <Textarea
-                  ref={inlineDescTextareaRef}
-                  value={inlineDescText}
-                  onChange={(e) => setInlineDescText(e.target.value)}
-                  onBlur={() => saveInlineDescEdit(item.id)}
-                  onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
-                  className="min-h-[60px] text-sm resize-none"
-                  placeholder="Enter description..."
-                />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
-                    Ctrl+Enter to save, Esc to cancel. Use expand for formatting.
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        cancelInlineDescEdit();
-                      }}
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-cyan-600 hover:text-cyan-700"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        saveInlineDescEdit(item.id);
-                      }}
-                    >
-                      <Check className="w-3 h-3 mr-1" />
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <Textarea
+                ref={inlineDescTextareaRef}
+                value={inlineDescText}
+                onChange={(e) => setInlineDescText(e.target.value)}
+                onBlur={() => saveInlineDescEdit(item.id)}
+                onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
+                className="flex-1 text-sm resize-none min-h-[32px] p-1.5 border rounded-md"
+                placeholder="Enter description..."
+                style={{ height: 'auto', minHeight: '32px' }}
+                rows={Math.max(1, inlineDescText.split('\n').length)}
+              />
             ) : (
               <div 
                 className="text-sm w-full min-h-[32px] p-1.5 border rounded-md bg-white prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline cursor-text hover:border-cyan-400 transition-colors"
@@ -1135,7 +1073,7 @@ export function BoqEditorClient({
   };
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
-  const [wrapText, setWrapText] = useState(false);
+  const [wrapText, setWrapText] = useState(true);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showPresetDialog, setShowPresetDialog] = useState(false);
   const [presetNameInput, setPresetNameInput] = useState('');

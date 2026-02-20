@@ -536,14 +536,21 @@ function SortableItemRow({
                 value={inlineDescText}
                 onChange={(e) => {
                   setInlineDescText(e.target.value);
-                  // Dynamic resize - grow or shrink based on content
-                  e.target.style.height = 'auto';
-                  e.target.style.height = `${Math.max(32, e.target.scrollHeight)}px`;
+                  const textarea = e.target;
+                  // Force browser to recalculate by setting to auto then measuring
+                  textarea.style.height = 'auto';
+                  textarea.style.overflow = 'hidden';
+                  // Use requestAnimationFrame to ensure reflow
+                  requestAnimationFrame(() => {
+                    const newHeight = Math.max(32, textarea.scrollHeight);
+                    textarea.style.height = `${newHeight}px`;
+                  });
                 }}
                 onBlur={() => saveInlineDescEdit(item.id)}
                 onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
-                className="flex-1 text-sm resize-none p-1.5 border rounded-md overflow-hidden"
+                className="flex-1 text-sm resize-none p-1.5 border rounded-md !min-h-0"
                 placeholder="Enter description..."
+                style={{ height: `${inlineDescHeightRef.current}px`, minHeight: '32px', overflow: 'hidden' }}
               />
             ) : (
               <div 
@@ -2047,6 +2054,9 @@ export function BoqEditorClient({
         return;
       }
 
+      // Capture the exact height of the display div BEFORE switching to textarea
+      inlineDescHeightRef.current = clickedElement.offsetHeight;
+
       const plainText = htmlToPlainText(currentHtml);
       setInlineDescText(plainText);
       setInlineEditingDescId(item.id);
@@ -2054,9 +2064,6 @@ export function BoqEditorClient({
       setTimeout(() => {
         if (inlineDescTextareaRef.current) {
           inlineDescTextareaRef.current.focus();
-          // Set initial height based on content
-          inlineDescTextareaRef.current.style.height = 'auto';
-          inlineDescTextareaRef.current.style.height = `${Math.max(32, inlineDescTextareaRef.current.scrollHeight)}px`;
         }
       }, 10);
     },

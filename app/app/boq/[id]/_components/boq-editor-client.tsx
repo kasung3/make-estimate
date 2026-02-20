@@ -310,7 +310,7 @@ interface SortableItemRowProps {
   handleDeleteItem: (itemId: string) => void;
   openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
   handleNoteClick: (item: BoqItemType, categoryId: string, categoryName: string, currentHtml: string) => void;
-  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => void;
+  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string, clickedElement: HTMLElement) => void;
   inlineEditingNoteId: string | null;
   inlineEditText: string;
   setInlineEditText: (text: string) => void;
@@ -322,6 +322,7 @@ interface SortableItemRowProps {
   inlineDescText: string;
   setInlineDescText: (text: string) => void;
   inlineDescTextareaRef: React.RefObject<HTMLTextAreaElement>;
+  inlineDescHeight: number | null;
   handleInlineDescKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
   saveInlineDescEdit: (itemId: string) => void;
   cancelInlineDescEdit: () => void;
@@ -355,6 +356,7 @@ function SortableItemRow({
   inlineDescText,
   setInlineDescText,
   inlineDescTextareaRef,
+  inlineDescHeight,
   handleInlineDescKeyDown,
   saveInlineDescEdit,
   cancelInlineDescEdit,
@@ -534,19 +536,21 @@ function SortableItemRow({
                 value={inlineDescText}
                 onChange={(e) => {
                   setInlineDescText(e.target.value);
-                  // Auto-resize on content change
+                  // Auto-resize on content change, but never shrink below original height
                   e.target.style.height = 'auto';
-                  e.target.style.height = `${e.target.scrollHeight}px`;
+                  const newHeight = Math.max(e.target.scrollHeight, inlineDescHeight || 32);
+                  e.target.style.height = `${newHeight}px`;
                 }}
                 onBlur={() => saveInlineDescEdit(item.id)}
                 onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
                 className="flex-1 text-sm resize-none p-1.5 border rounded-md overflow-hidden"
                 placeholder="Enter description..."
+                style={{ height: inlineDescHeight ? `${inlineDescHeight}px` : 'auto' }}
               />
             ) : (
               <div 
                 className="text-sm w-full min-h-[32px] p-1.5 border rounded-md bg-white prose prose-sm max-w-none [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline cursor-text hover:border-cyan-400 transition-colors"
-                onClick={() => handleDescriptionClick(item, categoryId, categoryName, itemNumber, getItemValue(item.id, 'description', item?.description) ?? '')}
+                onClick={(e) => handleDescriptionClick(item, categoryId, categoryName, itemNumber, getItemValue(item.id, 'description', item?.description) ?? '', e.currentTarget)}
                 title="Click to edit"
               >
                 {(getItemValue(item.id, 'description', item?.description) ?? '') ? (
@@ -688,7 +692,7 @@ interface SortableCategoryProps {
   handleDeleteItem: (itemId: string) => void;
   openEditItemDialog: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null) => void;
   handleNoteClick: (item: BoqItemType, categoryId: string, categoryName: string, currentHtml: string) => void;
-  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => void;
+  handleDescriptionClick: (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string, clickedElement: HTMLElement) => void;
   inlineEditingNoteId: string | null;
   inlineEditText: string;
   setInlineEditText: (text: string) => void;
@@ -700,6 +704,7 @@ interface SortableCategoryProps {
   inlineDescText: string;
   setInlineDescText: (text: string) => void;
   inlineDescTextareaRef: React.RefObject<HTMLTextAreaElement>;
+  inlineDescHeight: number | null;
   handleInlineDescKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, itemId: string) => void;
   saveInlineDescEdit: (itemId: string) => void;
   cancelInlineDescEdit: () => void;
@@ -748,6 +753,7 @@ function SortableCategory({
   inlineDescText,
   setInlineDescText,
   inlineDescTextareaRef,
+  inlineDescHeight,
   handleInlineDescKeyDown,
   saveInlineDescEdit,
   cancelInlineDescEdit,
@@ -958,6 +964,7 @@ function SortableCategory({
                           inlineDescText={inlineDescText}
                           setInlineDescText={setInlineDescText}
                           inlineDescTextareaRef={inlineDescTextareaRef}
+                          inlineDescHeight={inlineDescHeight}
                           handleInlineDescKeyDown={handleInlineDescKeyDown}
                           saveInlineDescEdit={saveInlineDescEdit}
                           cancelInlineDescEdit={cancelInlineDescEdit}
@@ -1057,6 +1064,7 @@ export function BoqEditorClient({
   // Inline description editing state
   const [inlineEditingDescId, setInlineEditingDescId] = useState<string | null>(null);
   const [inlineDescText, setInlineDescText] = useState('');
+  const [inlineDescHeight, setInlineDescHeight] = useState<number | null>(null);
   const inlineDescTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Local input states to prevent typing lag
@@ -2035,11 +2043,15 @@ export function BoqEditorClient({
 
   // Handler for clicking on description content (with wrap text enabled)
   const handleDescriptionClick = useCallback(
-    (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string) => {
+    (item: BoqItemType, categoryId: string, categoryName: string, itemNumber: string | null, currentHtml: string, clickedElement: HTMLElement) => {
       if (noteHasFormatting(currentHtml)) {
         openEditItemDialog(item, categoryId, categoryName, itemNumber);
         return;
       }
+
+      // Capture the height of the clicked div before switching to textarea
+      const capturedHeight = clickedElement.offsetHeight;
+      setInlineDescHeight(capturedHeight);
 
       const plainText = htmlToPlainText(currentHtml);
       setInlineDescText(plainText);
@@ -2048,9 +2060,8 @@ export function BoqEditorClient({
       setTimeout(() => {
         if (inlineDescTextareaRef.current) {
           inlineDescTextareaRef.current.focus();
-          // Auto-resize to match content
-          inlineDescTextareaRef.current.style.height = 'auto';
-          inlineDescTextareaRef.current.style.height = `${inlineDescTextareaRef.current.scrollHeight}px`;
+          // Use the captured height, ensuring textarea matches the original display
+          inlineDescTextareaRef.current.style.height = `${capturedHeight}px`;
         }
       }, 50);
     },
@@ -2663,6 +2674,7 @@ export function BoqEditorClient({
                       inlineDescText={inlineDescText}
                       setInlineDescText={setInlineDescText}
                       inlineDescTextareaRef={inlineDescTextareaRef}
+                      inlineDescHeight={inlineDescHeight}
                       handleInlineDescKeyDown={handleInlineDescKeyDown}
                       saveInlineDescEdit={saveInlineDescEdit}
                       cancelInlineDescEdit={cancelInlineDescEdit}

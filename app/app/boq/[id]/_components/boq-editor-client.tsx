@@ -419,13 +419,16 @@ function SortableItemRow({
                 <Textarea
                   ref={inlineTextareaRef}
                   value={inlineEditText}
-                  onChange={(e) => setInlineEditText(e.target.value)}
+                  onChange={(e) => {
+                    setInlineEditText(e.target.value);
+                    // Auto-resize on content change
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
                   onBlur={() => saveInlineEdit(item.id)}
                   onKeyDown={(e) => handleInlineNoteKeyDown(e, item.id)}
-                  className="flex-1 text-sm resize-none min-h-[32px] px-3 py-1.5 border rounded-lg"
+                  className="flex-1 text-sm resize-none px-3 py-1.5 border rounded-lg overflow-hidden"
                   placeholder="Enter note text..."
-                  style={{ height: 'auto', minHeight: '32px' }}
-                  rows={Math.max(1, inlineEditText.split('\n').length)}
                 />
               ) : (
                 <div
@@ -529,13 +532,16 @@ function SortableItemRow({
               <Textarea
                 ref={inlineDescTextareaRef}
                 value={inlineDescText}
-                onChange={(e) => setInlineDescText(e.target.value)}
+                onChange={(e) => {
+                  setInlineDescText(e.target.value);
+                  // Auto-resize on content change
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
                 onBlur={() => saveInlineDescEdit(item.id)}
                 onKeyDown={(e) => handleInlineDescKeyDown(e, item.id)}
-                className="flex-1 text-sm resize-none min-h-[32px] p-1.5 border rounded-md"
+                className="flex-1 text-sm resize-none p-1.5 border rounded-md overflow-hidden"
                 placeholder="Enter description..."
-                style={{ height: 'auto', minHeight: '32px' }}
-                rows={Math.max(1, inlineDescText.split('\n').length)}
               />
             ) : (
               <div 
@@ -2016,7 +2022,12 @@ export function BoqEditorClient({
       setInlineEditingNoteId(item.id);
 
       setTimeout(() => {
-        inlineTextareaRef.current?.focus();
+        if (inlineTextareaRef.current) {
+          inlineTextareaRef.current.focus();
+          // Auto-resize to match content
+          inlineTextareaRef.current.style.height = 'auto';
+          inlineTextareaRef.current.style.height = `${inlineTextareaRef.current.scrollHeight}px`;
+        }
       }, 50);
     },
     [noteHasFormatting, openEditItemDialog, htmlToPlainText]
@@ -2035,7 +2046,12 @@ export function BoqEditorClient({
       setInlineEditingDescId(item.id);
 
       setTimeout(() => {
-        inlineDescTextareaRef.current?.focus();
+        if (inlineDescTextareaRef.current) {
+          inlineDescTextareaRef.current.focus();
+          // Auto-resize to match content
+          inlineDescTextareaRef.current.style.height = 'auto';
+          inlineDescTextareaRef.current.style.height = `${inlineDescTextareaRef.current.scrollHeight}px`;
+        }
       }, 50);
     },
     [noteHasFormatting, openEditItemDialog, htmlToPlainText]
